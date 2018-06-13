@@ -1,0 +1,19 @@
+database:
+  type: sqlite3
+  name: maubot.db
+
+logging:
+  directory: ./logs
+  file_mode: 0600
+  print_debug: false
+  file_name_format: "%[1]s-%02[2]d.log"
+  file_date_format: 2006-01-02
+  timestamp_format: Jan _2, 2006 15:04:05
+
+# If multiple directories have a plugin with the same name, the first directory is used.
+plugin_directories:
+- ./plugins
+
+server:
+  listen: 0.0.0.0:29316
+  base_path: /_matrix/maubot

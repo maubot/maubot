@@ -1,0 +1,15 @@
+.idea
+.vscode
+
+*.db
+*.yaml
+!example-config.yaml
+
+plugins/
+
+# Bots under maubot.xyz
+jesaribot/
+sed/
+github/
+gitlab/
+rss/
