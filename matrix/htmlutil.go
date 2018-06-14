@@ -19,9 +19,10 @@ package matrix
 import (
 	"strings"
 	"gopkg.in/russross/blackfriday.v2"
+	"maubot.xyz"
 )
 
-func RenderMarkdown(text string) map[string]interface{} {
+func RenderMarkdown(text string) maubot.Content {
 	parser := blackfriday.New(
 		blackfriday.WithExtensions(blackfriday.NoIntraEmphasis |
 			blackfriday.Tables |
@@ -43,10 +44,10 @@ func RenderMarkdown(text string) map[string]interface{} {
 	renderer.RenderFooter(&buf, ast)
 	htmlBody := buf.String()
 
-	return map[string]interface{}{
-		"formatted_body": htmlBody,
-		"format":         "org.matrix.custom.html",
-		"msgtype":        "m.text",
-		"body":           HTMLToText(htmlBody),
+	return maubot.Content{
+		FormattedBody: htmlBody,
+		Format: maubot.FormatHTML,
+		MsgType: maubot.MsgText,
+		Body: HTMLToText(htmlBody),
 	}
 }

@@ -17,11 +17,13 @@
 package matrix
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
-	"fmt"
-	"maunium.net/go/gomatrix"
+
 	"golang.org/x/net/html"
+	"maubot.xyz"
+	"maunium.net/go/gomatrix"
 )
 
 var HTMLReplyFallbackRegex = regexp.MustCompile(`^<mx-reply>[\s\S]+?</mx-reply>`)
@@ -42,13 +44,13 @@ func TrimReplyFallbackText(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-func RemoveReplyFallback(evt *gomatrix.Event) {
-	if format, ok := evt.Content["format"].(string); ok && format == "org.matrix.custom.html" {
-		htmlBody, _ := evt.Content["formatted_body"].(string)
-		evt.Content["formatted_body"] = TrimReplyFallbackHTML(htmlBody)
+func RemoveReplyFallback(evt *maubot.Event) {
+	if len(evt.Content.RelatesTo.InReplyTo.EventID) > 0 {
+		if evt.Content.Format == maubot.FormatHTML {
+			evt.Content.FormattedBody = TrimReplyFallbackHTML(evt.Content.FormattedBody)
+		}
+		evt.Content.Body = TrimReplyFallbackText(evt.Content.Body)
 	}
-	plainBody, _ := evt.Content["body"].(string)
-	evt.Content["body"] = TrimReplyFallbackText(plainBody)
 }
 
 const ReplyFormat = `<mx-reply><blockquote>
@@ -86,22 +88,18 @@ func ReplyFallbackText(evt *gomatrix.Event) string {
 	return fallbackText.String()
 }
 
-func SetReply(content map[string]interface{}, inReplyTo *gomatrix.Event) map[string]interface{} {
-	content["m.relates_to"] = map[string]interface{}{
-		"m.in_reply_to": map[string]interface{}{
-			"event_id": inReplyTo.ID,
-			"room_id":  inReplyTo.RoomID,
-		},
+func SetReply(content maubot.Content, inReplyTo *gomatrix.Event) maubot.Content {
+	content.RelatesTo.InReplyTo.EventID = inReplyTo.ID
+	content.RelatesTo.InReplyTo.RoomID = inReplyTo.RoomID
+
+	if content.MsgType == maubot.MsgText || content.MsgType == maubot.MsgNotice {
+		if len(content.FormattedBody) == 0 || content.Format != maubot.FormatHTML {
+			content.FormattedBody = html.EscapeString(content.Body)
+			content.Format = maubot.FormatHTML
+		}
+		content.FormattedBody = ReplyFallbackHTML(inReplyTo) + content.FormattedBody
+		content.Body = ReplyFallbackText(inReplyTo) + content.Body
 	}
 
-	body, _ := content["body"].(string)
-	content["body"] = ReplyFallbackText(inReplyTo) + body
-
-	htmlBody, ok := content["formatted_body"].(string)
-	if !ok {
-		htmlBody = html.EscapeString(body)
-		content["format"] = "org.matrix.custom.html"
-	}
-	content["formatted_body"] = ReplyFallbackHTML(inReplyTo) + htmlBody
 	return content
 }

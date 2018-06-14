@@ -17,7 +17,9 @@
 package matrix
 
 import (
-	"maubot.xyz/interfaces"
+	"encoding/json"
+
+	"maubot.xyz"
 	"maunium.net/go/gomatrix"
 )
 
@@ -26,43 +28,64 @@ type Event struct {
 	Client *Client
 }
 
-func (evt *Event) Interface() *interfaces.Event {
+func roundtripContent(rawContent map[string]interface{}) (content maubot.Content) {
+	if len(rawContent) == 0 {
+		content.Raw = rawContent
+		return
+	}
+	data, _ := json.Marshal(&rawContent)
+	json.Unmarshal(data, &content)
+	content.Raw = rawContent
+	return
+}
+
+func (evt *Event) Interface() *maubot.Event {
 	var stateKey string
 	if evt.StateKey != nil {
 		stateKey = *evt.StateKey
 	}
-	return &interfaces.Event{
+	mbEvent := &maubot.Event{
 		EventFuncs: evt,
 		StateKey:   stateKey,
 		Sender:     evt.Sender,
-		Type:       evt.Type,
+		Type:       maubot.EventType(evt.Type),
 		Timestamp:  evt.Timestamp,
 		ID:         evt.ID,
 		RoomID:     evt.RoomID,
-		Content:    evt.Content,
+		Content:    roundtripContent(evt.Content),
 		Redacts:    evt.Redacts,
-		Unsigned: interfaces.Unsigned{
-			PrevContent:   evt.Unsigned.PrevContent,
+		Unsigned: maubot.Unsigned{
+			PrevContent:   roundtripContent(evt.Unsigned.PrevContent),
 			PrevSender:    evt.Unsigned.PrevSender,
 			ReplacesState: evt.Unsigned.ReplacesState,
 			Age:           evt.Unsigned.Age,
 		},
 	}
+	RemoveReplyFallback(mbEvent)
+	return mbEvent
 }
 
 func (evt *Event) Reply(text string) (string, error) {
-	return evt.SendEvent(
+	return evt.SendRawEvent(maubot.EventMessage,
 		SetReply(
 			RenderMarkdown(text),
 			evt.Event))
 }
 
-func (evt *Event) SendMessage(text string) (string, error) {
-	return evt.SendEvent(RenderMarkdown(text))
+func (evt *Event) ReplyContent(content maubot.Content) (string, error) {
+	return evt.SendRawEvent(maubot.EventMessage, SetReply(content, evt.Event))
 }
 
-func (evt *Event) SendEvent(content map[string]interface{}) (string, error) {
-	resp, err := evt.Client.SendMessageEvent(evt.RoomID, "m.room.message", content)
+func (evt *Event) SendMessage(text string) (string, error) {
+	return evt.SendRawEvent(maubot.EventMessage, RenderMarkdown(text))
+}
+
+func (evt *Event) SendContent(content maubot.Content) (string, error) {
+	return evt.SendRawEvent(maubot.EventMessage, content)
+}
+
+func (evt *Event) SendRawEvent(evtType maubot.EventType, content interface{}) (string, error) {
+	resp, err := evt.Client.SendMessageEvent(evt.RoomID, string(evtType), content)
 	if err != nil {
 		return "", err
 	}

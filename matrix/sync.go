@@ -6,14 +6,14 @@ import (
 	"runtime/debug"
 	"time"
 
-	"maubot.xyz/interfaces"
+	"maubot.xyz"
 	"maunium.net/go/gomatrix"
 )
 
 type MaubotSyncer struct {
 	Client    *Client
 	Store     gomatrix.Storer
-	listeners map[string][]interfaces.EventHandler
+	listeners map[maubot.EventType][]maubot.EventHandler
 }
 
 // NewDefaultSyncer returns an instantiated DefaultSyncer
@@ -21,7 +21,7 @@ func NewMaubotSyncer(client *Client, store gomatrix.Storer) *MaubotSyncer {
 	return &MaubotSyncer{
 		Client:    client,
 		Store:     store,
-		listeners: make(map[string][]interfaces.EventHandler),
+		listeners: make(map[maubot.EventType][]maubot.EventHandler),
 	}
 }
 
@@ -73,10 +73,10 @@ func (s *MaubotSyncer) ProcessResponse(res *gomatrix.RespSync, since string) (er
 
 // OnEventType allows callers to be notified when there are new events for the given event type.
 // There are no duplicate checks.
-func (s *MaubotSyncer) OnEventType(eventType string, callback interfaces.EventHandler) {
+func (s *MaubotSyncer) OnEventType(eventType maubot.EventType, callback maubot.EventHandler) {
 	_, exists := s.listeners[eventType]
 	if !exists {
-		s.listeners[eventType] = []interfaces.EventHandler{}
+		s.listeners[eventType] = []maubot.EventHandler{}
 	}
 	s.listeners[eventType] = append(s.listeners[eventType], callback)
 }
@@ -130,7 +130,7 @@ func (s *MaubotSyncer) getOrCreateRoom(roomID string) *gomatrix.Room {
 
 func (s *MaubotSyncer) notifyListeners(mxEvent *gomatrix.Event) {
 	event := s.Client.ParseEvent(mxEvent)
-	listeners, exists := s.listeners[event.Type]
+	listeners, exists := s.listeners[maubot.EventType(event.Type)]
 	if !exists {
 		return
 	}

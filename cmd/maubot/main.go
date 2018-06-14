@@ -23,7 +23,7 @@ import (
 	"syscall"
 
 	_ "github.com/mattn/go-sqlite3"
-	"maubot.xyz"
+	"maubot.xyz/app"
 	"maubot.xyz/config"
 	flag "maunium.net/go/mauflag"
 	log "maunium.net/go/maulogger"
@@ -55,7 +55,7 @@ func main() {
 	cfg.Logging.Configure(log.DefaultLogger)
 	log.Debugln("Logger configured")
 
-	bot := maubot.New(cfg)
+	bot := app.New(cfg)
 	bot.Init()
 	bot.Start()
 

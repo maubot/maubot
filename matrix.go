@@ -16,39 +16,109 @@
 
 package maubot
 
-import (
-	"os"
+type EventType string
+type MessageType string
 
-	"maubot.xyz/matrix"
-	log "maunium.net/go/maulogger"
+// State events
+const (
+	StateAliases        EventType = "m.room.aliases"
+	StateCanonicalAlias           = "m.room.canonical_alias"
+	StateCreate                   = "m.room.create"
+	StateJoinRules                = "m.room.join_rules"
+	StateMember                   = "m.room.member"
+	StatePowerLevels              = "m.room.power_levels"
+	StateRoomName                 = "m.room.name"
+	StateTopic                    = "m.room.topic"
+	StateRoomAvatar               = "m.room.avatar"
+	StatePinnedEvents             = "m.room.pinned_events"
 )
 
-func (bot *Bot) initClients() {
-	log.Debugln("Initializing Matrix clients")
-	clients := bot.Database.MatrixClient.GetAll()
-	for _, client := range clients {
-		mxClient, err := matrix.NewClient(client)
-		if err != nil {
-			log.Fatalf("Failed to create client to %s as %s: %v\n", client.Homeserver, client.UserID, err)
-			os.Exit(3)
-		}
-		log.Debugln("Initialized user", client.UserID, "with homeserver", client.Homeserver)
-		bot.Clients[client.UserID] = mxClient
-	}
+// Message events
+const (
+	EventRedaction EventType = "m.room.redaction"
+	EventMessage             = "m.room.message"
+	EventSticker             = "m.sticker"
+)
+
+// Msgtypes
+const (
+	MsgText     MessageType = "m.text"
+	MsgEmote                = "m.emote"
+	MsgNotice               = "m.notice"
+	MsgImage                = "m.image"
+	MsgLocation             = "m.location"
+	MsgVideo                = "m.video"
+	MsgAudio                = "m.audio"
+)
+
+const FormatHTML = "org.matrix.custom.html"
+
+type EventHandler func(*Event) bool
+
+type MatrixClient interface {
+	AddEventHandler(EventType, EventHandler)
 }
 
-func (bot *Bot) startClients() {
-	log.Debugln("Starting Matrix syncer")
-	for _, client := range bot.Clients {
-		if client.DB.Sync {
-			client.Sync()
-		}
-	}
+type EventFuncs interface {
+	Reply(string) (string, error)
+	ReplyContent(Content) (string, error)
+	SendMessage(string) (string, error)
+	SendContent(Content) (string, error)
+	SendRawEvent(EventType, interface{}) (string, error)
 }
 
-func (bot *Bot) stopClients() {
-	log.Debugln("Stopping Matrix syncers")
-	for _, client := range bot.Clients {
-		client.StopSync()
-	}
+type Event struct {
+	EventFuncs
+
+	StateKey   string                 `json:"state_key,omitempty"` // The state key for the event. Only present on State Events.
+	Sender     string                 `json:"sender"`              // The user ID of the sender of the event
+	Type       EventType              `json:"type"`                // The event type
+	Timestamp  int64                  `json:"origin_server_ts"`    // The unix timestamp when this message was sent by the origin server
+	ID         string                 `json:"event_id"`            // The unique ID of this event
+	RoomID     string                 `json:"room_id"`             // The room the event was sent to. May be nil (e.g. for presence)
+	Content    Content                `json:"content"`
+	Redacts    string                 `json:"redacts,omitempty"`  // The event ID that was redacted if a m.room.redaction event
+	Unsigned   Unsigned               `json:"unsigned,omitempty"` // Unsigned content set by own homeserver.
+}
+
+type Unsigned struct {
+	PrevContent    Content                `json:"prev_content,omitempty"`
+	PrevSender     string                 `json:"prev_sender,omitempty"`
+	ReplacesState  string                 `json:"replaces_state,omitempty"`
+	Age            int64                  `json:"age"`
+}
+
+type Content struct {
+	Raw map[string]interface{} `json:"-"`
+
+	MsgType       MessageType `json:"msgtype"`
+	Body          string      `json:"body"`
+	Format        string      `json:"format"`
+	FormattedBody string      `json:"formatted_body"`
+
+	Info FileInfo `json:"info"`
+	URL  string   `json:"url"`
+
+	Membership string `json:"membership"`
+
+	RelatesTo RelatesTo `json:"m.relates_to"`
+}
+
+type FileInfo struct {
+	MimeType      string   `json:"mimetype"`
+	ThumbnailInfo *FileInfo `json:"thumbnail_info"`
+	ThumbnailURL  string   `json:"thumbnail_url"`
+	Height        int      `json:"h"`
+	Width         int      `json:"w"`
+	Size          int      `json:"size"`
+}
+
+type RelatesTo struct {
+	InReplyTo InReplyTo `json:"m.in_reply_to"`
+}
+
+type InReplyTo struct {
+	EventID string `json:"event_id"`
+	// Not required, just for future-proofing
+	RoomID string `json:"room_id"`
 }

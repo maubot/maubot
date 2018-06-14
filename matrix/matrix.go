@@ -17,14 +17,15 @@
 package matrix
 
 import (
+	"maubot.xyz"
 	"maubot.xyz/database"
-	"maubot.xyz/interfaces"
 	"maunium.net/go/gomatrix"
 	log "maunium.net/go/maulogger"
 )
 
 type Client struct {
 	*gomatrix.Client
+	syncer *MaubotSyncer
 
 	DB *database.MatrixClient
 }
@@ -40,9 +41,10 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 		DB:     db,
 	}
 
-	client.Syncer = NewMaubotSyncer(client, client.Store)
+	client.syncer = NewMaubotSyncer(client, client.Store)
+	client.Client.Syncer = client.syncer
 
-	client.AddEventHandler(gomatrix.StateMember, client.onJoin)
+	client.AddEventHandler(maubot.StateMember, client.onJoin)
 
 	return client, nil
 }
@@ -50,19 +52,19 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 func (client *Client) ParseEvent(evt *gomatrix.Event) *Event {
 	return &Event{
 		Client: client,
-		Event: evt,
+		Event:  evt,
 	}
 }
 
-func (client *Client) AddEventHandler(evt string, handler interfaces.EventHandler) {
-	client.Syncer.(*MaubotSyncer).OnEventType(evt, handler)
+func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
+	client.syncer.OnEventType(evt, handler)
 }
 
-func (client *Client) onJoin(evt *interfaces.Event) bool {
+func (client *Client) onJoin(evt *maubot.Event) bool {
 	if !client.DB.AutoJoinRooms || evt.StateKey != client.DB.UserID {
 		return true
 	}
-	if membership, _ := evt.Content["membership"].(string); membership == "invite" {
+	if evt.Content.Membership == "invite" {
 		client.JoinRoom(evt.RoomID)
 		return false
 	}
