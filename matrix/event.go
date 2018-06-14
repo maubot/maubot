@@ -65,6 +65,10 @@ func (evt *Event) Interface() *maubot.Event {
 	return mbEvent
 }
 
+func (evt *Event) MarkRead() error {
+	return evt.Client.MarkRead(evt.RoomID, evt.ID)
+}
+
 func (evt *Event) Reply(text string) (string, error) {
 	return evt.SendRawEvent(maubot.EventMessage,
 		SetReply(

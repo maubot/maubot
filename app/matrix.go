@@ -40,6 +40,10 @@ func (bot *Bot) initClients() {
 func (bot *Bot) startClients() {
 	log.Debugln("Starting Matrix syncer")
 	for _, client := range bot.Clients {
+		go func() {
+			client.SetAvatarURL(client.DB.AvatarURL)
+			client.SetDisplayName(client.DB.DisplayName)
+		}()
 		if client.DB.Sync {
 			client.Sync()
 		}

@@ -41,7 +41,7 @@ func TrimReplyFallbackText(text string) string {
 	for len(lines) > 0 && strings.HasPrefix(lines[0], "> ") {
 		lines = lines[1:]
 	}
-	return strings.Join(lines, "\n")
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 func RemoveReplyFallback(evt *maubot.Event) {
