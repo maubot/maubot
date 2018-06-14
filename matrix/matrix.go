@@ -57,9 +57,9 @@ func (client *Client) ParseEvent(evt *gomatrix.Event) *Event {
 }
 
 func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
-	client.syncer.OnEventType(evt, func(evt *maubot.Event) bool {
+	client.syncer.OnEventType(evt, func(evt *maubot.Event) maubot.EventHandlerResult {
 		if evt.Sender == client.UserID {
-			return false
+			return maubot.StopPropagation
 		}
 		return handler(evt)
 	})
@@ -68,21 +68,18 @@ func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.Event
 func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 	evt, err := client.Client.GetEvent(roomID, eventID)
 	if err != nil {
-		log.Warnf("Failed to get event %s @ %s: %v", eventID, roomID, err)
+		log.Warnf("Failed to get event %s @ %s: %v\n", eventID, roomID, err)
 		return nil
 	}
 	return client.ParseEvent(evt).Interface()
 }
 
-func (client *Client) onJoin(evt *maubot.Event) bool {
-	if !client.DB.AutoJoinRooms || evt.StateKey != client.DB.UserID {
-		return true
-	}
-	if evt.Content.Membership == "invite" {
+func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {
+	if client.DB.AutoJoinRooms && evt.StateKey == client.DB.UserID && evt.Content.Membership == "invite" {
 		client.JoinRoom(evt.RoomID)
-		return false
+		return maubot.StopPropagation
 	}
-	return true
+	return maubot.Continue
 }
 
 func (client *Client) JoinRoom(roomID string) {

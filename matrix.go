@@ -53,7 +53,13 @@ const (
 
 const FormatHTML = "org.matrix.custom.html"
 
-type EventHandler func(*Event) bool
+type EventHandler func(*Event) EventHandlerResult
+type EventHandlerResult bool
+
+const (
+	Continue        EventHandlerResult = false
+	StopPropagation EventHandlerResult = true
+)
 
 type MatrixClient interface {
 	AddEventHandler(EventType, EventHandler)
