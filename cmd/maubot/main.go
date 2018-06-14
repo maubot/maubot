@@ -22,6 +22,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/mattn/go-sqlite3"
 	"maubot.xyz"
 	"maubot.xyz/config"
 	flag "maunium.net/go/mauflag"

@@ -86,10 +86,9 @@ func (bot *Bot) createPlugins() {
 			continue
 		}
 
-
 		log.Debugf("Created plugin %s (type %s v%s)\n", plugin.ID, creator.Name, creator.Version)
 		bot.Plugins[plugin.ID] = &PluginWrapper{
-			Plugin:  creator.Create(bot, plugin, client),
+			Plugin:  creator.Create(client),
 			Creator: creator,
 			DB:      plugin,
 		}

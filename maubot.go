@@ -22,6 +22,7 @@ import (
 
 	"maubot.xyz/config"
 	"maubot.xyz/database"
+	"maubot.xyz/interfaces"
 	"maubot.xyz/matrix"
 	log "maunium.net/go/maulogger"
 )
@@ -30,7 +31,7 @@ type Bot struct {
 	Config         *config.MainConfig
 	Database       *database.Database
 	Clients        map[string]*matrix.Client
-	PluginCreators map[string]*PluginCreator
+	PluginCreators map[string]*interfaces.PluginCreator
 	Plugins        map[string]*PluginWrapper
 	Server         *http.Server
 }
@@ -40,7 +41,7 @@ func New(config *config.MainConfig) *Bot {
 		Config:         config,
 		Clients:        make(map[string]*matrix.Client),
 		Plugins:        make(map[string]*PluginWrapper),
-		PluginCreators: make(map[string]*PluginCreator),
+		PluginCreators: make(map[string]*interfaces.PluginCreator),
 	}
 }
 

@@ -21,30 +21,16 @@ import (
 	"plugin"
 
 	"maubot.xyz/database"
-	"maubot.xyz/matrix"
+	"maubot.xyz/interfaces"
 )
 
-type Plugin interface {
-	Start()
-	Stop()
-}
-
 type PluginWrapper struct {
-	Plugin
-	Creator *PluginCreator
+	interfaces.Plugin
+	Creator *interfaces.PluginCreator
 	DB      *database.Plugin
 }
 
-type PluginCreatorFunc func(bot *Bot, info *database.Plugin, client *matrix.Client) Plugin
-
-type PluginCreator struct {
-	Create  PluginCreatorFunc
-	Name    string
-	Version string
-	Path    string
-}
-
-func LoadPlugin(path string) (*PluginCreator, error) {
+func LoadPlugin(path string) (*interfaces.PluginCreator, error) {
 	rawPlugin, err := plugin.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open: %v", err)
@@ -52,7 +38,7 @@ func LoadPlugin(path string) (*PluginCreator, error) {
 
 	pluginCreatorSymbol, err := rawPlugin.Lookup("Plugin")
 	if err == nil {
-		pluginCreator, ok := pluginCreatorSymbol.(*PluginCreator)
+		pluginCreator, ok := pluginCreatorSymbol.(*interfaces.PluginCreator)
 		if ok {
 			pluginCreator.Path = path
 			return pluginCreator, nil
@@ -63,7 +49,7 @@ func LoadPlugin(path string) (*PluginCreator, error) {
 	if err != nil {
 		return nil, fmt.Errorf("symbol \"Create\" not found: %v", err)
 	}
-	pluginCreatorFunc, ok := pluginCreatorFuncSymbol.(PluginCreatorFunc)
+	pluginCreatorFunc, ok := pluginCreatorFuncSymbol.(interfaces.PluginCreatorFunc)
 	if !ok {
 		return nil, fmt.Errorf("symbol \"Create\" does not implement maubot.PluginCreator")
 	}
@@ -86,7 +72,7 @@ func LoadPlugin(path string) (*PluginCreator, error) {
 		return nil, fmt.Errorf("symbol \"Version\" is not a string")
 	}
 
-	return &PluginCreator{
+	return &interfaces.PluginCreator{
 		Create:  pluginCreatorFunc,
 		Name:    name,
 		Version: version,

@@ -17,12 +17,37 @@
 package matrix
 
 import (
+	"maubot.xyz/interfaces"
 	"maunium.net/go/gomatrix"
 )
 
 type Event struct {
 	*gomatrix.Event
 	Client *Client
+}
+
+func (evt *Event) Interface() *interfaces.Event {
+	var stateKey string
+	if evt.StateKey != nil {
+		stateKey = *evt.StateKey
+	}
+	return &interfaces.Event{
+		EventFuncs: evt,
+		StateKey:   stateKey,
+		Sender:     evt.Sender,
+		Type:       evt.Type,
+		Timestamp:  evt.Timestamp,
+		ID:         evt.ID,
+		RoomID:     evt.RoomID,
+		Content:    evt.Content,
+		Redacts:    evt.Redacts,
+		Unsigned: interfaces.Unsigned{
+			PrevContent:   evt.Unsigned.PrevContent,
+			PrevSender:    evt.Unsigned.PrevSender,
+			ReplacesState: evt.Unsigned.ReplacesState,
+			Age:           evt.Unsigned.Age,
+		},
+	}
 }
 
 func (evt *Event) Reply(text string) (string, error) {

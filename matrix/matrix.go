@@ -18,6 +18,7 @@ package matrix
 
 import (
 	"maubot.xyz/database"
+	"maubot.xyz/interfaces"
 	"maunium.net/go/gomatrix"
 	log "maunium.net/go/maulogger"
 )
@@ -39,22 +40,33 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 		DB:     db,
 	}
 
+	client.Syncer = NewMaubotSyncer(client, client.Store)
+
 	client.AddEventHandler(gomatrix.StateMember, client.onJoin)
 
 	return client, nil
 }
 
-func (client *Client) AddEventHandler(evt string, handler gomatrix.OnEventListener) {
-	client.Syncer.(*gomatrix.DefaultSyncer).OnEventType(evt, handler)
+func (client *Client) ParseEvent(evt *gomatrix.Event) *Event {
+	return &Event{
+		Client: client,
+		Event: evt,
+	}
 }
 
-func (client *Client) onJoin(evt *gomatrix.Event) {
-	if !client.DB.AutoJoinRooms || evt.StateKey == nil || *evt.StateKey != client.DB.UserID {
-		return
+func (client *Client) AddEventHandler(evt string, handler interfaces.EventHandler) {
+	client.Syncer.(*MaubotSyncer).OnEventType(evt, handler)
+}
+
+func (client *Client) onJoin(evt *interfaces.Event) bool {
+	if !client.DB.AutoJoinRooms || evt.StateKey != client.DB.UserID {
+		return true
 	}
 	if membership, _ := evt.Content["membership"].(string); membership == "invite" {
 		client.JoinRoom(evt.RoomID)
+		return false
 	}
+	return true
 }
 
 func (client *Client) JoinRoom(roomID string) {
