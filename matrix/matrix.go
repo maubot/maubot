@@ -49,13 +49,6 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 	return client, nil
 }
 
-func (client *Client) ParseEvent(evt *gomatrix.Event) *Event {
-	return &Event{
-		Client: client,
-		Event:  evt,
-	}
-}
-
 func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
 	client.syncer.OnEventType(evt, func(evt *maubot.Event) maubot.EventHandlerResult {
 		if evt.Sender == client.UserID {
@@ -71,7 +64,7 @@ func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 		log.Warnf("Failed to get event %s @ %s: %v\n", eventID, roomID, err)
 		return nil
 	}
-	return client.ParseEvent(evt).Interface()
+	return client.ParseEvent(evt).Event
 }
 
 func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {

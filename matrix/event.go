@@ -24,7 +24,7 @@ import (
 )
 
 type Event struct {
-	*gomatrix.Event
+	*maubot.Event
 	Client *Client
 }
 
@@ -39,30 +39,34 @@ func roundtripContent(rawContent map[string]interface{}) (content maubot.Content
 	return
 }
 
-func (evt *Event) Interface() *maubot.Event {
+func (client *Client) ParseEvent(mxEvent *gomatrix.Event) *Event {
 	var stateKey string
-	if evt.StateKey != nil {
-		stateKey = *evt.StateKey
+	if mxEvent.StateKey != nil {
+		stateKey = *mxEvent.StateKey
+	}
+	event := &Event{
+		Client: client,
 	}
 	mbEvent := &maubot.Event{
-		EventFuncs: evt,
+		EventFuncs: event,
 		StateKey:   stateKey,
-		Sender:     evt.Sender,
-		Type:       maubot.EventType(evt.Type),
-		Timestamp:  evt.Timestamp,
-		ID:         evt.ID,
-		RoomID:     evt.RoomID,
-		Content:    roundtripContent(evt.Content),
-		Redacts:    evt.Redacts,
+		Sender:     mxEvent.Sender,
+		Type:       maubot.EventType(mxEvent.Type),
+		Timestamp:  mxEvent.Timestamp,
+		ID:         mxEvent.ID,
+		RoomID:     mxEvent.RoomID,
+		Content:    roundtripContent(mxEvent.Content),
+		Redacts:    mxEvent.Redacts,
 		Unsigned: maubot.Unsigned{
-			PrevContent:   roundtripContent(evt.Unsigned.PrevContent),
-			PrevSender:    evt.Unsigned.PrevSender,
-			ReplacesState: evt.Unsigned.ReplacesState,
-			Age:           evt.Unsigned.Age,
+			PrevContent:   roundtripContent(mxEvent.Unsigned.PrevContent),
+			PrevSender:    mxEvent.Unsigned.PrevSender,
+			ReplacesState: mxEvent.Unsigned.ReplacesState,
+			Age:           mxEvent.Unsigned.Age,
 		},
 	}
 	RemoveReplyFallback(mbEvent)
-	return mbEvent
+	event.Event = mbEvent
+	return event
 }
 
 func (evt *Event) MarkRead() error {
@@ -70,18 +74,15 @@ func (evt *Event) MarkRead() error {
 }
 
 func (evt *Event) Reply(text string) (string, error) {
-	return evt.SendRawEvent(maubot.EventMessage,
-		SetReply(
-			RenderMarkdown(text),
-			evt.Event))
+	return evt.ReplyContent(RenderMarkdown(text))
 }
 
 func (evt *Event) ReplyContent(content maubot.Content) (string, error) {
-	return evt.SendRawEvent(maubot.EventMessage, SetReply(content, evt.Event))
+	return evt.SendContent(SetReply(content, evt))
 }
 
 func (evt *Event) SendMessage(text string) (string, error) {
-	return evt.SendRawEvent(maubot.EventMessage, RenderMarkdown(text))
+	return evt.SendContent(RenderMarkdown(text))
 }
 
 func (evt *Event) SendContent(content maubot.Content) (string, error) {

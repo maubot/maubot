@@ -23,7 +23,6 @@ import (
 
 	"golang.org/x/net/html"
 	"maubot.xyz"
-	"maunium.net/go/gomatrix"
 )
 
 var HTMLReplyFallbackRegex = regexp.MustCompile(`^<mx-reply>[\s\S]+?</mx-reply>`)
@@ -60,11 +59,10 @@ const ReplyFormat = `<mx-reply><blockquote>
 </blockquote></mx-reply>
 `
 
-func ReplyFallbackHTML(evt *gomatrix.Event) string {
-	body, ok := evt.Content["formatted_body"].(string)
-	if !ok {
-		body, _ = evt.Content["body"].(string)
-		body = html.EscapeString(body)
+func ReplyFallbackHTML(evt *Event) string {
+	body := evt.Content.FormattedBody
+	if len(body) == 0 {
+		body = html.EscapeString(evt.Content.Body)
 	}
 
 	senderDisplayName := evt.Sender
@@ -72,8 +70,8 @@ func ReplyFallbackHTML(evt *gomatrix.Event) string {
 	return fmt.Sprintf(ReplyFormat, evt.RoomID, evt.ID, evt.Sender, senderDisplayName, body)
 }
 
-func ReplyFallbackText(evt *gomatrix.Event) string {
-	body, _ := evt.Content["body"].(string)
+func ReplyFallbackText(evt *Event) string {
+	body := evt.Content.Body
 	lines := strings.Split(strings.TrimSpace(body), "\n")
 	firstLine, lines := lines[0], lines[1:]
 
@@ -88,7 +86,7 @@ func ReplyFallbackText(evt *gomatrix.Event) string {
 	return fallbackText.String()
 }
 
-func SetReply(content maubot.Content, inReplyTo *gomatrix.Event) maubot.Content {
+func SetReply(content maubot.Content, inReplyTo *Event) maubot.Content {
 	content.RelatesTo.InReplyTo.EventID = inReplyTo.ID
 	content.RelatesTo.InReplyTo.RoomID = inReplyTo.RoomID
 

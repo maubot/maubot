@@ -135,7 +135,7 @@ func (s *MaubotSyncer) notifyListeners(mxEvent *gomatrix.Event) {
 		return
 	}
 	for _, fn := range listeners {
-		if fn(event.Interface()) {
+		if fn(event.Event) {
 			break
 		}
 	}
