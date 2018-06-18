@@ -45,8 +45,16 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 	client.Client.Syncer = client.syncer
 
 	client.AddEventHandler(maubot.StateMember, client.onJoin)
+	client.AddEventHandler(maubot.EventMessage, client.onMessage)
 
 	return client, nil
+}
+
+func (client *Client) Proxy(owner string) *ClientProxy {
+	return &ClientProxy{
+		hiddenClient: client,
+		owner:        owner,
+	}
 }
 
 func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
@@ -58,6 +66,18 @@ func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.Event
 	})
 }
 
+func (client *Client) AddCommandHandler(evt string, handler maubot.CommandHandler) {
+	// TODO add command handler
+}
+
+func (client *Client) SetCommandSpec(owner string, spec *maubot.CommandSpec) {
+	changed := client.DB.SetCommandSpec(owner, spec)
+	if changed {
+		log.Debugln("Command spec of", owner, "on", client.UserID, "updated.")
+		// TODO
+	}
+}
+
 func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 	evt, err := client.Client.GetEvent(roomID, eventID)
 	if err != nil {
@@ -65,6 +85,11 @@ func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 		return nil
 	}
 	return client.ParseEvent(evt).Event
+}
+
+func (client *Client) onMessage(evt *maubot.Event) maubot.EventHandlerResult {
+	// TODO call command handlers
+	return maubot.Continue
 }
 
 func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {
@@ -86,4 +111,15 @@ func (client *Client) Sync() {
 			log.Errorln("Sync() in client", client.UserID, "errored:", err)
 		}
 	}()
+}
+
+type hiddenClient = Client
+
+type ClientProxy struct {
+	*hiddenClient
+	owner string
+}
+
+func (cp *ClientProxy) SetCommandSpec(spec *maubot.CommandSpec) {
+	cp.hiddenClient.SetCommandSpec(cp.owner, spec)
 }

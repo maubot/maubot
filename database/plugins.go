@@ -1,4 +1,4 @@
-// jesaribot - A simple maubot plugin.
+// maubot - A plugin-based Matrix bot system written in Go.
 // Copyright (C) 2018 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify

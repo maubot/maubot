@@ -63,6 +63,8 @@ const (
 
 type MatrixClient interface {
 	AddEventHandler(EventType, EventHandler)
+	AddCommandHandler(string, CommandHandler)
+	SetCommandSpec(*CommandSpec)
 	GetEvent(string, string) *Event
 }
 
@@ -89,11 +91,30 @@ type Event struct {
 	Unsigned  Unsigned  `json:"unsigned,omitempty"` // Unsigned content set by own homeserver.
 }
 
+func (evt *Event) Equals(otherEvt *Event) bool {
+	return evt.StateKey == otherEvt.StateKey &&
+		evt.Sender == otherEvt.Sender &&
+		evt.Type == otherEvt.Type &&
+		evt.Timestamp == otherEvt.Timestamp &&
+		evt.ID == otherEvt.ID &&
+		evt.RoomID == otherEvt.RoomID &&
+		evt.Content.Equals(&otherEvt.Content) &&
+		evt.Redacts == otherEvt.Redacts &&
+		evt.Unsigned.Equals(&otherEvt.Unsigned)
+}
+
 type Unsigned struct {
-	PrevContent   Content `json:"prev_content,omitempty"`
-	PrevSender    string  `json:"prev_sender,omitempty"`
-	ReplacesState string  `json:"replaces_state,omitempty"`
-	Age           int64   `json:"age"`
+	PrevContent   *Content `json:"prev_content,omitempty"`
+	PrevSender    string   `json:"prev_sender,omitempty"`
+	ReplacesState string   `json:"replaces_state,omitempty"`
+	Age           int64    `json:"age"`
+}
+
+func (unsigned Unsigned) Equals(otherUnsigned *Unsigned) bool {
+	return unsigned.PrevContent.Equals(otherUnsigned.PrevContent) &&
+		unsigned.PrevSender == otherUnsigned.PrevSender &&
+		unsigned.ReplacesState == otherUnsigned.ReplacesState &&
+		unsigned.Age == otherUnsigned.Age
 }
 
 type Content struct {
@@ -104,12 +125,23 @@ type Content struct {
 	Format        string      `json:"format,omitempty"`
 	FormattedBody string      `json:"formatted_body,omitempty"`
 
-	Info FileInfo `json:"info,omitempty"`
-	URL  string   `json:"url,omitempty"`
+	Info *FileInfo `json:"info,omitempty"`
+	URL  string    `json:"url,omitempty"`
 
 	Membership string `json:"membership,omitempty"`
 
 	RelatesTo RelatesTo `json:"m.relates_to,omitempty"`
+}
+
+func (content Content) Equals(otherContent *Content) bool {
+	return content.MsgType == otherContent.MsgType &&
+		content.Body == otherContent.Body &&
+		content.Format == otherContent.Format &&
+		content.FormattedBody == otherContent.FormattedBody &&
+		((content.Info != nil && content.Info.Equals(otherContent.Info)) || otherContent.Info == nil) &&
+		content.URL == otherContent.URL &&
+		content.Membership == otherContent.Membership &&
+		content.RelatesTo == otherContent.RelatesTo
 }
 
 type FileInfo struct {
@@ -119,6 +151,15 @@ type FileInfo struct {
 	Height        int       `json:"h,omitempty"`
 	Width         int       `json:"w,omitempty"`
 	Size          int       `json:"size,omitempty"`
+}
+
+func (fi *FileInfo) Equals(otherFI *FileInfo) bool {
+	return fi.MimeType == otherFI.MimeType &&
+		fi.ThumbnailURL == otherFI.ThumbnailURL &&
+		fi.Height == otherFI.Height &&
+		fi.Width == otherFI.Width &&
+		fi.Size == otherFI.Size &&
+		((fi.ThumbnailInfo != nil && fi.ThumbnailInfo.Equals(otherFI.ThumbnailInfo)) || otherFI.ThumbnailInfo == nil)
 }
 
 type RelatesTo struct {

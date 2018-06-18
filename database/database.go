@@ -1,4 +1,4 @@
-// jesaribot - A simple maubot plugin.
+// maubot - A plugin-based Matrix bot system written in Go.
 // Copyright (C) 2018 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,12 +22,17 @@ import (
 	log "maunium.net/go/maulogger"
 )
 
+type Scannable interface {
+	Scan(...interface{}) error
+}
+
 type Database struct {
 	Type string `yaml:"type"`
 	Name string `yaml:"name"`
 
 	MatrixClient *MatrixClientStatic `yaml:"-"`
 	Plugin       *PluginStatic       `yaml:"-"`
+	CommandSpec  *CommandSpecStatic  `yaml:"-"`
 
 	sql *sql.DB
 }
@@ -40,6 +45,7 @@ func (db *Database) Connect() (err error) {
 
 	db.MatrixClient = &MatrixClientStatic{db: db, sql: db.sql}
 	db.Plugin = &PluginStatic{db: db, sql: db.sql}
+	db.CommandSpec = &CommandSpecStatic{db: db, sql: db.sql}
 
 	return nil
 }

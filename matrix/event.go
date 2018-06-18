@@ -28,7 +28,8 @@ type Event struct {
 	Client *Client
 }
 
-func roundtripContent(rawContent map[string]interface{}) (content maubot.Content) {
+func roundtripContent(rawContent map[string]interface{}) (content *maubot.Content) {
+	content = &maubot.Content{}
 	if len(rawContent) == 0 {
 		content.Raw = rawContent
 		return
@@ -55,7 +56,7 @@ func (client *Client) ParseEvent(mxEvent *gomatrix.Event) *Event {
 		Timestamp:  mxEvent.Timestamp,
 		ID:         mxEvent.ID,
 		RoomID:     mxEvent.RoomID,
-		Content:    roundtripContent(mxEvent.Content),
+		Content:    *roundtripContent(mxEvent.Content),
 		Redacts:    mxEvent.Redacts,
 		Unsigned: maubot.Unsigned{
 			PrevContent:   roundtripContent(mxEvent.Unsigned.PrevContent),
