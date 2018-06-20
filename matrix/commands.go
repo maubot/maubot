@@ -28,6 +28,8 @@ import (
 
 type ParsedCommand struct {
 	Name         string
+	IsPassive    bool
+	Arguments    []string
 	StartsWith   string
 	Matches      *regexp.Regexp
 	MatchAgainst string
@@ -43,12 +45,14 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 	words := strings.Split(command.Syntax, " ")
 	for i, word := range words {
 		argument, ok := command.Arguments[word]
-		if ok {
+		// TODO enable $ check?
+		if ok && len(word) > 0 /*&& word[0] == '$'*/ {
 			argumentEncountered = true
 			regex := argument.Matches
 			if argument.Required {
 				regex = fmt.Sprintf("(?:%s)?", regex)
 			}
+			pc.Arguments = append(pc.Arguments, word)
 			regexBuilder.WriteString(regex)
 		} else {
 			if !argumentEncountered {
@@ -57,7 +61,7 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 			regexBuilder.WriteString(regexp.QuoteMeta(word))
 		}
 
-		if i < len(words) - 1 {
+		if i < len(words)-1 {
 			if !argumentEncountered {
 				swBuilder.WriteRune(' ')
 			}
@@ -78,7 +82,7 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 func (pc *ParsedCommand) parsePassiveCommandSyntax(command maubot.PassiveCommand) error {
 	pc.MatchAgainst = command.MatchAgainst
 	var err error
-	pc.Matches, err = regexp.Compile(command.Matches)
+	pc.Matches, err = regexp.Compile(fmt.Sprintf("(%s)", command.Matches))
 	pc.MatchesEvent = command.MatchEvent
 	return err
 }
@@ -86,7 +90,8 @@ func (pc *ParsedCommand) parsePassiveCommandSyntax(command maubot.PassiveCommand
 func ParseSpec(spec *maubot.CommandSpec) (commands []*ParsedCommand) {
 	for _, command := range spec.Commands {
 		parsing := &ParsedCommand{
-			Name: command.Syntax,
+			Name:      command.Syntax,
+			IsPassive: false,
 		}
 		err := parsing.parseCommandSyntax(command)
 		if err != nil {
@@ -97,7 +102,8 @@ func ParseSpec(spec *maubot.CommandSpec) (commands []*ParsedCommand) {
 	}
 	for _, command := range spec.PassiveCommands {
 		parsing := &ParsedCommand{
-			Name: command.Name,
+			Name:      command.Name,
+			IsPassive: true,
 		}
 		err := parsing.parsePassiveCommandSyntax(command)
 		if err != nil {
@@ -126,13 +132,62 @@ func deepGet(from map[string]interface{}, path string) interface{} {
 	}
 }
 
-func (pc *ParsedCommand) Match(evt *maubot.Event) bool {
+func (pc *ParsedCommand) MatchActive(evt *maubot.Event) bool {
+	if !strings.HasPrefix(evt.Content.Body, pc.StartsWith) {
+		return false
+	}
+	match := pc.Matches.FindStringSubmatch(evt.Content.Body)
+	if match == nil {
+		return false
+	}
+	// First element is whole content
+	match = match[1:]
+
+	evt.Content.Command.Arguments = make(map[string]string)
+	for i, value := range match {
+		if i >= len(pc.Arguments) {
+			break
+		}
+		key := pc.Arguments[i]
+		evt.Content.Command.Arguments[key] = value
+	}
+
+	evt.Content.Command.Matched = pc.Name
+	// TODO add evt.Content.Command.Target?
+
+	return true
+}
+
+func (pc *ParsedCommand) MatchPassive(evt *maubot.Event) bool {
 	matchAgainst, ok := deepGet(evt.Content.Raw, pc.MatchAgainst).(string)
 	if !ok {
 		matchAgainst = evt.Content.Body
 	}
 
-	return strings.HasPrefix(matchAgainst, pc.StartsWith) &&
-		pc.Matches.MatchString(matchAgainst) &&
-		(pc.MatchesEvent == nil || pc.MatchesEvent.Equals(evt))
+	if pc.MatchesEvent != nil && !pc.MatchesEvent.Equals(evt) {
+		return false
+	}
+
+	matches := pc.Matches.FindAllStringSubmatch(matchAgainst, -1)
+	if matches == nil {
+		return false
+	}
+
+	values := make([]string, len(matches))
+	for i, match := range matches {
+		values[i] = match[0]
+	}
+
+	evt.Unsigned.PassiveCommand.Matched = pc.Name
+	evt.Unsigned.PassiveCommand.Values = values
+
+	return true
+}
+
+func (pc *ParsedCommand) Match(evt *maubot.Event) bool {
+	if pc.IsPassive {
+		return pc.MatchPassive(evt)
+	} else {
+		return pc.MatchActive(evt)
+	}
 }

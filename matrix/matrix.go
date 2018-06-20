@@ -104,6 +104,7 @@ func (client *Client) TriggerCommand(command *ParsedCommand, evt *maubot.Event) 
 		log.Warnf("Command %s triggered by %s doesn't have any handlers.", command.Name, evt.Sender)
 		return maubot.Continue
 	}
+
 	log.Debugf("Command %s on client %s triggered by %s\n", command.Name, client.UserID, evt.Sender)
 	for _, handler := range handlers {
 		result := handler(evt)

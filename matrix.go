@@ -110,6 +110,8 @@ type Unsigned struct {
 	PrevSender    string   `json:"prev_sender,omitempty"`
 	ReplacesState string   `json:"replaces_state,omitempty"`
 	Age           int64    `json:"age"`
+
+	PassiveCommand MatchedPassiveCommand `json:"m.passive_command,omitempty"`
 }
 
 func (unsigned Unsigned) Equals(otherUnsigned *Unsigned) bool {
@@ -169,6 +171,14 @@ type MatchedCommand struct {
 	Target    string            `json:"target"`
 	Matched   string            `json:"matched"`
 	Arguments map[string]string `json:"arguments"`
+}
+
+type MatchedPassiveCommand struct {
+	Matched string   `json:"matched"`
+	Values  []string `json:"captured"`
+
+	BackCompatCommand   string            `json:"command"`
+	BackCompatArguments map[string]string `json:"arguments"`
 }
 
 type RelatesTo struct {
