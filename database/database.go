@@ -62,6 +62,11 @@ func (db *Database) CreateTables() {
 	if err != nil {
 		log.Errorln("Failed to create plugin table:", err)
 	}
+
+	err = db.CommandSpec.CreateTable()
+	if err != nil {
+		log.Errorln("Failed to create command_spec table:", err)
+	}
 }
 
 func (db *Database) SQL() *sql.DB {

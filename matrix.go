@@ -54,11 +54,13 @@ const (
 const FormatHTML = "org.matrix.custom.html"
 
 type EventHandler func(*Event) EventHandlerResult
-type EventHandlerResult bool
+type EventHandlerResult int
+type CommandHandlerResult = EventHandlerResult
 
 const (
-	Continue        EventHandlerResult = false
-	StopPropagation EventHandlerResult = true
+	Continue               EventHandlerResult = iota
+	StopEventPropagation
+	StopCommandPropagation CommandHandlerResult = iota
 )
 
 type MatrixClient interface {
@@ -130,7 +132,8 @@ type Content struct {
 
 	Membership string `json:"membership,omitempty"`
 
-	RelatesTo RelatesTo `json:"m.relates_to,omitempty"`
+	Command   MatchedCommand `json:"m.command,omitempty"`
+	RelatesTo RelatesTo      `json:"m.relates_to,omitempty"`
 }
 
 func (content Content) Equals(otherContent *Content) bool {
@@ -160,6 +163,12 @@ func (fi *FileInfo) Equals(otherFI *FileInfo) bool {
 		fi.Width == otherFI.Width &&
 		fi.Size == otherFI.Size &&
 		((fi.ThumbnailInfo != nil && fi.ThumbnailInfo.Equals(otherFI.ThumbnailInfo)) || otherFI.ThumbnailInfo == nil)
+}
+
+type MatchedCommand struct {
+	Target    string            `json:"target"`
+	Matched   string            `json:"matched"`
+	Arguments map[string]string `json:"arguments"`
 }
 
 type RelatesTo struct {

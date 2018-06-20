@@ -20,6 +20,7 @@ import (
 	"maubot.xyz"
 	log "maunium.net/go/maulogger"
 	"database/sql"
+	"sort"
 )
 
 type MatrixClient struct {
@@ -37,7 +38,7 @@ type MatrixClient struct {
 	DisplayName   string `json:"display_name"`
 	AvatarURL     string `json:"avatar_url"`
 
-	Commands map[string]*CommandSpec `json:"commandspecs"`
+	CommandSpecs map[string]*CommandSpec `json:"command_specs"`
 }
 
 type MatrixClientStatic struct {
@@ -91,30 +92,61 @@ func (mcs *MatrixClientStatic) New() *MatrixClient {
 func (mxc *MatrixClient) Scan(row Scannable) *MatrixClient {
 	err := row.Scan(&mxc.UserID, &mxc.Homeserver, &mxc.AccessToken, &mxc.NextBatch, &mxc.FilterID, &mxc.Sync, &mxc.AutoJoinRooms, &mxc.DisplayName, &mxc.AvatarURL)
 	if err != nil {
-		log.Fatalln("Database scan failed:", err)
+		log.Errorln("MatrixClient scan failed:", err)
+		return mxc
 	}
 	mxc.LoadCommandSpecs()
 	return mxc
 }
 
 func (mxc *MatrixClient) SetCommandSpec(owner string, newSpec *maubot.CommandSpec) bool {
-	spec := mxc.db.CommandSpec.GetOrCreate(owner, mxc.UserID)
-	if newSpec.Equals(spec.CommandSpec) {
+	spec, ok := mxc.CommandSpecs[owner]
+	if ok && newSpec.Equals(spec.CommandSpec) {
 		return false
 	}
-	spec.CommandSpec = newSpec
-	spec.Update()
-	mxc.Commands[owner] = spec
+	if spec == nil {
+		spec = mxc.db.CommandSpec.New()
+		spec.CommandSpec = newSpec
+		spec.Insert()
+	} else {
+		spec.CommandSpec = newSpec
+		spec.Update()
+	}
+	mxc.CommandSpecs[owner] = spec
 	return true
 }
 
 func (mxc *MatrixClient) LoadCommandSpecs() *MatrixClient {
 	specs := mxc.db.CommandSpec.GetAllByClient(mxc.UserID)
-	mxc.Commands = make(map[string]*CommandSpec)
+	mxc.CommandSpecs = make(map[string]*CommandSpec)
 	for _, spec := range specs {
-		mxc.Commands[spec.Owner] = spec
+		mxc.CommandSpecs[spec.Owner] = spec
 	}
+	log.Debugln("Loaded command specs:", mxc.CommandSpecs)
 	return mxc
+}
+
+func (mxc *MatrixClient) CommandSpecIDs() []string {
+	keys := make([]string, len(mxc.CommandSpecs))
+	i := 0
+	for key := range mxc.CommandSpecs {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func (mxc *MatrixClient) Commands() *maubot.CommandSpec {
+	if len(mxc.CommandSpecs) == 0 {
+		return &maubot.CommandSpec{}
+	}
+	specIDs := mxc.CommandSpecIDs()
+	spec := mxc.CommandSpecs[specIDs[0]].Clone()
+	for _, specID := range specIDs[1:] {
+		spec.Merge(mxc.CommandSpecs[specID].CommandSpec)
+	}
+	return spec
 }
 
 func (mxc *MatrixClient) Insert() error {

@@ -16,15 +16,31 @@
 
 package maubot
 
-type CommandHandler func(*Event)
+type CommandHandler func(*Event) CommandHandlerResult
 
 type CommandSpec struct {
-	Commands        []Command        `json:"commands"`
-	PassiveCommands []PassiveCommand `json:"passive_commands"`
+	Commands        []Command        `json:"commands,omitempty"`
+	PassiveCommands []PassiveCommand `json:"passive_commands,omitempty"`
+}
+
+func (spec *CommandSpec) Clone() *CommandSpec {
+	return &CommandSpec{
+		Commands:        append([]Command(nil), spec.Commands...),
+		PassiveCommands: append([]PassiveCommand(nil), spec.PassiveCommands...),
+	}
+}
+
+func (spec *CommandSpec) Merge(otherSpecs ...*CommandSpec) {
+	for _, otherSpec := range otherSpecs {
+		spec.Commands = append(spec.Commands, otherSpec.Commands...)
+		spec.PassiveCommands = append(spec.PassiveCommands, otherSpec.PassiveCommands...)
+	}
 }
 
 func (spec *CommandSpec) Equals(otherSpec *CommandSpec) bool {
-	if len(spec.Commands) != len(otherSpec.Commands) || len(spec.PassiveCommands) != len(otherSpec.PassiveCommands) {
+	if otherSpec == nil ||
+		len(spec.Commands) != len(otherSpec.Commands) ||
+		len(spec.PassiveCommands) != len(otherSpec.PassiveCommands) {
 		return false
 	}
 

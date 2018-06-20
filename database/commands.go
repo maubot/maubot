@@ -54,11 +54,11 @@ func (css *CommandSpecStatic) CreateTable() error {
 }
 
 func (css *CommandSpecStatic) Get(owner, client string) *CommandSpec {
-	row := css.sql.QueryRow("SELECT * FROM command_spec WHERE owner=? AND client=?", owner, client)
-	if row != nil {
-		return css.New().Scan(row)
+	rows, err := css.sql.Query("SELECT * FROM command_spec WHERE owner=? AND client=?", owner, client)
+	if err != nil {
+		log.Errorf("Failed to Get(%s, %s): %v\n", owner, client, err)
 	}
-	return nil
+	return css.New().Scan(rows)
 }
 
 func (css *CommandSpecStatic) GetOrCreate(owner, client string) (spec *CommandSpec) {
@@ -74,13 +74,15 @@ func (css *CommandSpecStatic) GetOrCreate(owner, client string) (spec *CommandSp
 
 func (css *CommandSpecStatic) getAllByQuery(query string, args ...interface{}) (specs []*CommandSpec) {
 	rows, err := css.sql.Query(query, args...)
-	if err != nil || rows == nil {
+	if err != nil {
+		log.Errorf("Failed to getAllByQuery(%s): %v\n", query, err)
 		return nil
 	}
 	defer rows.Close()
 	for rows.Next() {
 		specs = append(specs, css.New().Scan(rows))
 	}
+	log.Debugln("getAllByQuery() =", specs)
 	return
 }
 
@@ -103,9 +105,14 @@ func (cs *CommandSpec) Scan(row Scannable) *CommandSpec {
 	var spec string
 	err := row.Scan(&cs.Owner, &cs.Client, &spec)
 	if err != nil {
-		log.Fatalln("Database scan failed:", err)
+		log.Errorln("CommandSpec scan failed:", err)
+		return cs
 	}
-	json.Unmarshal([]byte(spec), &cs.CommandSpec)
+	cs.CommandSpec = &maubot.CommandSpec{}
+	err = json.Unmarshal([]byte(spec), cs.CommandSpec)
+	if err != nil {
+		log.Errorln("CommandSpec parse failed:", err)
+	}
 	return cs
 }
 

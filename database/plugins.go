@@ -87,7 +87,7 @@ func (ps *PluginStatic) New() *Plugin {
 func (p *Plugin) Scan(row Scannable) *Plugin {
 	err := row.Scan(&p.ID, &p.Type, &p.Enabled, &p.UserID)
 	if err != nil {
-		log.Fatalln("Database scan failed:", err)
+		log.Errorln("Plugin scan failed:", err)
 	}
 	return p
 }
