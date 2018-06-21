@@ -41,7 +41,7 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 	swBuilder := &strings.Builder{}
 	argumentEncountered := false
 
-	regexBuilder.WriteRune('^')
+	regexBuilder.WriteString("^!")
 	words := strings.Split(command.Syntax, " ")
 	for i, word := range words {
 		argument, ok := command.Arguments[word]
