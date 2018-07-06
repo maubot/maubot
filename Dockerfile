@@ -9,12 +9,12 @@ WORKDIR /go/src/maubot.xyz/
 RUN dep ensure -vendor-only
 
 COPY . /go/src/maubot.xyz/
-RUN CGO_ENABLED=0 go build -o /usr/bin/maubot maubot.xyz/cmd/maubot
+RUN go build -o /usr/bin/maubot maubot.xyz/cmd/maubot
 
 
-FROM scratch
+FROM alpine
 
+RUN apk add --no-cache ca-certificates
 COPY --from=builder /usr/bin/maubot /usr/bin/maubot
-COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs
 
 CMD ["/usr/bin/maubot", "-c", "/etc/maubot/config.yaml"]
