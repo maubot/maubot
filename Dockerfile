@@ -9,7 +9,7 @@ WORKDIR /go/src/maubot.xyz/
 RUN dep ensure -vendor-only
 
 COPY . /go/src/maubot.xyz/
-RUN CGO_ENABLED=0 go build -o /usr/bin/maubot
+RUN CGO_ENABLED=0 go build -o /usr/bin/maubot maubot.xyz/cmd/maubot
 
 
 FROM scratch
