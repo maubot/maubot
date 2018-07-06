@@ -17,4 +17,4 @@ FROM scratch
 COPY --from=builder /usr/bin/maubot /usr/bin/maubot
 COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs
 
-CMD ["/usr/bin/maubot"]
+CMD ["/usr/bin/maubot", "-c", "/etc/maubot/config.yaml"]
