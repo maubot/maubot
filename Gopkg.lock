@@ -59,14 +59,14 @@
   revision = "8337821952ba5e919673bd62c502d43474e5e71d"
 
 [[projects]]
+  branch = "master"
   name = "maunium.net/go/maulogger"
   packages = ["."]
-  revision = "64f0aa33b6c51313e15575257db71dec44fe7988"
-  version = "v1.0"
+  revision = "743010e44ca0ec7bebc89f167d3c8aa7c8e49b13"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1e2b6f7e7780bb5e804d55ea3c1dec753c09575342fc9ed0c35cfe9059a56edd"
+  inputs-digest = "c21e70a3427dd8c0a380c35ab64e74939c873860c3d764d2f41d63c39115b72b"
   solver-name = "gps-cdcl"
   solver-version = 1

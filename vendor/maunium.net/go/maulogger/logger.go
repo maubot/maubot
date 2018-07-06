@@ -1,219 +1,146 @@
-package maulog
+// mauLogger - A logger for Go programs
+// Copyright (C) 2016 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+// Package maulogger ...
+package maulogger
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"time"
 )
 
-// Level is the severity level of a log entry.
-type Level struct {
-	Name            string
-	Severity, Color int
+// LoggerFileFormat ...
+type LoggerFileFormat func(now string, i int) string
+
+// Logger ...
+type Logger struct {
+	PrintLevel         int
+	FlushLineThreshold int
+	FileTimeFormat     string
+	FileFormat         LoggerFileFormat
+	TimeFormat         string
+	FileMode           os.FileMode
+	DefaultSub         *Sublogger
+
+	writer        *os.File
+	lines         int
+	prefixPrinted bool
 }
 
-// LogWriter writes to the log with an optional prefix
-type LogWriter struct {
-	Level  Level
-	Prefix string
+// GeneralLogger contains advanced logging functions and also implements io.Writer
+type GeneralLogger interface {
+	Write(p []byte) (n int, err error)
+	Log(level Level, parts ...interface{})
+	Logln(level Level, parts ...interface{})
+	Logf(level Level, message string, args ...interface{})
+	Debug(parts ...interface{})
+	Debugln(parts ...interface{})
+	Debugf(message string, args ...interface{})
+	Info(parts ...interface{})
+	Infoln(parts ...interface{})
+	Infof(message string, args ...interface{})
+	Warn(parts ...interface{})
+	Warnln(parts ...interface{})
+	Warnf(message string, args ...interface{})
+	Error(parts ...interface{})
+	Errorln(parts ...interface{})
+	Errorf(message string, args ...interface{})
+	Fatal(parts ...interface{})
+	Fatalln(parts ...interface{})
+	Fatalf(message string, args ...interface{})
 }
 
-func (lw LogWriter) Write(p []byte) (n int, err error) {
-	log(lw.Level, fmt.Sprint(lw.Prefix, string(p)))
-	return len(p), nil
-}
-
-// GetColor gets the ANSI escape color code for the log level.
-func (lvl Level) GetColor() []byte {
-	if lvl.Color < 0 {
-		return []byte("")
+// Create a Logger
+func Create() *Logger {
+	var log = &Logger{
+		PrintLevel:         10,
+		FileTimeFormat:     "2006-01-02",
+		FileFormat:         func(now string, i int) string { return fmt.Sprintf("%[1]s-%02[2]d.log", now, i) },
+		TimeFormat:         "15:04:05 02.01.2006",
+		FileMode:           0600,
+		FlushLineThreshold: 5,
+		lines:              0,
 	}
-	return []byte(fmt.Sprintf("\x1b[%dm", lvl.Color))
+	log.DefaultSub = log.CreateSublogger("", LevelInfo)
+	return log
 }
 
-// GetReset gets the ANSI escape reset code.
-func (lvl Level) GetReset() []byte {
-	if lvl.Color < 0 {
-		return []byte("")
-	}
-	return []byte("\x1b[0m")
+// SetWriter formats the given parts with fmt.Sprint and log them with the SetWriter level
+func (log *Logger) SetWriter(w *os.File) {
+	log.writer = w
 }
 
-var (
-	// Debug is the level for debug messages.
-	Debug = Level{Name: "DEBUG", Color: 36, Severity: 0}
-	// Info is the level for basic log messages.
-	Info = Level{Name: "INFO", Color: -1, Severity: 10}
-	// Warn is the level saying that something went wrong, but the program will continue operating mostly normally.
-	Warn = Level{Name: "WARN", Color: 33, Severity: 50}
-	// Error is the level saying that something went wrong and the program may not operate as expected, but will still continue.
-	Error = Level{Name: "ERROR", Color: 31, Severity: 100}
-	// Fatal is the level saying that something went wrong and the program will not operate normally.
-	Fatal = Level{Name: "FATAL", Color: 35, Severity: 9001}
-)
-
-// PrintLevel tells the first severity level at which messages should be printed to stdout
-var PrintLevel = 10
-
-// PrintDebug means PrintLevel = 0, kept for backwards compatibility
-var PrintDebug = false
-
-// FileTimeformat is the time format used in log file names.
-var FileTimeformat = "2006-01-02"
-
-// FileformatArgs is an undocumented integer.
-var FileformatArgs = 3
-
-// Fileformat is the format used for log file names.
-var Fileformat = func(now string, i int) string { return fmt.Sprintf("%[1]s-%02[2]d.log", now, i) }
-
-// Timeformat is the time format used in logging.
-var Timeformat = "15:04:05 02.01.2006"
-
-var writer *bufio.Writer
-var lines int
-
-// InitWithWriter initializes MauLogger with the given writer.
-func InitWithWriter(w *bufio.Writer) {
-	writer = w
-}
-
-// Init initializes MauLogger.
-func Init() {
-	// Find the next file name.
-	now := time.Now().Format(FileTimeformat)
+// OpenFile formats the given parts with fmt.Sprint and log them with the OpenFile level
+func (log *Logger) OpenFile() error {
+	now := time.Now().Format(log.FileTimeFormat)
 	i := 1
 	for ; ; i++ {
-		if _, err := os.Stat(Fileformat(now, i)); os.IsNotExist(err) {
+		if _, err := os.Stat(log.FileFormat(now, i)); os.IsNotExist(err) {
 			break
-		}
-		if i == 99 {
+		} else if i == 99 {
 			i = 1
 			break
 		}
 	}
-	// Open the file
-	file, err := os.OpenFile(Fileformat(now, i), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0700)
+	var err error
+	log.writer, err = os.OpenFile(log.FileFormat(now, i), os.O_WRONLY|os.O_CREATE|os.O_APPEND, log.FileMode)
 	if err != nil {
-		panic(err)
+		return err
+	} else if log.writer == nil {
+		return os.ErrInvalid
 	}
-	if file == nil {
-		panic(os.ErrInvalid)
+	return nil
+}
+
+// Close formats the given parts with fmt.Sprint and log them with the Close level
+func (log *Logger) Close() {
+	if log.writer != nil {
+		log.writer.Close()
 	}
-	// Create a writer
-	writer = bufio.NewWriter(file)
 }
 
-// Debugf formats and logs a debug message.
-func Debugf(message string, args ...interface{}) {
-	logln(Debug, fmt.Sprintf(message, args...))
-}
+// Raw formats the given parts with fmt.Sprint and log them with the Raw level
+func (log *Logger) Raw(level Level, module, message string) {
+	if !log.prefixPrinted {
+		if len(module) == 0 {
+			message = fmt.Sprintf("[%s] [%s] %s", time.Now().Format(log.TimeFormat), level.Name, message)
+		} else {
+			message = fmt.Sprintf("[%s] [%s/%s] %s", time.Now().Format(log.TimeFormat), module, level.Name, message)
+		}
+	}
 
-// Printf formats and logs a string in the Info log level.
-func Printf(message string, args ...interface{}) {
-	Infof(message, args...)
-}
+	log.prefixPrinted = message[len(message)-1] != '\n'
 
-// Infof formats and logs a string in the Info log level.
-func Infof(message string, args ...interface{}) {
-	logln(Info, fmt.Sprintf(message, args...))
-}
-
-// Warnf formats and logs a string in the Warn log level.
-func Warnf(message string, args ...interface{}) {
-	logln(Warn, fmt.Sprintf(message, args...))
-}
-
-// Errorf formats and logs a string in the Error log level.
-func Errorf(message string, args ...interface{}) {
-	logln(Error, fmt.Sprintf(message, args...))
-}
-
-// Fatalf formats and logs a string in the Fatal log level.
-func Fatalf(message string, args ...interface{}) {
-	logln(Fatal, fmt.Sprintf(message, args...))
-}
-
-// Logf formats and logs a message in the given log level.
-func Logf(level Level, message string, args ...interface{}) {
-	logln(level, fmt.Sprintf(message, args...))
-}
-
-// Debugln logs a debug message.
-func Debugln(args ...interface{}) {
-	log(Debug, fmt.Sprintln(args...))
-}
-
-// Println logs a string in the Info log level.
-func Println(args ...interface{}) {
-	Infoln(args...)
-}
-
-// Infoln logs a string in the Info log level.
-func Infoln(args ...interface{}) {
-	log(Info, fmt.Sprintln(args...))
-}
-
-// Warnln logs a string in the Warn log level.
-func Warnln(args ...interface{}) {
-	log(Warn, fmt.Sprintln(args...))
-}
-
-// Errorln logs a string in the Error log level.
-func Errorln(args ...interface{}) {
-	log(Error, fmt.Sprintln(args...))
-}
-
-// Fatalln logs a string in the Fatal log level.
-func Fatalln(args ...interface{}) {
-	log(Fatal, fmt.Sprintln(args...))
-}
-
-// Logln logs a message in the given log level.
-func Logln(level Level, args ...interface{}) {
-	log(level, fmt.Sprintln(args...))
-}
-
-func logln(level Level, message string) {
-	log(level, fmt.Sprintln(message))
-}
-
-func log(level Level, message string) {
-	// Prefix the message with the timestamp and log level.
-	msg := []byte(fmt.Sprintf("[%[1]s] [%[2]s] %[3]s", time.Now().Format(Timeformat), level.Name, message))
-
-	if writer != nil {
-		// Write it to the log file.
-		_, err := writer.Write(msg)
+	if log.writer != nil {
+		_, err := log.writer.WriteString(message)
 		if err != nil {
-			panic(err)
-		}
-		lines++
-		// Flush the file if needed
-		if lines == 5 {
-			lines = 0
-			writer.Flush()
+			fmt.Println("Failed to write to log file:", err)
 		}
 	}
 
-	// Print to stdout using correct color
-	if level.Severity >= PrintLevel || PrintDebug {
-		if level.Severity >= Error.Severity {
+	if level.Severity >= log.PrintLevel {
+		if level.Severity >= LevelError.Severity {
 			os.Stderr.Write(level.GetColor())
-			os.Stderr.Write(msg)
+			os.Stderr.WriteString(message)
 			os.Stderr.Write(level.GetReset())
 		} else {
 			os.Stdout.Write(level.GetColor())
-			os.Stdout.Write(msg)
+			os.Stdout.WriteString(message)
 			os.Stdout.Write(level.GetReset())
 		}
-	}
-}
-
-// Shutdown cleans up the logger.
-func Shutdown() {
-	if writer != nil {
-		writer.Flush()
 	}
 }

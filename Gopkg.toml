@@ -55,7 +55,7 @@
 
 [[constraint]]
   name = "maunium.net/go/maulogger"
-  version = "1.0.0"
+  branch = "master"
 
 [prune]
   go-tests = true
