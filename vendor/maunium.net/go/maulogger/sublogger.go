@@ -1,39 +1,53 @@
 // mauLogger - A logger for Go programs
-// Copyright (C) 2016 Tulir Asokan
+// Copyright (C) 2016-2018 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package maulogger ...
 package maulogger
 
 import (
 	"fmt"
 )
 
-// Sublogger ...
 type Sublogger struct {
-	Parent       *Logger
+	topLevel     *BasicLogger
+	parent       Logger
 	Module       string
 	DefaultLevel Level
 }
 
-// CreateSublogger creates a Sublogger
-func (log *Logger) CreateSublogger(module string, DefaultLevel Level) *Sublogger {
+// Sub creates a Sublogger
+func (log *BasicLogger) Sub(module string) Logger {
 	return &Sublogger{
-		Parent:       log,
+		topLevel:     log,
+		parent:       log,
 		Module:       module,
-		DefaultLevel: DefaultLevel,
+		DefaultLevel: LevelInfo,
+	}
+}
+
+func (log *Sublogger) GetParent() Logger {
+	return log.parent
+}
+
+// Sub creates a Sublogger
+func (log *Sublogger) Sub(module string) Logger {
+	return &Sublogger{
+		topLevel:     log.topLevel,
+		parent:       log,
+		Module:       fmt.Sprintf("%s/%s", log.Module, module),
+		DefaultLevel: log.DefaultLevel,
 	}
 }
 
@@ -48,102 +62,132 @@ func (log *Sublogger) SetDefaultLevel(lvl Level) {
 }
 
 // SetParent changes the parent of this Sublogger
-func (log *Sublogger) SetParent(parent *Logger) {
-	log.Parent = parent
+func (log *Sublogger) SetParent(parent *BasicLogger) {
+	log.topLevel = parent
 }
 
 //Write ...
 func (log *Sublogger) Write(p []byte) (n int, err error) {
-	log.Parent.Raw(log.DefaultLevel, log.Module, string(p))
+	log.topLevel.Raw(log.DefaultLevel, log.Module, string(p))
 	return len(p), nil
 }
 
-// Log formats the given parts with fmt.Sprint and log them with the Log level
+// Log formats the given parts with fmt.Sprint and logs the result with the given level
 func (log *Sublogger) Log(level Level, parts ...interface{}) {
-	log.Parent.Raw(level, "", fmt.Sprint(parts...))
+	log.topLevel.Raw(level, "", fmt.Sprint(parts...))
 }
 
-// Logln formats the given parts with fmt.Sprintln and log them with the Log level
+// Logln formats the given parts with fmt.Sprintln and logs the result with the given level
 func (log *Sublogger) Logln(level Level, parts ...interface{}) {
-	log.Parent.Raw(level, "", fmt.Sprintln(parts...))
+	log.topLevel.Raw(level, "", fmt.Sprintln(parts...))
 }
 
-// Logf formats the given message and args with fmt.Sprintf and log them with the Log level
+// Logf formats the given message and args with fmt.Sprintf and logs the result with the given level
 func (log *Sublogger) Logf(level Level, message string, args ...interface{}) {
-	log.Parent.Raw(level, "", fmt.Sprintf(message, args...))
+	log.topLevel.Raw(level, "", fmt.Sprintf(message, args...))
 }
 
-// Debug formats the given parts with fmt.Sprint and log them with the Debug level
+// Logfln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the given level
+func (log *Sublogger) Logfln(level Level, message string, args ...interface{}) {
+	log.topLevel.Raw(level, log.Module, fmt.Sprintf(message+"\n", args...))
+}
+
+// Debug formats the given parts with fmt.Sprint and logs the result with the Debug level
 func (log *Sublogger) Debug(parts ...interface{}) {
-	log.Parent.Raw(LevelDebug, log.Module, fmt.Sprint(parts...))
+	log.topLevel.Raw(LevelDebug, log.Module, fmt.Sprint(parts...))
 }
 
-// Debugln formats the given parts with fmt.Sprintln and log them with the Debug level
+// Debugln formats the given parts with fmt.Sprintln and logs the result with the Debug level
 func (log *Sublogger) Debugln(parts ...interface{}) {
-	log.Parent.Raw(LevelDebug, log.Module, fmt.Sprintln(parts...))
+	log.topLevel.Raw(LevelDebug, log.Module, fmt.Sprintln(parts...))
 }
 
-// Debugf formats the given message and args with fmt.Sprintf and log them with the Debug level
+// Debugf formats the given message and args with fmt.Sprintf and logs the result with the Debug level
 func (log *Sublogger) Debugf(message string, args ...interface{}) {
-	log.Parent.Raw(LevelDebug, log.Module, fmt.Sprintf(message, args...))
+	log.topLevel.Raw(LevelDebug, log.Module, fmt.Sprintf(message, args...))
 }
 
-// Info formats the given parts with fmt.Sprint and log them with the Info level
+// Debugfln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the Debug level
+func (log *Sublogger) Debugfln(message string, args ...interface{}) {
+	log.topLevel.Raw(LevelDebug, log.Module, fmt.Sprintf(message+"\n", args...))
+}
+
+// Info formats the given parts with fmt.Sprint and logs the result with the Info level
 func (log *Sublogger) Info(parts ...interface{}) {
-	log.Parent.Raw(LevelInfo, log.Module, fmt.Sprint(parts...))
+	log.topLevel.Raw(LevelInfo, log.Module, fmt.Sprint(parts...))
 }
 
-// Infoln formats the given parts with fmt.Sprintln and log them with the Info level
+// Infoln formats the given parts with fmt.Sprintln and logs the result with the Info level
 func (log *Sublogger) Infoln(parts ...interface{}) {
-	log.Parent.Raw(LevelInfo, log.Module, fmt.Sprintln(parts...))
+	log.topLevel.Raw(LevelInfo, log.Module, fmt.Sprintln(parts...))
 }
 
-// Infof formats the given message and args with fmt.Sprintf and log them with the Info level
+// Infof formats the given message and args with fmt.Sprintf and logs the result with the Info level
 func (log *Sublogger) Infof(message string, args ...interface{}) {
-	log.Parent.Raw(LevelInfo, log.Module, fmt.Sprintf(message, args...))
+	log.topLevel.Raw(LevelInfo, log.Module, fmt.Sprintf(message, args...))
 }
 
-// Warn formats the given parts with fmt.Sprint and log them with the Warn level
+// Infofln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the Info level
+func (log *Sublogger) Infofln(message string, args ...interface{}) {
+	log.topLevel.Raw(LevelInfo, log.Module, fmt.Sprintf(message+"\n", args...))
+}
+
+// Warn formats the given parts with fmt.Sprint and logs the result with the Warn level
 func (log *Sublogger) Warn(parts ...interface{}) {
-	log.Parent.Raw(LevelWarn, log.Module, fmt.Sprint(parts...))
+	log.topLevel.Raw(LevelWarn, log.Module, fmt.Sprint(parts...))
 }
 
-// Warnln formats the given parts with fmt.Sprintln and log them with the Warn level
+// Warnln formats the given parts with fmt.Sprintln and logs the result with the Warn level
 func (log *Sublogger) Warnln(parts ...interface{}) {
-	log.Parent.Raw(LevelWarn, log.Module, fmt.Sprintln(parts...))
+	log.topLevel.Raw(LevelWarn, log.Module, fmt.Sprintln(parts...))
 }
 
-// Warnf formats the given message and args with fmt.Sprintf and log them with the Warn level
+// Warnf formats the given message and args with fmt.Sprintf and logs the result with the Warn level
 func (log *Sublogger) Warnf(message string, args ...interface{}) {
-	log.Parent.Raw(LevelWarn, log.Module, fmt.Sprintf(message, args...))
+	log.topLevel.Raw(LevelWarn, log.Module, fmt.Sprintf(message, args...))
 }
 
-// Error formats the given parts with fmt.Sprint and log them with the Error level
+// Warnfln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the Warn level
+func (log *Sublogger) Warnfln(message string, args ...interface{}) {
+	log.topLevel.Raw(LevelWarn, log.Module, fmt.Sprintf(message+"\n", args...))
+}
+
+// Error formats the given parts with fmt.Sprint and logs the result with the Error level
 func (log *Sublogger) Error(parts ...interface{}) {
-	log.Parent.Raw(LevelError, log.Module, fmt.Sprint(parts...))
+	log.topLevel.Raw(LevelError, log.Module, fmt.Sprint(parts...))
 }
 
-// Errorln formats the given parts with fmt.Sprintln and log them with the Error level
+// Errorln formats the given parts with fmt.Sprintln and logs the result with the Error level
 func (log *Sublogger) Errorln(parts ...interface{}) {
-	log.Parent.Raw(LevelError, log.Module, fmt.Sprintln(parts...))
+	log.topLevel.Raw(LevelError, log.Module, fmt.Sprintln(parts...))
 }
 
-// Errorf formats the given message and args with fmt.Sprintf and log them with the Error level
+// Errorf formats the given message and args with fmt.Sprintf and logs the result with the Error level
 func (log *Sublogger) Errorf(message string, args ...interface{}) {
-	log.Parent.Raw(LevelError, log.Module, fmt.Sprintf(message, args...))
+	log.topLevel.Raw(LevelError, log.Module, fmt.Sprintf(message, args...))
 }
 
-// Fatal formats the given parts with fmt.Sprint and log them with the Fatal level
+// Errorfln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the Error level
+func (log *Sublogger) Errorfln(message string, args ...interface{}) {
+	log.topLevel.Raw(LevelError, log.Module, fmt.Sprintf(message+"\n", args...))
+}
+
+// Fatal formats the given parts with fmt.Sprint and logs the result with the Fatal level
 func (log *Sublogger) Fatal(parts ...interface{}) {
-	log.Parent.Raw(LevelFatal, log.Module, fmt.Sprint(parts...))
+	log.topLevel.Raw(LevelFatal, log.Module, fmt.Sprint(parts...))
 }
 
-// Fatalln formats the given parts with fmt.Sprintln and log them with the Fatal level
+// Fatalln formats the given parts with fmt.Sprintln and logs the result with the Fatal level
 func (log *Sublogger) Fatalln(parts ...interface{}) {
-	log.Parent.Raw(LevelFatal, log.Module, fmt.Sprintln(parts...))
+	log.topLevel.Raw(LevelFatal, log.Module, fmt.Sprintln(parts...))
 }
 
-// Fatalf formats the given message and args with fmt.Sprintf and log them with the Fatal level
+// Fatalf formats the given message and args with fmt.Sprintf and logs the result with the Fatal level
 func (log *Sublogger) Fatalf(message string, args ...interface{}) {
-	log.Parent.Raw(LevelFatal, log.Module, fmt.Sprintf(message, args...))
+	log.topLevel.Raw(LevelFatal, log.Module, fmt.Sprintf(message, args...))
+}
+
+// Fatalfln formats the given message and args with fmt.Sprintf, appends a newline and logs the result with the Fatal level
+func (log *Sublogger) Fatalfln(message string, args ...interface{}) {
+	log.topLevel.Raw(LevelFatal, log.Module, fmt.Sprintf(message+"\n", args...))
 }

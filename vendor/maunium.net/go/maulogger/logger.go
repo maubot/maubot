@@ -1,20 +1,19 @@
 // mauLogger - A logger for Go programs
-// Copyright (C) 2016 Tulir Asokan
+// Copyright (C) 2016-2018 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package maulogger ...
 package maulogger
 
 import (
@@ -26,47 +25,57 @@ import (
 // LoggerFileFormat ...
 type LoggerFileFormat func(now string, i int) string
 
-// Logger ...
-type Logger struct {
+type BasicLogger struct {
 	PrintLevel         int
 	FlushLineThreshold int
 	FileTimeFormat     string
 	FileFormat         LoggerFileFormat
 	TimeFormat         string
 	FileMode           os.FileMode
-	DefaultSub         *Sublogger
+	DefaultSub         Logger
 
 	writer        *os.File
 	lines         int
 	prefixPrinted bool
 }
 
-// GeneralLogger contains advanced logging functions and also implements io.Writer
-type GeneralLogger interface {
+// Logger contains advanced logging functions and also implements io.Writer
+type Logger interface {
+	Sub(module string) Logger
+	GetParent() Logger
+
 	Write(p []byte) (n int, err error)
+
 	Log(level Level, parts ...interface{})
 	Logln(level Level, parts ...interface{})
 	Logf(level Level, message string, args ...interface{})
+	Logfln(level Level, message string, args ...interface{})
+
 	Debug(parts ...interface{})
 	Debugln(parts ...interface{})
 	Debugf(message string, args ...interface{})
+	Debugfln(message string, args ...interface{})
 	Info(parts ...interface{})
 	Infoln(parts ...interface{})
 	Infof(message string, args ...interface{})
+	Infofln(message string, args ...interface{})
 	Warn(parts ...interface{})
 	Warnln(parts ...interface{})
 	Warnf(message string, args ...interface{})
+	Warnfln(message string, args ...interface{})
 	Error(parts ...interface{})
 	Errorln(parts ...interface{})
 	Errorf(message string, args ...interface{})
+	Errorfln(message string, args ...interface{})
 	Fatal(parts ...interface{})
 	Fatalln(parts ...interface{})
 	Fatalf(message string, args ...interface{})
+	Fatalfln(message string, args ...interface{})
 }
 
 // Create a Logger
-func Create() *Logger {
-	var log = &Logger{
+func Create() Logger {
+	var log = &BasicLogger{
 		PrintLevel:         10,
 		FileTimeFormat:     "2006-01-02",
 		FileFormat:         func(now string, i int) string { return fmt.Sprintf("%[1]s-%02[2]d.log", now, i) },
@@ -75,17 +84,21 @@ func Create() *Logger {
 		FlushLineThreshold: 5,
 		lines:              0,
 	}
-	log.DefaultSub = log.CreateSublogger("", LevelInfo)
+	log.DefaultSub = log.Sub("")
 	return log
 }
 
-// SetWriter formats the given parts with fmt.Sprint and log them with the SetWriter level
-func (log *Logger) SetWriter(w *os.File) {
+func (log *BasicLogger) GetParent() Logger {
+	return nil
+}
+
+// SetWriter formats the given parts with fmt.Sprint and logs the result with the SetWriter level
+func (log *BasicLogger) SetWriter(w *os.File) {
 	log.writer = w
 }
 
-// OpenFile formats the given parts with fmt.Sprint and log them with the OpenFile level
-func (log *Logger) OpenFile() error {
+// OpenFile formats the given parts with fmt.Sprint and logs the result with the OpenFile level
+func (log *BasicLogger) OpenFile() error {
 	now := time.Now().Format(log.FileTimeFormat)
 	i := 1
 	for ; ; i++ {
@@ -106,15 +119,15 @@ func (log *Logger) OpenFile() error {
 	return nil
 }
 
-// Close formats the given parts with fmt.Sprint and log them with the Close level
-func (log *Logger) Close() {
+// Close formats the given parts with fmt.Sprint and logs the result with the Close level
+func (log *BasicLogger) Close() {
 	if log.writer != nil {
 		log.writer.Close()
 	}
 }
 
-// Raw formats the given parts with fmt.Sprint and log them with the Raw level
-func (log *Logger) Raw(level Level, module, message string) {
+// Raw formats the given parts with fmt.Sprint and logs the result with the Raw level
+func (log *BasicLogger) Raw(level Level, module, message string) {
 	if !log.prefixPrinted {
 		if len(module) == 0 {
 			message = fmt.Sprintf("[%s] [%s] %s", time.Now().Format(log.TimeFormat), level.Name, message)

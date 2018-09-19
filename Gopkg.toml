@@ -38,10 +38,6 @@
   name = "golang.org/x/net"
 
 [[constraint]]
-  name = "gopkg.in/russross/blackfriday.v2"
-  version = "2.0.0"
-
-[[constraint]]
   name = "gopkg.in/yaml.v2"
   version = "2.2.1"
 

@@ -32,7 +32,7 @@
     "html",
     "html/atom"
   ]
-  revision = "32a936f46389aa10549d60bd7833e54b01685d09"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   name = "gopkg.in/russross/blackfriday.v2"
@@ -49,8 +49,11 @@
 [[projects]]
   branch = "master"
   name = "maunium.net/go/gomatrix"
-  packages = ["."]
-  revision = "a42d596e48b3ded4a95eae8065fc5cf13afeeacc"
+  packages = [
+    ".",
+    "format"
+  ]
+  revision = "920b154a410aeb5a55200d7b21363732abff3502"
 
 [[projects]]
   branch = "master"
@@ -62,11 +65,11 @@
   branch = "master"
   name = "maunium.net/go/maulogger"
   packages = ["."]
-  revision = "743010e44ca0ec7bebc89f167d3c8aa7c8e49b13"
+  revision = "ed98745dedb5f9296c1b2a0ed9424d7347d7e7d4"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c21e70a3427dd8c0a380c35ab64e74939c873860c3d764d2f41d63c39115b72b"
+  inputs-digest = "6b56fff780b66591381a1d1c4572951bbad3deea30e0774d34721d89adeee379"
   solver-name = "gps-cdcl"
   solver-version = 1

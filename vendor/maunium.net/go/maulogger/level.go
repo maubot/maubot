@@ -1,20 +1,19 @@
 // mauLogger - A logger for Go programs
-// Copyright (C) 2016 Tulir Asokan
+// Copyright (C) 2016-2018 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package maulogger ...
 package maulogger
 
 import (
@@ -29,9 +28,9 @@ type Level struct {
 
 var (
 	// LevelDebug is the level for debug messages.
-	LevelDebug = Level{Name: "DEBUG", Color: 36, Severity: 0}
+	LevelDebug = Level{Name: "DEBUG", Color: -1, Severity: 0}
 	// LevelInfo is the level for basic log messages.
-	LevelInfo = Level{Name: "INFO", Color: -1, Severity: 10}
+	LevelInfo = Level{Name: "INFO", Color: 36, Severity: 10}
 	// LevelWarn is the level saying that something went wrong, but the program will continue operating mostly normally.
 	LevelWarn = Level{Name: "WARN", Color: 33, Severity: 50}
 	// LevelError is the level saying that something went wrong and the program may not operate as expected, but will still continue.
