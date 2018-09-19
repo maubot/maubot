@@ -106,16 +106,63 @@ const (
 	MatchAgainstBody = "body"
 )
 
+// JSONLeftEquals checks if the given JSON-parsed interfaces are equal.
+// Extra properties in the right interface are ignored.
+func JSONLeftEquals(left, right interface{}) bool {
+	switch val := left.(type) {
+	case nil:
+		return right == nil
+	case bool:
+		rightVal, ok := right.(bool)
+		return ok && rightVal
+	case float64:
+		rightVal, ok := right.(float64)
+		if !ok {
+			return false
+		}
+		return val == rightVal
+	case string:
+		rightVal, ok := right.(string)
+		if !ok {
+			return false
+		}
+		return val == rightVal
+	case []interface{}:
+		rightVal, ok := right.([]interface{})
+		if !ok || len(val) != len(rightVal) {
+			return false
+		}
+		for index, leftChild := range val {
+			rightChild := rightVal[index]
+			if !JSONLeftEquals(leftChild, rightChild) {
+				return false
+			}
+		}
+	case map[string]interface{}:
+		rightVal, ok := right.(map[string]interface{})
+		if !ok {
+			return false
+		}
+		for key, leftChild := range val {
+			rightChild, ok := rightVal[key]
+			if !ok || !JSONLeftEquals(leftChild, rightChild) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 type PassiveCommand struct {
-	Name         string `json:"name"`
-	Matches      string `json:"matches"`
-	MatchAgainst string `json:"match_against"`
-	MatchEvent   *Event `json:"match_event"`
+	Name         string      `json:"name"`
+	Matches      string      `json:"matches"`
+	MatchAgainst string      `json:"match_against"`
+	MatchEvent   interface{} `json:"match_event"`
 }
 
 func (cmd PassiveCommand) Equals(otherCmd PassiveCommand) bool {
 	return cmd.Name == otherCmd.Name &&
 		cmd.Matches == otherCmd.Matches &&
 		cmd.MatchAgainst == otherCmd.MatchAgainst &&
-		((cmd.MatchEvent != nil && cmd.MatchEvent.Equals(otherCmd.MatchEvent)) || otherCmd.MatchEvent == nil)
+		(cmd.MatchEvent != nil && JSONLeftEquals(cmd.MatchEvent, otherCmd.MatchEvent) || otherCmd.MatchEvent == nil)
 }

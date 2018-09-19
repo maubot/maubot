@@ -53,6 +53,7 @@ func main() {
 		return
 	}
 	cfg.Logging.Configure(log.DefaultLogger)
+	log.OpenFile()
 	log.Debugln("Logger configured")
 
 	bot := app.New(cfg)

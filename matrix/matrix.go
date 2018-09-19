@@ -47,8 +47,8 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 	client.syncer = NewMaubotSyncer(client, client.Store)
 	client.Client.Syncer = client.syncer
 
-	client.AddEventHandler(maubot.StateMember, client.onJoin)
-	client.AddEventHandler(maubot.EventMessage, client.onMessage)
+	client.AddEventHandler(gomatrix.StateMember, client.onJoin)
+	client.AddEventHandler(gomatrix.EventMessage, client.onMessage)
 
 	return client, nil
 }
@@ -60,7 +60,7 @@ func (client *Client) Proxy(owner string) *ClientProxy {
 	}
 }
 
-func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
+func (client *Client) AddEventHandler(evt gomatrix.EventType, handler maubot.EventHandler) {
 	client.syncer.OnEventType(evt, func(evt *maubot.Event) maubot.EventHandlerResult {
 		if evt.Sender == client.UserID {
 			return maubot.StopEventPropagation
@@ -95,13 +95,13 @@ func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 		log.Warnf("Failed to get event %s @ %s: %v\n", eventID, roomID, err)
 		return nil
 	}
-	return client.ParseEvent(evt).Event
+	return client.ParseEvent(evt)
 }
 
 func (client *Client) TriggerCommand(command *ParsedCommand, evt *maubot.Event) maubot.CommandHandlerResult {
 	handlers, ok := client.handlers[command.Name]
 	if !ok {
-		log.Warnf("Command %s triggered by %s doesn't have any handlers.", command.Name, evt.Sender)
+		log.Warnf("Command %s triggered by %s doesn't have any handlers.\n", command.Name, evt.Sender)
 		return maubot.Continue
 	}
 
@@ -120,7 +120,7 @@ func (client *Client) TriggerCommand(command *ParsedCommand, evt *maubot.Event) 
 
 func (client *Client) onMessage(evt *maubot.Event) maubot.EventHandlerResult {
 	for _, command := range client.commands {
-		if command.Match(evt) {
+		if command.Match(evt.Event) {
 			return client.TriggerCommand(command, evt)
 		}
 	}
@@ -128,7 +128,7 @@ func (client *Client) onMessage(evt *maubot.Event) maubot.EventHandlerResult {
 }
 
 func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {
-	if client.DB.AutoJoinRooms && evt.StateKey == client.DB.UserID && evt.Content.Membership == "invite" {
+	if client.DB.AutoJoinRooms && evt.GetStateKey() == client.DB.UserID && evt.Content.Membership == "invite" {
 		client.JoinRoom(evt.RoomID)
 		return maubot.StopEventPropagation
 	}

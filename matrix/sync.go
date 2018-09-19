@@ -13,7 +13,7 @@ import (
 type MaubotSyncer struct {
 	Client    *Client
 	Store     gomatrix.Storer
-	listeners map[maubot.EventType][]maubot.EventHandler
+	listeners map[gomatrix.EventType][]maubot.EventHandler
 }
 
 // NewDefaultSyncer returns an instantiated DefaultSyncer
@@ -21,7 +21,7 @@ func NewMaubotSyncer(client *Client, store gomatrix.Storer) *MaubotSyncer {
 	return &MaubotSyncer{
 		Client:    client,
 		Store:     store,
-		listeners: make(map[maubot.EventType][]maubot.EventHandler),
+		listeners: make(map[gomatrix.EventType][]maubot.EventHandler),
 	}
 }
 
@@ -73,7 +73,7 @@ func (s *MaubotSyncer) ProcessResponse(res *gomatrix.RespSync, since string) (er
 
 // OnEventType allows callers to be notified when there are new events for the given event type.
 // There are no duplicate checks.
-func (s *MaubotSyncer) OnEventType(eventType maubot.EventType, callback maubot.EventHandler) {
+func (s *MaubotSyncer) OnEventType(eventType gomatrix.EventType, callback maubot.EventHandler) {
 	_, exists := s.listeners[eventType]
 	if !exists {
 		s.listeners[eventType] = []maubot.EventHandler{}
@@ -96,14 +96,9 @@ func (s *MaubotSyncer) shouldProcessResponse(resp *gomatrix.RespSync, since stri
 	// TODO: We probably want to process messages from after the last join event in the timeline.
 	for roomID, roomData := range resp.Rooms.Join {
 		for i := len(roomData.Timeline.Events) - 1; i >= 0; i-- {
-			e := roomData.Timeline.Events[i]
-			if e.Type == "m.room.member" && e.StateKey != nil && *e.StateKey == s.Client.UserID {
-				m := e.Content["membership"]
-				mship, ok := m.(string)
-				if !ok {
-					continue
-				}
-				if mship == "join" {
+			evt := roomData.Timeline.Events[i]
+			if evt.Type == gomatrix.StateMember && evt.GetStateKey() == s.Client.UserID {
+				if evt.Content.Membership == gomatrix.MembershipJoin {
 					_, ok := resp.Rooms.Join[roomID]
 					if !ok {
 						continue
@@ -130,12 +125,12 @@ func (s *MaubotSyncer) getOrCreateRoom(roomID string) *gomatrix.Room {
 
 func (s *MaubotSyncer) notifyListeners(mxEvent *gomatrix.Event) {
 	event := s.Client.ParseEvent(mxEvent)
-	listeners, exists := s.listeners[maubot.EventType(event.Type)]
+	listeners, exists := s.listeners[event.Type]
 	if !exists {
 		return
 	}
 	for _, fn := range listeners {
-		if fn(event.Event) == maubot.StopEventPropagation {
+		if fn(event) == maubot.StopEventPropagation {
 			break
 		}
 	}

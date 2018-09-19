@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 
+	"maunium.net/go/gomatrix"
 	log "maunium.net/go/maulogger"
 
 	"maubot.xyz"
@@ -33,7 +34,7 @@ type ParsedCommand struct {
 	StartsWith   string
 	Matches      *regexp.Regexp
 	MatchAgainst string
-	MatchesEvent *maubot.Event
+	MatchesEvent interface{}
 }
 
 func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
@@ -132,7 +133,7 @@ func deepGet(from map[string]interface{}, path string) interface{} {
 	}
 }
 
-func (pc *ParsedCommand) MatchActive(evt *maubot.Event) bool {
+func (pc *ParsedCommand) MatchActive(evt *gomatrix.Event) bool {
 	if !strings.HasPrefix(evt.Content.Body, pc.StartsWith) {
 		return false
 	}
@@ -143,28 +144,30 @@ func (pc *ParsedCommand) MatchActive(evt *maubot.Event) bool {
 	// First element is whole content
 	match = match[1:]
 
-	evt.Content.Command.Arguments = make(map[string]string)
+	command := &gomatrix.MatchedCommand{
+		Arguments: make(map[string]string),
+	}
 	for i, value := range match {
 		if i >= len(pc.Arguments) {
 			break
 		}
 		key := pc.Arguments[i]
-		evt.Content.Command.Arguments[key] = value
+		command.Arguments[key] = value
 	}
 
-	evt.Content.Command.Matched = pc.Name
+	command.Matched = pc.Name
 	// TODO add evt.Content.Command.Target?
-
+	evt.Content.Command = command
 	return true
 }
 
-func (pc *ParsedCommand) MatchPassive(evt *maubot.Event) bool {
+func (pc *ParsedCommand) MatchPassive(evt *gomatrix.Event) bool {
 	matchAgainst, ok := deepGet(evt.Content.Raw, pc.MatchAgainst).(string)
 	if !ok {
 		matchAgainst = evt.Content.Body
 	}
 
-	if pc.MatchesEvent != nil && !pc.MatchesEvent.Equals(evt) {
+	if pc.MatchesEvent != nil && !maubot.JSONLeftEquals(pc.MatchesEvent, evt) {
 		return false
 	}
 
@@ -173,18 +176,19 @@ func (pc *ParsedCommand) MatchPassive(evt *maubot.Event) bool {
 		return false
 	}
 
-	values := make([]string, len(matches))
-	for i, match := range matches {
-		values[i] = match[0]
+	if evt.Unsigned.PassiveCommand == nil {
+		evt.Unsigned.PassiveCommand = make(map[string]*gomatrix.MatchedPassiveCommand)
 	}
-
-	evt.Unsigned.PassiveCommand.Matched = pc.Name
-	evt.Unsigned.PassiveCommand.Values = values
+	evt.Unsigned.PassiveCommand[pc.Name] = &gomatrix.MatchedPassiveCommand{
+		Captured: matches,
+	}
+	//evt.Unsigned.PassiveCommand.Matched = pc.Name
+	//evt.Unsigned.PassiveCommand.Captured = matches
 
 	return true
 }
 
-func (pc *ParsedCommand) Match(evt *maubot.Event) bool {
+func (pc *ParsedCommand) Match(evt *gomatrix.Event) bool {
 	if pc.IsPassive {
 		return pc.MatchPassive(evt)
 	} else {

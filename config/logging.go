@@ -17,9 +17,13 @@
 package config
 
 import (
-	"maunium.net/go/maulogger"
+	"errors"
 	"os"
-	"fmt"
+	"path/filepath"
+	"strings"
+	"text/template"
+
+	"maunium.net/go/maulogger"
 )
 
 // LogConfig contains configs for the logger.
@@ -29,7 +33,49 @@ type LogConfig struct {
 	FileDateFormat  string `yaml:"file_date_format"`
 	FileMode        uint32 `yaml:"file_mode"`
 	TimestampFormat string `yaml:"timestamp_format"`
-	Debug           bool   `yaml:"print_debug"`
+	RawPrintLevel   string `yaml:"print_level"`
+	PrintLevel      int    `yaml:"-"`
+}
+
+type umLogConfig LogConfig
+
+func (lc *LogConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	err := unmarshal((*umLogConfig)(lc))
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToUpper(lc.RawPrintLevel) {
+	case "DEBUG":
+		lc.PrintLevel = maulogger.LevelDebug.Severity
+	case "INFO":
+		lc.PrintLevel = maulogger.LevelInfo.Severity
+	case "WARN", "WARNING":
+		lc.PrintLevel = maulogger.LevelWarn.Severity
+	case "ERR", "ERROR":
+		lc.PrintLevel = maulogger.LevelError.Severity
+	case "FATAL":
+		lc.PrintLevel = maulogger.LevelFatal.Severity
+	default:
+		return errors.New("invalid print level " + lc.RawPrintLevel)
+	}
+	return err
+}
+
+func (lc *LogConfig) MarshalYAML() (interface{}, error) {
+	switch {
+	case lc.PrintLevel >= maulogger.LevelFatal.Severity:
+		lc.RawPrintLevel = maulogger.LevelFatal.Name
+	case lc.PrintLevel >= maulogger.LevelError.Severity:
+		lc.RawPrintLevel = maulogger.LevelError.Name
+	case lc.PrintLevel >= maulogger.LevelWarn.Severity:
+		lc.RawPrintLevel = maulogger.LevelWarn.Name
+	case lc.PrintLevel >= maulogger.LevelInfo.Severity:
+		lc.RawPrintLevel = maulogger.LevelInfo.Name
+	default:
+		lc.RawPrintLevel = maulogger.LevelDebug.Name
+	}
+	return lc, nil
 }
 
 // CreateLogConfig creates a basic LogConfig.
@@ -40,29 +86,37 @@ func CreateLogConfig() LogConfig {
 		TimestampFormat: "Jan _2, 2006 15:04:05",
 		FileMode:        0600,
 		FileDateFormat:  "2006-01-02",
-		Debug:           false,
+		PrintLevel:      10,
 	}
+}
+
+type FileFormatData struct {
+	Date string
+	Index int
 }
 
 // GetFileFormat returns a mauLogger-compatible logger file format based on the data in the struct.
 func (lc LogConfig) GetFileFormat() maulogger.LoggerFileFormat {
-	path := lc.FileNameFormat
-	if len(lc.Directory) > 0 {
-		path = lc.Directory + "/" + path
-	}
+	os.MkdirAll(lc.Directory, 0700)
+	path := filepath.Join(lc.Directory, lc.FileNameFormat)
+	tpl, _ := template.New("fileformat").Parse(path)
 
 	return func(now string, i int) string {
-		return fmt.Sprintf(path, now, i)
+		var buf strings.Builder
+		tpl.Execute(&buf, FileFormatData{
+			Date: now,
+			Index: i,
+		})
+		return buf.String()
 	}
 }
 
 // Configure configures a mauLogger instance with the data in this struct.
-func (lc LogConfig) Configure(log *maulogger.Logger) {
-	log.FileFormat = lc.GetFileFormat()
-	log.FileMode = os.FileMode(lc.FileMode)
-	log.FileTimeFormat = lc.FileDateFormat
-	log.TimeFormat = lc.TimestampFormat
-	if lc.Debug {
-		log.PrintLevel = maulogger.LevelDebug.Severity
-	}
+func (lc LogConfig) Configure(log maulogger.Logger) {
+	basicLogger := log.(*maulogger.BasicLogger)
+	basicLogger.FileFormat = lc.GetFileFormat()
+	basicLogger.FileMode = os.FileMode(lc.FileMode)
+	basicLogger.FileTimeFormat = lc.FileDateFormat
+	basicLogger.TimeFormat = lc.TimestampFormat
+	basicLogger.PrintLevel = lc.PrintLevel
 }
