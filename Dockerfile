@@ -1,7 +1,7 @@
 FROM golang:1-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates gcc musl-dev
-RUN wget -qO /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
+RUN wget -qO /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
 RUN chmod +x /usr/local/bin/dep
 
 COPY Gopkg.lock Gopkg.toml /go/src/maubot.xyz/
