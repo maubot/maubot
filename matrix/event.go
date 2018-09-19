@@ -17,80 +17,53 @@
 package matrix
 
 import (
-	"encoding/json"
-
 	"maubot.xyz"
 	"maunium.net/go/gomatrix"
+	"maunium.net/go/gomatrix/format"
 )
 
-type Event struct {
-	*maubot.Event
+type EventFuncsImpl struct {
+	*gomatrix.Event
 	Client *Client
 }
 
-func roundtripContent(rawContent map[string]interface{}) (content maubot.Content) {
-	if len(rawContent) == 0 {
-		content.Raw = rawContent
-		return
+func (client *Client) ParseEvent(mxEvent *gomatrix.Event) *maubot.Event {
+	if mxEvent == nil {
+		return nil
 	}
-	data, _ := json.Marshal(&rawContent)
-	json.Unmarshal(data, &content)
-	content.Raw = rawContent
-	return
-}
-
-func (client *Client) ParseEvent(mxEvent *gomatrix.Event) *Event {
-	var stateKey string
-	if mxEvent.StateKey != nil {
-		stateKey = *mxEvent.StateKey
-	}
-	event := &Event{
-		Client: client,
-	}
-	mbEvent := &maubot.Event{
-		EventFuncs: event,
-		StateKey:   stateKey,
-		Sender:     mxEvent.Sender,
-		Type:       maubot.EventType(mxEvent.Type),
-		Timestamp:  mxEvent.Timestamp,
-		ID:         mxEvent.ID,
-		RoomID:     mxEvent.RoomID,
-		Content:    roundtripContent(mxEvent.Content),
-		Redacts:    mxEvent.Redacts,
-		Unsigned: maubot.Unsigned{
-			PrevContent:   roundtripContent(mxEvent.Unsigned.PrevContent),
-			PrevSender:    mxEvent.Unsigned.PrevSender,
-			ReplacesState: mxEvent.Unsigned.ReplacesState,
-			Age:           mxEvent.Unsigned.Age,
+	mxEvent.Content.RemoveReplyFallback()
+	return &maubot.Event{
+		EventFuncs: &EventFuncsImpl{
+			Event:  mxEvent,
+			Client: client,
 		},
+		Event: mxEvent,
 	}
-	RemoveReplyFallback(mbEvent)
-	event.Event = mbEvent
-	return event
 }
 
-func (evt *Event) MarkRead() error {
+func (evt *EventFuncsImpl) MarkRead() error {
 	return evt.Client.MarkRead(evt.RoomID, evt.ID)
 }
 
-func (evt *Event) Reply(text string) (string, error) {
-	return evt.ReplyContent(RenderMarkdown(text))
+func (evt *EventFuncsImpl) Reply(text string) (string, error) {
+	return evt.ReplyContent(format.RenderMarkdown(text))
 }
 
-func (evt *Event) ReplyContent(content maubot.Content) (string, error) {
-	return evt.SendContent(SetReply(content, evt))
+func (evt *EventFuncsImpl) ReplyContent(content gomatrix.Content) (string, error) {
+	content.SetReply(evt.Event)
+	return evt.SendContent(content)
 }
 
-func (evt *Event) SendMessage(text string) (string, error) {
-	return evt.SendContent(RenderMarkdown(text))
+func (evt *EventFuncsImpl) SendMessage(text string) (string, error) {
+	return evt.SendContent(format.RenderMarkdown(text))
 }
 
-func (evt *Event) SendContent(content maubot.Content) (string, error) {
-	return evt.SendRawEvent(maubot.EventMessage, content)
+func (evt *EventFuncsImpl) SendContent(content gomatrix.Content) (string, error) {
+	return evt.SendRawEvent(gomatrix.EventMessage, content)
 }
 
-func (evt *Event) SendRawEvent(evtType maubot.EventType, content interface{}) (string, error) {
-	resp, err := evt.Client.SendMessageEvent(evt.RoomID, string(evtType), content)
+func (evt *EventFuncsImpl) SendRawEvent(evtType gomatrix.EventType, content interface{}) (string, error) {
+	resp, err := evt.Client.SendMessageEvent(evt.RoomID, evtType, content)
 	if err != nil {
 		return "", err
 	}

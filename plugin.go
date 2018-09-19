@@ -21,7 +21,7 @@ type Plugin interface {
 	Stop()
 }
 
-type PluginCreatorFunc func(client MatrixClient) Plugin
+type PluginCreatorFunc func(client MatrixClient, logger Logger) Plugin
 
 type PluginCreator struct {
 	Create  PluginCreatorFunc

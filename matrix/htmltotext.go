@@ -20,15 +20,15 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
-	"strconv"
 )
 
 var matrixToURL = regexp.MustCompile("^(?:https?://)?(?:www\\.)?matrix\\.to/#/([#@!].*)")
 
-type htmlParser struct {}
+type htmlParser struct{}
 
 type taggedString struct {
 	string
@@ -124,13 +124,13 @@ func (parser *htmlParser) linkToString(node *html.Node, stripLinebreak bool) str
 	}
 	match := matrixToURL.FindStringSubmatch(href)
 	if len(match) == 2 {
-//		pillTarget := match[1]
-//		if pillTarget[0] == '@' {
-//			if member := parser.room.GetMember(pillTarget); member != nil {
-//				return member.DisplayName
-//			}
-//		}
-//		return pillTarget
+		//		pillTarget := match[1]
+		//		if pillTarget[0] == '@' {
+		//			if member := parser.room.GetMember(pillTarget); member != nil {
+		//				return member.DisplayName
+		//			}
+		//		}
+		//		return pillTarget
 		return str
 	}
 	return fmt.Sprintf("%s (%s)", str, href)

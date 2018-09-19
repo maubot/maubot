@@ -25,9 +25,10 @@ import (
 
 type Client struct {
 	*gomatrix.Client
-	syncer *MaubotSyncer
-
-	DB *database.MatrixClient
+	syncer   *MaubotSyncer
+	handlers map[string][]maubot.CommandHandler
+	commands []*ParsedCommand
+	DB       *database.MatrixClient
 }
 
 func NewClient(db *database.MatrixClient) (*Client, error) {
@@ -37,25 +38,55 @@ func NewClient(db *database.MatrixClient) (*Client, error) {
 	}
 
 	client := &Client{
-		Client: mxClient,
-		DB:     db,
+		Client:   mxClient,
+		handlers: make(map[string][]maubot.CommandHandler),
+		commands: ParseSpec(db.Commands()),
+		DB:       db,
 	}
 
 	client.syncer = NewMaubotSyncer(client, client.Store)
 	client.Client.Syncer = client.syncer
 
-	client.AddEventHandler(maubot.StateMember, client.onJoin)
+	client.AddEventHandler(gomatrix.StateMember, client.onJoin)
+	client.AddEventHandler(gomatrix.EventMessage, client.onMessage)
 
 	return client, nil
 }
 
-func (client *Client) AddEventHandler(evt maubot.EventType, handler maubot.EventHandler) {
+func (client *Client) Proxy(owner string) *ClientProxy {
+	return &ClientProxy{
+		hiddenClient: client,
+		owner:        owner,
+	}
+}
+
+func (client *Client) AddEventHandler(evt gomatrix.EventType, handler maubot.EventHandler) {
 	client.syncer.OnEventType(evt, func(evt *maubot.Event) maubot.EventHandlerResult {
 		if evt.Sender == client.UserID {
-			return maubot.StopPropagation
+			return maubot.StopEventPropagation
 		}
 		return handler(evt)
 	})
+}
+
+func (client *Client) AddCommandHandler(owner, evt string, handler maubot.CommandHandler) {
+	log.Debugln("Registering command handler for event", evt, "by", owner)
+	list, ok := client.handlers[evt]
+	if !ok {
+		list = []maubot.CommandHandler{handler}
+	} else {
+		list = append(list, handler)
+	}
+	client.handlers[evt] = list
+}
+
+func (client *Client) SetCommandSpec(owner string, spec *maubot.CommandSpec) {
+	log.Debugln("Registering command spec for", owner, "on", client.UserID)
+	changed := client.DB.SetCommandSpec(owner, spec)
+	if changed {
+		client.commands = ParseSpec(client.DB.Commands())
+		log.Debugln("Command spec of", owner, "on", client.UserID, "updated.")
+	}
 }
 
 func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
@@ -64,13 +95,42 @@ func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 		log.Warnf("Failed to get event %s @ %s: %v\n", eventID, roomID, err)
 		return nil
 	}
-	return client.ParseEvent(evt).Event
+	return client.ParseEvent(evt)
+}
+
+func (client *Client) TriggerCommand(command *ParsedCommand, evt *maubot.Event) maubot.CommandHandlerResult {
+	handlers, ok := client.handlers[command.Name]
+	if !ok {
+		log.Warnf("Command %s triggered by %s doesn't have any handlers.\n", command.Name, evt.Sender)
+		return maubot.Continue
+	}
+
+	log.Debugf("Command %s on client %s triggered by %s\n", command.Name, client.UserID, evt.Sender)
+	for _, handler := range handlers {
+		result := handler(evt)
+		if result == maubot.StopCommandPropagation {
+			break
+		} else if result != maubot.Continue {
+			return result
+		}
+	}
+
+	return maubot.Continue
+}
+
+func (client *Client) onMessage(evt *maubot.Event) maubot.EventHandlerResult {
+	for _, command := range client.commands {
+		if command.Match(evt.Event) {
+			return client.TriggerCommand(command, evt)
+		}
+	}
+	return maubot.Continue
 }
 
 func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {
-	if client.DB.AutoJoinRooms && evt.StateKey == client.DB.UserID && evt.Content.Membership == "invite" {
+	if client.DB.AutoJoinRooms && evt.GetStateKey() == client.DB.UserID && evt.Content.Membership == "invite" {
 		client.JoinRoom(evt.RoomID)
-		return maubot.StopPropagation
+		return maubot.StopEventPropagation
 	}
 	return maubot.Continue
 }
@@ -86,4 +146,19 @@ func (client *Client) Sync() {
 			log.Errorln("Sync() in client", client.UserID, "errored:", err)
 		}
 	}()
+}
+
+type hiddenClient = Client
+
+type ClientProxy struct {
+	*hiddenClient
+	owner string
+}
+
+func (cp *ClientProxy) AddCommandHandler(evt string, handler maubot.CommandHandler) {
+	cp.hiddenClient.AddCommandHandler(cp.owner, evt, handler)
+}
+
+func (cp *ClientProxy) SetCommandSpec(spec *maubot.CommandSpec) {
+	cp.hiddenClient.SetCommandSpec(cp.owner, spec)
 }
