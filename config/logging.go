@@ -82,7 +82,7 @@ func (lc *LogConfig) MarshalYAML() (interface{}, error) {
 func CreateLogConfig() LogConfig {
 	return LogConfig{
 		Directory:       "./logs",
-		FileNameFormat:  "%[1]s-%02[2]d.log",
+		FileNameFormat:  "{{.Date}}-{{.Index}}.log",
 		TimestampFormat: "Jan _2, 2006 15:04:05",
 		FileMode:        0600,
 		FileDateFormat:  "2006-01-02",

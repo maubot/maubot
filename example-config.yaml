@@ -5,8 +5,8 @@ database:
 logging:
   directory: ./logs
   file_mode: 0600
-  print_debug: false
-  file_name_format: "%[1]s-%02[2]d.log"
+  print_level: DEBUG
+  file_name_format: "{{.Date}}-{{.Index}}.log"
   file_date_format: 2006-01-02
   timestamp_format: Jan _2, 2006 15:04:05
 

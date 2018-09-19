@@ -122,7 +122,6 @@ func (mxc *MatrixClient) LoadCommandSpecs() *MatrixClient {
 	for _, spec := range specs {
 		mxc.CommandSpecs[spec.Owner] = spec
 	}
-	log.Debugln("Loaded command specs:", mxc.CommandSpecs)
 	return mxc
 }
 

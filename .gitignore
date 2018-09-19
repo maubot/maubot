@@ -5,6 +5,8 @@
 *.yaml
 !example-config.yaml
 
+logs/
+
 plugins/
 
 # Bots under maubot.xyz

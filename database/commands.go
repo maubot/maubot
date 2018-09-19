@@ -82,7 +82,6 @@ func (css *CommandSpecStatic) getAllByQuery(query string, args ...interface{}) (
 	for rows.Next() {
 		specs = append(specs, css.New().Scan(rows))
 	}
-	log.Debugln("getAllByQuery() =", specs)
 	return
 }
 

@@ -51,21 +51,18 @@ func (bot *Bot) Init() {
 	bot.initServer()
 	bot.loadPlugins()
 	bot.createPlugins()
-	log.Debugln("Init func exit")
 }
 
 func (bot *Bot) Start() {
 	go bot.startClients()
 	go bot.startServer()
 	bot.startPlugins()
-	log.Debugln("Start func exit")
 }
 
 func (bot *Bot) Stop() {
 	bot.stopPlugins()
 	bot.stopServer()
 	bot.stopClients()
-	log.Debugln("Stop func exit")
 }
 
 func (bot *Bot) initDatabase() {
