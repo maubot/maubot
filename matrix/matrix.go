@@ -17,9 +17,12 @@
 package matrix
 
 import (
+	"fmt"
+
 	"maubot.xyz"
 	"maubot.xyz/database"
 	"maunium.net/go/gomatrix"
+	"maunium.net/go/gomatrix/format"
 	log "maunium.net/go/maulogger"
 )
 
@@ -135,8 +138,28 @@ func (client *Client) onJoin(evt *maubot.Event) maubot.EventHandlerResult {
 	return maubot.Continue
 }
 
-func (client *Client) JoinRoom(roomID string) {
-	client.Client.JoinRoom(roomID, "", nil)
+func (client *Client) JoinRoom(roomID string) (resp *gomatrix.RespJoinRoom, err error) {
+	return client.Client.JoinRoom(roomID, "", nil)
+}
+
+func (client *Client) SendMessage(roomID, text string) (string, error) {
+	return client.SendContent(roomID, format.RenderMarkdown(text))
+}
+
+func (client *Client) SendMessagef(roomID, text string, args ...interface{}) (string, error) {
+	return client.SendContent(roomID, format.RenderMarkdown(fmt.Sprintf(text, args...)))
+}
+
+func (client *Client) SendContent(roomID string, content gomatrix.Content) (string, error) {
+	return client.SendMessageEvent(roomID, gomatrix.EventMessage, content)
+}
+
+func (client *Client) SendMessageEvent(roomID string, evtType gomatrix.EventType, content interface{}) (string, error) {
+	resp, err := client.Client.SendMessageEvent(roomID, evtType, content)
+	if err != nil {
+		return "", err
+	}
+	return resp.EventID, nil
 }
 
 func (client *Client) Sync() {

@@ -55,17 +55,17 @@ func (evt *EventFuncsImpl) ReplyContent(content gomatrix.Content) (string, error
 }
 
 func (evt *EventFuncsImpl) SendMessage(text string) (string, error) {
-	return evt.SendContent(format.RenderMarkdown(text))
+	return evt.Client.SendMessage(evt.RoomID, text)
+}
+
+func (evt *EventFuncsImpl) SendMessagef(text string, args ...interface{}) (string, error) {
+	return evt.Client.SendMessagef(evt.RoomID, text, args...)
 }
 
 func (evt *EventFuncsImpl) SendContent(content gomatrix.Content) (string, error) {
-	return evt.SendRawEvent(gomatrix.EventMessage, content)
+	return evt.Client.SendContent(evt.RoomID, content)
 }
 
-func (evt *EventFuncsImpl) SendRawEvent(evtType gomatrix.EventType, content interface{}) (string, error) {
-	resp, err := evt.Client.SendMessageEvent(evt.RoomID, evtType, content)
-	if err != nil {
-		return "", err
-	}
-	return resp.EventID, nil
+func (evt *EventFuncsImpl) SendMessageEvent(evtType gomatrix.EventType, content interface{}) (eventID string, err error) {
+	return evt.Client.SendMessageEvent(evt.RoomID, evtType, content)
 }
