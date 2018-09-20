@@ -101,7 +101,7 @@ type MBMatrixClient interface {
 	SendMessage(roomID, text string) (eventID string, err error)
 	SendMessagef(roomID, text string, args ...interface{}) (eventID string, err error)
 	SendContent(roomID string, content gomatrix.Content) (eventID string, err error)
-	SendMessageEvent(roomID string, content interface{}) (eventID string, err error)
+	SendMessageEvent(roomID string, evtType gomatrix.EventType, content interface{}) (eventID string, err error)
 }
 
 type MatrixClient interface {
