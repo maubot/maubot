@@ -162,9 +162,17 @@ func (pc *ParsedCommand) MatchActive(evt *gomatrix.Event) bool {
 }
 
 func (pc *ParsedCommand) MatchPassive(evt *gomatrix.Event) bool {
-	matchAgainst, ok := deepGet(evt.Content.Raw, pc.MatchAgainst).(string)
-	if !ok {
+	matchAgainst := evt.Content.Body
+	switch pc.MatchAgainst {
+	case maubot.MatchAgainstBody:
 		matchAgainst = evt.Content.Body
+	case "formatted_body":
+		matchAgainst = evt.Content.FormattedBody
+	default:
+		matchAgainstDirect, ok := deepGet(evt.Content.Raw, pc.MatchAgainst).(string)
+		if ok {
+			matchAgainst = matchAgainstDirect
+		}
 	}
 
 	if pc.MatchesEvent != nil && !maubot.JSONLeftEquals(pc.MatchesEvent, evt) {
