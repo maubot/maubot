@@ -104,11 +104,11 @@ func (client *Client) GetEvent(roomID, eventID string) *maubot.Event {
 func (client *Client) TriggerCommand(command *ParsedCommand, evt *maubot.Event) maubot.CommandHandlerResult {
 	handlers, ok := client.handlers[command.Name]
 	if !ok {
-		log.Warnf("Command %s triggered by %s doesn't have any handlers.\n", command.Name, evt.Sender)
+		log.Warnf("Command `%s` triggered by %s doesn't have any handlers.\n", command.Name, evt.Sender)
 		return maubot.Continue
 	}
 
-	log.Debugf("Command %s on client %s triggered by %s\n", command.Name, client.UserID, evt.Sender)
+	log.Debugf("Command `%s` on client %s triggered by %s\n", command.Name, client.UserID, evt.Sender)
 	for _, handler := range handlers {
 		result := handler(evt)
 		if result == maubot.StopCommandPropagation {

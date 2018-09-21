@@ -43,6 +43,7 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 	argumentEncountered := false
 
 	regexBuilder.WriteString("^!")
+	swBuilder.WriteRune('!')
 	words := strings.Split(command.Syntax, " ")
 	for i, word := range words {
 		argument, ok := command.Arguments[word]
@@ -50,8 +51,10 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 		if ok && len(word) > 0 /*&& word[0] == '$'*/ {
 			argumentEncountered = true
 			regex := argument.Matches
-			if argument.Required {
+			if !argument.Required {
 				regex = fmt.Sprintf("(?:%s)?", regex)
+			} else {
+				regex = fmt.Sprintf("(%s)", regex)
 			}
 			pc.Arguments = append(pc.Arguments, word)
 			regexBuilder.WriteString(regex)
