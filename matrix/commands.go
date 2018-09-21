@@ -83,7 +83,7 @@ func (pc *ParsedCommand) parseCommandSyntax(command maubot.Command) error {
 func (pc *ParsedCommand) parsePassiveCommandSyntax(command maubot.PassiveCommand) error {
 	pc.MatchAgainst = command.MatchAgainst
 	var err error
-	pc.Matches, err = regexp.Compile(fmt.Sprintf("(%s)", command.Matches))
+	pc.Matches, err = regexp.Compile(command.Matches)
 	pc.MatchesEvent = command.MatchEvent
 	return err
 }

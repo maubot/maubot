@@ -46,7 +46,9 @@ func (evt *EventFuncsImpl) MarkRead() error {
 }
 
 func (evt *EventFuncsImpl) Reply(text string) (string, error) {
-	return evt.ReplyContent(format.RenderMarkdown(text))
+	content := format.RenderMarkdown(text)
+	content.MsgType = gomatrix.MsgNotice
+	return evt.ReplyContent(content)
 }
 
 func (evt *EventFuncsImpl) ReplyContent(content gomatrix.Content) (string, error) {

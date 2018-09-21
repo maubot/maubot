@@ -143,11 +143,15 @@ func (client *Client) JoinRoom(roomID string) (resp *gomatrix.RespJoinRoom, err 
 }
 
 func (client *Client) SendMessage(roomID, text string) (string, error) {
-	return client.SendContent(roomID, format.RenderMarkdown(text))
+	content := format.RenderMarkdown(text)
+	content.MsgType = gomatrix.MsgNotice
+	return client.SendContent(roomID, content)
 }
 
 func (client *Client) SendMessagef(roomID, text string, args ...interface{}) (string, error) {
-	return client.SendContent(roomID, format.RenderMarkdown(fmt.Sprintf(text, args...)))
+	content := format.RenderMarkdown(fmt.Sprintf(text, args...))
+	content.MsgType = gomatrix.MsgNotice
+	return client.SendContent(roomID, content)
 }
 
 func (client *Client) SendContent(roomID string, content gomatrix.Content) (string, error) {
