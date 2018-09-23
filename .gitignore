@@ -1,6 +1,11 @@
 .idea
 .vscode
 
+.venv
+pip-selfcheck.json
+*.pyc
+__pycache__
+
 *.db
 *.yaml
 !example-config.yaml
@@ -8,12 +13,3 @@
 logs/
 
 plugins/
-
-# Bots under maubot.xyz
-jesaribot/
-sed/
-github/
-gitlab/
-rss/
-factorial/
-dictionary/

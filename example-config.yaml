@@ -1,19 +1,37 @@
-database:
-  type: sqlite3
-  name: maubot.db
-
-logging:
-  directory: ./logs
-  file_mode: 0600
-  print_level: DEBUG
-  file_name_format: "{{.Date}}-{{.Index}}.log"
-  file_date_format: 2006-01-02
-  timestamp_format: Jan _2, 2006 15:04:05
+database: sqlite:///maubot.db
 
 # If multiple directories have a plugin with the same name, the first directory is used.
 plugin_directories:
 - ./plugins
 
 server:
-  listen: 0.0.0.0:29316
-  base_path: /_matrix/maubot
+    listen: 0.0.0.0:29316
+    base_path: /_matrix/maubot
+
+# Python logging configuration.
+#
+# See section 16.7.2 of the Python documentation for more info:
+# https://docs.python.org/3.6/library/logging.config.html#configuration-dictionary-schema
+logging:
+    version: 1
+    formatters:
+        precise:
+            format: "[%(asctime)s] [%(levelname)s@%(name)s] %(message)s"
+    handlers:
+        file:
+            class: logging.handlers.RotatingFileHandler
+            formatter: precise
+            filename: ./maubot.log
+            maxBytes: 10485760
+            backupCount: 10
+        console:
+            class: logging.StreamHandler
+            formatter: precise
+    loggers:
+        maubot:
+            level: DEBUG
+        aiohttp:
+            level: INFO
+    root:
+        level: DEBUG
+        handlers: [file, console]
