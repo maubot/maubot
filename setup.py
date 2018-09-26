@@ -1,9 +1,9 @@
 import setuptools
-import maubot
+from maubot import __version__
 
 setuptools.setup(
     name="maubot",
-    version=maubot.__version__,
+    version=__version__,
     url="https://github.com/maubot/maubot",
 
     author="Tulir Asokan",
@@ -16,9 +16,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
+        "mautrix>=0.4,<0.5",
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
-        "Markdown>=2.6.11,<3",
+        "alembic>=1.0.0,<2",
+        "commonmark>=0.8.1,<1",
         "ruamel.yaml>=0.15.35,<0.16",
     ],
 

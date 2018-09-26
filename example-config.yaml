@@ -8,6 +8,9 @@ server:
     listen: 0.0.0.0:29316
     base_path: /_matrix/maubot
 
+admins:
+- "@admin:example.com"
+
 # Python logging configuration.
 #
 # See section 16.7.2 of the Python documentation for more info:
@@ -21,7 +24,7 @@ logging:
         file:
             class: logging.handlers.RotatingFileHandler
             formatter: precise
-            filename: ./maubot.log
+            filename: ./logs/maubot.log
             maxBytes: 10485760
             backupCount: 10
         console:
@@ -29,6 +32,8 @@ logging:
             formatter: precise
     loggers:
         maubot:
+            level: DEBUG
+        mautrix:
             level: DEBUG
         aiohttp:
             level: INFO
