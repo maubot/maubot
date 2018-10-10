@@ -13,8 +13,71 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from sqlalchemy import (Column)
+from sqlalchemy import (Column, String, Boolean, ForeignKey, Text, TypeDecorator)
+from sqlalchemy.orm import Query
 from sqlalchemy.ext.declarative import declarative_base
+import json
+
+from mautrix.types import JSON, UserID, FilterID, SyncToken, ContentURI
 
 Base: declarative_base = declarative_base()
 
+
+class JSONEncodedDict(TypeDecorator):
+    impl = Text
+
+    @property
+    def python_type(self):
+        return dict
+
+    def process_literal_param(self, value, _):
+        return json.dumps(value) if value is not None else None
+
+    def process_bind_param(self, value, _):
+        return json.dumps(value) if value is not None else None
+
+    def process_result_value(self, value, _):
+        return json.loads(value) if value is not None else None
+
+
+class DBPlugin(Base):
+    query: Query
+    __tablename__ = "plugin"
+
+    id: str = Column(String(255), primary_key=True)
+    type: str = Column(String(255), nullable=False)
+    enabled: bool = Column(Boolean, nullable=False, default=False)
+    primary_user: str = Column(String(255),
+                               ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
+                               nullable=False)
+
+
+class DBClient(Base):
+    query: Query
+    __tablename__ = "client"
+
+    id: UserID = Column(String(255), primary_key=True)
+    homeserver: str = Column(String(255), nullable=False)
+    access_token: str = Column(String(255), nullable=False)
+
+    next_batch: SyncToken = Column(String(255), nullable=False, default="")
+    filter_id: FilterID = Column(String(255), nullable=False, default="")
+
+    sync: bool = Column(Boolean, nullable=False, default=True)
+    autojoin: bool = Column(Boolean, nullable=False, default=True)
+
+    displayname: str = Column(String(255), nullable=False, default="")
+    avatar_url: ContentURI = Column(String(255), nullable=False, default="")
+
+
+class DBCommandSpec(Base):
+    query: Query
+    __tablename__ = "command_spec"
+
+    owner: str = Column(String(255),
+                        ForeignKey("plugin.id", onupdate="CASCADE", ondelete="CASCADE"),
+                        primary_key=True)
+    client: UserID = Column(String(255),
+                            ForeignKey("client.id", onupdate="CASCADE", ondelete="CASCADE"),
+                            primary_key=True)
+    spec: JSON = Column(JSONEncodedDict, nullable=False)
