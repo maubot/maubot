@@ -47,9 +47,9 @@ class DBPlugin(Base):
     id: str = Column(String(255), primary_key=True)
     type: str = Column(String(255), nullable=False)
     enabled: bool = Column(Boolean, nullable=False, default=False)
-    primary_user: str = Column(String(255),
-                               ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
-                               nullable=False)
+    primary_user: UserID = Column(String(255),
+                                  ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
+                                  nullable=False)
 
 
 class DBClient(Base):

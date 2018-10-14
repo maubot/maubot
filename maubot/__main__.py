@@ -20,7 +20,7 @@ import argparse
 import copy
 
 from .config import Config
-from . import __version__
+from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
                                  prog="python -m maubot")

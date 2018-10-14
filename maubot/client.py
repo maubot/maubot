@@ -42,11 +42,11 @@ class Client:
             self.client.add_event_handler(self.handle_invite, EventType.ROOM_MEMBER)
 
     @classmethod
-    def get(cls, id: UserID) -> Optional['Client']:
+    def get(cls, user_id: UserID) -> Optional['Client']:
         try:
-            return cls.cache[id]
+            return cls.cache[user_id]
         except KeyError:
-            db_instance = DBClient.query.get(id)
+            db_instance = DBClient.query.get(user_id)
             if not db_instance:
                 return None
             return Client(db_instance)
@@ -126,6 +126,6 @@ class Client:
 
     # endregion
 
-    async def handle_invite(self, evt: StateEvent):
+    async def handle_invite(self, evt: StateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
             await self.client.join_room_by_id(evt.room_id)

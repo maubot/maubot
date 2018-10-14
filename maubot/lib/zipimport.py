@@ -1,3 +1,9 @@
+# The pure Python implementation of zipimport in Python 3.8+. Slightly modified to allow clearing
+# the zip directory cache to bypass https://bugs.python.org/issue19081
+#
+# https://github.com/python/cpython/blob/5a5ce064b3baadcb79605c5a42ee3d0aee57cdfc/Lib/zipimport.py
+# See license at https://github.com/python/cpython/blob/master/LICENSE
+
 """zipimport provides support for importing Python modules from Zip archives.
 
 This module exports three objects:

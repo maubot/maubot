@@ -1,5 +1,10 @@
 import setuptools
-from maubot import __version__
+import os
+
+path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "maubot", "__meta__.py")
+__version__ = "UNKNOWN"
+with open(path) as f:
+    exec(f.read())
 
 setuptools.setup(
     name="maubot",
