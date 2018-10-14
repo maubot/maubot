@@ -1,5 +1,6 @@
-.idea
-.vscode
+build/
+dist/
+*.egg-info
 
 .venv
 pip-selfcheck.json
@@ -11,5 +12,4 @@ __pycache__
 !example-config.yaml
 
 logs/
-
 plugins/
