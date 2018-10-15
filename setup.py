@@ -27,6 +27,7 @@ setuptools.setup(
         "alembic>=1.0.0,<2",
         "commonmark>=0.8.1,<1",
         "ruamel.yaml>=0.15.35,<0.16",
+        "attrs>=18.2.0,<19",
     ],
 
     classifiers=[

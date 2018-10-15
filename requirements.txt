@@ -4,3 +4,4 @@ SQLAlchemy
 alembic
 commonmark
 ruamel.yaml
+attrs

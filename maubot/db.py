@@ -13,31 +13,39 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Type
 from sqlalchemy import (Column, String, Boolean, ForeignKey, Text, TypeDecorator)
 from sqlalchemy.orm import Query
 from sqlalchemy.ext.declarative import declarative_base
 import json
 
-from mautrix.types import JSON, UserID, FilterID, SyncToken, ContentURI
+from mautrix.types import UserID, FilterID, SyncToken, ContentURI
+from mautrix.client.api.types.util import Serializable
+from mautrix import ClientStore
+
+from .command_spec import CommandSpec
 
 Base: declarative_base = declarative_base()
 
 
-class JSONEncodedDict(TypeDecorator):
-    impl = Text
+def make_serializable_alchemy(serializable_type: Type[Serializable]):
+    class SerializableAlchemy(TypeDecorator):
+        impl = Text
 
-    @property
-    def python_type(self):
-        return dict
+        @property
+        def python_type(self):
+            return serializable_type
 
-    def process_literal_param(self, value, _):
-        return json.dumps(value) if value is not None else None
+        def process_literal_param(self, value: Serializable, _) -> str:
+            return json.dumps(value.serialize()) if value is not None else None
 
-    def process_bind_param(self, value, _):
-        return json.dumps(value) if value is not None else None
+        def process_bind_param(self, value: Serializable, _) -> str:
+            return json.dumps(value.serialize()) if value is not None else None
 
-    def process_result_value(self, value, _):
-        return json.loads(value) if value is not None else None
+        def process_result_value(self, value: str, _) -> serializable_type:
+            return serializable_type.deserialize(json.loads(value)) if value is not None else None
+
+    return SerializableAlchemy
 
 
 class DBPlugin(Base):
@@ -52,7 +60,7 @@ class DBPlugin(Base):
                                   nullable=False)
 
 
-class DBClient(Base):
+class DBClient(ClientStore, Base):
     query: Query
     __tablename__ = "client"
 
@@ -74,10 +82,10 @@ class DBCommandSpec(Base):
     query: Query
     __tablename__ = "command_spec"
 
-    owner: str = Column(String(255),
-                        ForeignKey("plugin.id", onupdate="CASCADE", ondelete="CASCADE"),
-                        primary_key=True)
+    plugin: str = Column(String(255),
+                         ForeignKey("plugin.id", onupdate="CASCADE", ondelete="CASCADE"),
+                         primary_key=True)
     client: UserID = Column(String(255),
                             ForeignKey("client.id", onupdate="CASCADE", ondelete="CASCADE"),
                             primary_key=True)
-    spec: JSON = Column(JSONEncodedDict, nullable=False)
+    spec: CommandSpec = Column(make_serializable_alchemy(CommandSpec), nullable=False)

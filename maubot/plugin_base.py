@@ -17,12 +17,16 @@ from typing import TYPE_CHECKING
 from abc import ABC
 
 if TYPE_CHECKING:
-    from mautrix import Client as MatrixClient
+    from .client import MaubotMatrixClient
+    from .command_spec import CommandSpec
 
 
 class Plugin(ABC):
-    def __init__(self, client: 'MatrixClient') -> None:
+    def __init__(self, client: 'MaubotMatrixClient') -> None:
         self.client = client
+
+    def set_command_spec(self, spec: 'CommandSpec') -> None:
+        pass
 
     async def start(self) -> None:
         pass
