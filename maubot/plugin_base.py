@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import TYPE_CHECKING
+from logging import Logger
 from abc import ABC
 
 if TYPE_CHECKING:
@@ -22,9 +23,14 @@ if TYPE_CHECKING:
 
 
 class Plugin(ABC):
-    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str) -> None:
+    client: 'MaubotMatrixClient'
+    id: str
+    log: Logger
+
+    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger) -> None:
         self.client = client
         self.id = plugin_instance_id
+        self.log = log
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
         self.client.set_command_spec(self.id, spec)

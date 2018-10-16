@@ -118,6 +118,12 @@ class zipimporter:
         self._files = _read_directory(self.archive)
         _zip_directory_cache[self.archive] = self._files
 
+    def remove_cache(self):
+        try:
+            del _zip_directory_cache[self.archive]
+        except KeyError:
+            pass
+
     # Check whether we can satisfy the import of the module named by
     # 'fullname', or whether it could be a portion of a namespace
     # package. Return self if we can load it, a string containing the

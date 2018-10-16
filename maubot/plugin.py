@@ -13,12 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List
+from typing import Dict, List, Optional
 import logging
 
 from mautrix.types import UserID
 
 from .db import DBPlugin
+from .client import Client
+from .loader import PluginLoader
+from .plugin_base import Plugin
 
 log = logging.getLogger("maubot.plugin")
 
@@ -27,9 +30,55 @@ class PluginInstance:
     cache: Dict[str, 'PluginInstance'] = {}
     plugin_directories: List[str] = []
 
+    log: logging.Logger
+    loader: PluginLoader
+    client: Client
+    plugin: Plugin
+
     def __init__(self, db_instance: DBPlugin):
         self.db_instance = db_instance
+        self.log = logging.getLogger(f"maubot.plugin.{self.id}")
         self.cache[self.id] = self
+
+    def load(self) -> None:
+        try:
+            self.loader = PluginLoader.find(self.type)
+        except KeyError:
+            self.log.error(f"Failed to find loader for type {self.type}")
+            self.db_instance.enabled = False
+            return
+        self.client = Client.get(self.primary_user)
+        if not self.client:
+            self.log.error(f"Failed to get client for user {self.primary_user}")
+            self.db_instance.enabled = False
+
+    async def start(self) -> None:
+        self.log.debug(f"Starting...")
+        cls = self.loader.load()
+        self.plugin = cls(self.client.client, self.id, self.log)
+        self.loader.references |= {self}
+        await self.plugin.start()
+
+    async def stop(self) -> None:
+        self.log.debug("Stopping...")
+        self.loader.references -= {self}
+        await self.plugin.stop()
+        self.plugin = None
+
+    @classmethod
+    def get(cls, instance_id: str, db_instance: Optional[DBPlugin] = None
+            ) -> Optional['PluginInstance']:
+        try:
+            return cls.cache[instance_id]
+        except KeyError:
+            db_instance = db_instance or DBPlugin.query.get(instance_id)
+            if not db_instance:
+                return None
+            return PluginInstance(db_instance)
+
+    @classmethod
+    def all(cls) -> List['PluginInstance']:
+        return [cls.get(plugin.id, plugin) for plugin in DBPlugin.query.all()]
 
     # region Properties
 

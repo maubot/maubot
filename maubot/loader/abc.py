@@ -13,10 +13,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TypeVar, Type, Dict
+from typing import TypeVar, Type, Dict, Set, TYPE_CHECKING
 from abc import ABC, abstractmethod
 
 from ..plugin_base import Plugin
+
+if TYPE_CHECKING:
+    from ..plugin import PluginInstance
 
 PluginClass = TypeVar("PluginClass", bound=Plugin)
 
@@ -28,8 +31,16 @@ class IDConflictError(Exception):
 class PluginLoader(ABC):
     id_cache: Dict[str, 'PluginLoader'] = {}
 
+    references: Set['PluginInstance']
     id: str
     version: str
+
+    def __init__(self):
+        self.references = set()
+
+    @classmethod
+    def find(cls, plugin_id: str) -> 'PluginLoader':
+        return cls.id_cache[plugin_id]
 
     @property
     @abstractmethod

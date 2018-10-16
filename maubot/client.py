@@ -37,15 +37,21 @@ class Client:
     def __init__(self, db_instance: DBClient) -> None:
         self.db_instance = db_instance
         self.cache[self.id] = self
-        self.client = MaubotMatrixClient(maubot_client=self, store=self.db_instance,
-                                         mxid=self.id, base_url=self.homeserver,
+        self.log = log.getChild(self.id)
+        self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
-                                         log=log.getChild(self.id))
+                                         log=self.log, loop=self.loop, store=self.db_instance)
         if self.autojoin:
             self.client.add_event_handler(self._handle_invite, EventType.ROOM_MEMBER)
 
     def start(self) -> None:
-        asyncio.ensure_future(self.client.start(), loop=self.loop)
+        asyncio.ensure_future(self._start(), loop=self.loop)
+
+    async def _start(self) -> None:
+        try:
+            await self.client.start()
+        except Exception:
+            self.log.exception("Fail")
 
     def stop(self) -> None:
         self.client.stop()
@@ -64,6 +70,10 @@ class Client:
     def all(cls) -> List['Client']:
         return [cls.get(user.id, user) for user in DBClient.query.all()]
 
+    async def _handle_invite(self, evt: StateEvent) -> None:
+        if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
+            await self.client.join_room_by_id(evt.room_id)
+
     # region Properties
 
     @property
@@ -72,7 +82,7 @@ class Client:
 
     @property
     def homeserver(self) -> str:
-        return self.db_instance.id
+        return self.db_instance.homeserver
 
     @property
     def access_token(self) -> str:
@@ -139,12 +149,9 @@ class Client:
 
     # endregion
 
-    async def _handle_invite(self, evt: StateEvent) -> None:
-        if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
-            await self.client.join_room_by_id(evt.room_id)
-
 
 def init(loop: asyncio.AbstractEventLoop) -> None:
+    Client.http_client = ClientSession(loop=loop)
     Client.loop = loop
     for client in Client.all():
         client.start()

@@ -15,8 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, List, Type
 from zipfile import ZipFile, BadZipFile
-import sys
 import configparser
+import logging
+import sys
+import os
 
 from ..lib.zipimport import zipimporter, ZipImportError
 from ..plugin_base import Plugin
@@ -29,6 +31,7 @@ class MaubotZipImportError(Exception):
 
 class ZippedPluginLoader(PluginLoader):
     path_cache: Dict[str, 'ZippedPluginLoader'] = {}
+    log = logging.getLogger("maubot.loader.zip")
 
     path: str
     id: str
@@ -40,9 +43,11 @@ class ZippedPluginLoader(PluginLoader):
     _importer: zipimporter
 
     def __init__(self, path: str) -> None:
+        super().__init__()
         self.path = path
         self.id = None
         self._loaded = None
+        self._importer = None
         self._load_meta()
         self._run_preload_checks(self._get_importer())
         try:
@@ -52,6 +57,7 @@ class ZippedPluginLoader(PluginLoader):
             pass
         self.path_cache[self.path] = self
         self.id_cache[self.id] = self
+        self.log.debug(f"Preloaded plugin {self.id} from {self.path}")
 
     @classmethod
     def get(cls, path: str) -> 'ZippedPluginLoader':
@@ -68,7 +74,7 @@ class ZippedPluginLoader(PluginLoader):
         return ("<ZippedPlugin "
                 f"path='{self.path}' "
                 f"id='{self.id}' "
-                f"loaded={self._loaded}>")
+                f"loaded={self._loaded is not None}>")
 
     def _load_meta(self) -> None:
         try:
@@ -100,10 +106,11 @@ class ZippedPluginLoader(PluginLoader):
 
     def _get_importer(self, reset_cache: bool = False) -> zipimporter:
         try:
-            importer = zipimporter(self.path)
+            if not self._importer:
+                self._importer = zipimporter(self.path)
             if reset_cache:
-                importer.reset_cache()
-            return importer
+                self._importer.reset_cache()
+            return self._importer
         except ZipImportError as e:
             raise MaubotZipImportError("File not found or not a maubot plugin") from e
 
@@ -127,6 +134,8 @@ class ZippedPluginLoader(PluginLoader):
             return self._loaded
         importer = self._get_importer(reset_cache=reset_cache)
         self._run_preload_checks(importer)
+        if reset_cache:
+            self.log.debug(f"Preloaded plugin {self.id} from {self.path}")
         for module in self.modules:
             importer.load_module(module)
         main_mod = sys.modules[self.main_module]
@@ -134,6 +143,7 @@ class ZippedPluginLoader(PluginLoader):
         if not issubclass(plugin, Plugin):
             raise MaubotZipImportError("Main class of plugin does not extend maubot.Plugin")
         self._loaded = plugin
+        self.log.debug(f"Loaded and imported plugin {self.id} from {self.path}")
         return plugin
 
     def reload(self) -> Type[PluginClass]:
@@ -144,6 +154,8 @@ class ZippedPluginLoader(PluginLoader):
         for name, mod in list(sys.modules.items()):
             if getattr(mod, "__file__", "").startswith(self.path):
                 del sys.modules[name]
+        self._loaded = None
+        self.log.debug(f"Unloaded plugin {self.id} at {self.path}")
 
     def destroy(self) -> None:
         self.unload()
@@ -155,3 +167,24 @@ class ZippedPluginLoader(PluginLoader):
             del self.id_cache[self.id]
         except KeyError:
             pass
+        self.id = None
+        self.path = None
+        self.version = None
+        self.modules = None
+        if self._importer:
+            self._importer.remove_cache()
+            self._importer = None
+        self._loaded = None
+
+    @classmethod
+    def load_all(cls, *args: str) -> None:
+        cls.log.debug("Preloading plugins...")
+        for directory in args:
+            for file in os.listdir(directory):
+                if not file.endswith(".mbp"):
+                    continue
+                path = os.path.join(directory, file)
+                try:
+                    ZippedPluginLoader.get(path)
+                except (MaubotZipImportError, IDConflictError):
+                    cls.log.exception(f"Failed to load plugin at {path}")
