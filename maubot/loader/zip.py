@@ -20,7 +20,7 @@ import configparser
 
 from ..lib.zipimport import zipimporter, ZipImportError
 from ..plugin_base import Plugin
-from .abc import PluginLoader, PluginClass
+from .abc import PluginLoader, PluginClass, IDConflictError
 
 
 class MaubotZipImportError(Exception):
@@ -36,35 +36,50 @@ class ZippedPluginLoader(PluginLoader):
     modules: List[str]
     main_class: str
     main_module: str
-    loaded: bool
+    _loaded: Type[PluginClass]
     _importer: zipimporter
 
     def __init__(self, path: str) -> None:
         self.path = path
         self.id = None
-        self.loaded = False
+        self._loaded = None
         self._load_meta()
         self._run_preload_checks(self._get_importer())
+        try:
+            existing = self.id_cache[self.id]
+            raise IDConflictError(f"Plugin with id {self.id} already loaded from {existing.source}")
+        except KeyError:
+            pass
         self.path_cache[self.path] = self
         self.id_cache[self.id] = self
+
+    @classmethod
+    def get(cls, path: str) -> 'ZippedPluginLoader':
+        try:
+            return cls.path_cache[path]
+        except KeyError:
+            return cls(path)
+
+    @property
+    def source(self) -> str:
+        return self.path
 
     def __repr__(self) -> str:
         return ("<ZippedPlugin "
                 f"path='{self.path}' "
                 f"id='{self.id}' "
-                f"loaded={self.loaded}>")
+                f"loaded={self._loaded}>")
 
     def _load_meta(self) -> None:
         try:
             file = ZipFile(self.path)
             data = file.read("maubot.ini")
         except FileNotFoundError as e:
-            raise MaubotZipImportError(f"Maubot plugin not found at {self.path}") from e
+            raise MaubotZipImportError("Maubot plugin not found") from e
         except BadZipFile as e:
-            raise MaubotZipImportError(f"File at {self.path} is not a maubot plugin") from e
+            raise MaubotZipImportError("File is not a maubot plugin") from e
         except KeyError as e:
-            raise MaubotZipImportError(
-                "File at {path} does not contain a maubot plugin definition") from e
+            raise MaubotZipImportError("File does not contain a maubot plugin definition") from e
         config = configparser.ConfigParser()
         try:
             config.read_string(data.decode("utf-8"), source=f"{self.path}/maubot.ini")
@@ -77,8 +92,7 @@ class ZippedPluginLoader(PluginLoader):
             if "/" in main_class:
                 main_module, main_class = main_class.split("/")[:2]
         except (configparser.Error, KeyError, IndexError, ValueError) as e:
-            raise MaubotZipImportError(
-                f"Maubot plugin definition in file at {self.path} is invalid") from e
+            raise MaubotZipImportError("Maubot plugin definition in file is invalid") from e
         if self.id and meta_id != self.id:
             raise MaubotZipImportError("Maubot plugin ID changed during reload")
         self.id, self.version, self.modules = meta_id, version, modules
@@ -91,8 +105,7 @@ class ZippedPluginLoader(PluginLoader):
                 importer.reset_cache()
             return importer
         except ZipImportError as e:
-            raise MaubotZipImportError(
-                f"File at {self.path} not found or not a maubot plugin") from e
+            raise MaubotZipImportError("File not found or not a maubot plugin") from e
 
     def _run_preload_checks(self, importer: zipimporter) -> None:
         try:
@@ -102,29 +115,30 @@ class ZippedPluginLoader(PluginLoader):
                     f"Main class {self.main_class} not in {self.main_module}")
         except ZipImportError as e:
             raise MaubotZipImportError(
-                f"Main module {self.main_module} not found in {self.path}") from e
+                f"Main module {self.main_module} not found in file") from e
         for module in self.modules:
             try:
                 importer.find_module(module)
             except ZipImportError as e:
-                raise MaubotZipImportError(f"Module {module} not found in {self.path}") from e
+                raise MaubotZipImportError(f"Module {module} not found in file") from e
 
-    def load(self) -> Type[PluginClass]:
-        importer = self._get_importer(reset_cache=self.loaded)
+    def load(self, reset_cache: bool = False) -> Type[PluginClass]:
+        if self._loaded is not None and not reset_cache:
+            return self._loaded
+        importer = self._get_importer(reset_cache=reset_cache)
         self._run_preload_checks(importer)
         for module in self.modules:
             importer.load_module(module)
-        self.loaded = True
         main_mod = sys.modules[self.main_module]
         plugin = getattr(main_mod, self.main_class)
         if not issubclass(plugin, Plugin):
-            raise MaubotZipImportError(
-                f"Main class of plugin at {self.path} does not extend maubot.Plugin")
+            raise MaubotZipImportError("Main class of plugin does not extend maubot.Plugin")
+        self._loaded = plugin
         return plugin
 
     def reload(self) -> Type[PluginClass]:
         self.unload()
-        return self.load()
+        return self.load(reset_cache=True)
 
     def unload(self) -> None:
         for name, mod in list(sys.modules.items()):

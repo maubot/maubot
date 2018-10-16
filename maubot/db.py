@@ -60,7 +60,7 @@ class DBPlugin(Base):
                                   nullable=False)
 
 
-class DBClient(ClientStore, Base):
+class DBClient(Base):
     query: Query
     __tablename__ = "client"
 

@@ -16,7 +16,7 @@
 from aiohttp import web
 import asyncio
 
-from mautrix.api import PathBuilder
+from mautrix.api import PathBuilder, Method
 
 from .config import Config
 from .__meta__ import __version__
@@ -29,12 +29,15 @@ class MaubotServer:
         self.config = config
 
         path = PathBuilder(config["server.base_path"])
-        self.app.router.add_get(path.version, self.version)
+        self.add_route(Method.GET, path.version, self.version)
 
         as_path = PathBuilder(config["server.appservice_base_path"])
-        self.app.router.add_put(as_path.transactions, self.handle_transaction)
+        self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
 
         self.runner = web.AppRunner(self.app)
+
+    def add_route(self, method: Method, path: PathBuilder, handler) -> None:
+        self.app.router.add_route(method.value, str(path), handler)
 
     async def start(self) -> None:
         await self.runner.setup()

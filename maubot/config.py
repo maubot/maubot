@@ -13,14 +13,28 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import random
+import string
+
 from mautrix.util import BaseConfig
 
 
 class Config(BaseConfig):
+    @staticmethod
+    def _new_token() -> str:
+        return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(64))
+
     def update(self):
         base, copy, copy_dict = self._pre_update()
         copy("database")
         copy("plugin_directories")
+        copy("server.hostname")
+        copy("server.port")
         copy("server.listen")
         copy("server.base_path")
+        shared_secret = self["server.shared_secret"]
+        if shared_secret is None or shared_secret == "generate":
+            base["server.shared_secret"] = self._new_token()
+        else:
+            base["server.shared_secret"] = shared_secret
         copy("logging")

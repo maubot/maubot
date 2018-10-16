@@ -21,11 +21,20 @@ from ..plugin_base import Plugin
 PluginClass = TypeVar("PluginClass", bound=Plugin)
 
 
+class IDConflictError(Exception):
+    pass
+
+
 class PluginLoader(ABC):
     id_cache: Dict[str, 'PluginLoader'] = {}
 
     id: str
     version: str
+
+    @property
+    @abstractmethod
+    def source(self) -> str:
+        pass
 
     @abstractmethod
     def load(self) -> Type[PluginClass]:
