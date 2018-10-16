@@ -13,14 +13,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Dict
 from abc import ABC, abstractmethod
+
 from ..plugin_base import Plugin
 
 PluginClass = TypeVar("PluginClass", bound=Plugin)
 
 
 class PluginLoader(ABC):
+    id_cache: Dict[str, 'PluginLoader'] = {}
+
     id: str
     version: str
 

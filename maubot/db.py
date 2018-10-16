@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Type
 from sqlalchemy import (Column, String, Boolean, ForeignKey, Text, TypeDecorator)
-from sqlalchemy.orm import Query
+from sqlalchemy.orm import Query, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 import json
 
@@ -89,3 +89,9 @@ class DBCommandSpec(Base):
                             ForeignKey("client.id", onupdate="CASCADE", ondelete="CASCADE"),
                             primary_key=True)
     spec: CommandSpec = Column(make_serializable_alchemy(CommandSpec), nullable=False)
+
+
+def init(session: scoped_session) -> None:
+    DBPlugin.query = session.query_property()
+    DBClient.query = session.query_property()
+    DBCommandSpec.query = session.query_property()

@@ -22,11 +22,12 @@ if TYPE_CHECKING:
 
 
 class Plugin(ABC):
-    def __init__(self, client: 'MaubotMatrixClient') -> None:
+    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str) -> None:
         self.client = client
+        self.id = plugin_instance_id
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
-        pass
+        self.client.set_command_spec(self.id, spec)
 
     async def start(self) -> None:
         pass

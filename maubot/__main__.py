@@ -17,9 +17,14 @@ from sqlalchemy import orm
 import sqlalchemy as sql
 import logging.config
 import argparse
+import asyncio
 import copy
+import sys
 
 from .config import Config
+from .db import Base, init as init_db
+from .server import MaubotServer
+from .client import Client, init as init_client
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -36,7 +41,23 @@ logging.config.dictConfig(copy.deepcopy(config["logging"]))
 log = logging.getLogger("maubot")
 log.debug(f"Initializing maubot {__version__}")
 
-db_engine = sql.create_engine(config["database"])
+db_engine: sql.engine.Engine = sql.create_engine(config["database"])
 db_factory = orm.sessionmaker(bind=db_engine)
 db_session = orm.scoping.scoped_session(db_factory)
 Base.metadata.bind=db_engine
+
+loop = asyncio.get_event_loop()
+
+init_db(db_session)
+init_client(loop)
+server = MaubotServer(config, loop)
+
+try:
+    loop.run_until_complete(server.start())
+    loop.run_forever()
+except KeyboardInterrupt:
+    log.debug("Keyboard interrupt received, stopping...")
+    for client in Client.cache.values():
+        client.stop()
+    loop.run_until_complete(server.stop())
+    sys.exit(0)

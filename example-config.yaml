@@ -10,8 +10,9 @@ plugin_directories:
 - ./plugins
 
 server:
-    # The IP:port to listen to.
-    listen: 0.0.0.0:29316
+    # The IP and port to listen to.
+    hostname: 0.0.0.0
+    port: 29316
     # The base management API path.
     base_path: /_matrix/maubot
     # The base appservice API path. Use / for legacy appservice API and /_matrix/app/v1 for v1.

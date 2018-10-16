@@ -29,7 +29,6 @@ class MaubotZipImportError(Exception):
 
 class ZippedPluginLoader(PluginLoader):
     path_cache: Dict[str, 'ZippedPluginLoader'] = {}
-    id_cache: Dict[str, 'ZippedPluginLoader'] = {}
 
     path: str
     id: str
