@@ -19,7 +19,7 @@ import asyncio
 import logging
 
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
-                           EventType)
+                           EventType, Filter, RoomFilter, RoomEventFilter)
 
 from .db import DBClient
 from .matrix import MaubotMatrixClient
@@ -50,11 +50,19 @@ class Client:
 
     async def _start(self) -> None:
         try:
+            if not self.filter_id:
+                self.filter_id = await self.client.create_filter(Filter(
+                    room=RoomFilter(
+                        timeline=RoomEventFilter(
+                            limit=50,
+                        ),
+                    ),
+                ))
             if self.displayname != "disable":
                 await self.client.set_displayname(self.displayname)
             if self.avatar_url != "disable":
                 await self.client.set_avatar_url(self.avatar_url)
-            await self.client.start()
+            await self.client.start(self.filter_id)
         except Exception:
             self.log.exception("starting raised exception")
 
