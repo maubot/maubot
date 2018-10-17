@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.8
+FROM alpine:3.8
 
 ENV UID=1338 \
     GID=1338
@@ -13,8 +13,8 @@ RUN apk add --no-cache \
       py3-attrs \
       ca-certificates \
       su-exec \
- && pip3 install -r requirements.txt -r optional-requirements.txt
+ && pip3 install -r requirements.txt
 
 VOLUME /data
 
-CMD ["/opt/mautrix-telegram/docker-run.sh"]
+CMD ["/opt/maubot/docker-run.sh"]
