@@ -18,7 +18,8 @@ from aiohttp import ClientSession
 import asyncio
 import logging
 
-from mautrix.types import UserID, SyncToken, FilterID, ContentURI, StateEvent, Membership, EventType
+from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
+                           EventType)
 
 from .db import DBClient
 from .matrix import MaubotMatrixClient
@@ -49,9 +50,13 @@ class Client:
 
     async def _start(self) -> None:
         try:
+            if self.displayname != "disable":
+                await self.client.set_displayname(self.displayname)
+            if self.avatar_url != "disable":
+                await self.client.set_avatar_url(self.avatar_url)
             await self.client.start()
         except Exception:
-            self.log.exception("Fail")
+            self.log.exception("starting raised exception")
 
     def stop(self) -> None:
         self.client.stop()
@@ -70,7 +75,7 @@ class Client:
     def all(cls) -> List['Client']:
         return [cls.get(user.id, user) for user in DBClient.query.all()]
 
-    async def _handle_invite(self, evt: StateEvent) -> None:
+    async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
             await self.client.join_room_by_id(evt.room_id)
 
