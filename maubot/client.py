@@ -77,7 +77,7 @@ class Client:
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
-            await self.client.join_room_by_id(evt.room_id)
+            await self.client.join_room(evt.room_id)
 
     # region Properties
 
