@@ -1,20 +1,20 @@
-FROM golang:1-alpine AS builder
+FROM docker.io/alpine:3.8
 
-RUN apk add --no-cache git ca-certificates gcc musl-dev
-RUN wget -qO /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
-RUN chmod +x /usr/local/bin/dep
+ENV UID=1338 \
+    GID=1338
 
-COPY Gopkg.lock Gopkg.toml /go/src/maubot.xyz/
-WORKDIR /go/src/maubot.xyz/
-RUN dep ensure -vendor-only
+COPY . /opt/maubot
+WORKDIR /opt/maubot
+RUN apk add --no-cache \
+      python3-dev \
+      build-base \
+      py3-aiohttp \
+      py3-sqlalchemy \
+      py3-attrs \
+      ca-certificates \
+      su-exec \
+ && pip3 install -r requirements.txt -r optional-requirements.txt
 
-COPY . /go/src/maubot.xyz/
-RUN go build -o /usr/bin/maubot maubot.xyz/cmd/maubot
+VOLUME /data
 
-
-FROM alpine
-
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /usr/bin/maubot /usr/bin/maubot
-
-CMD ["/usr/bin/maubot", "-c", "/etc/maubot/config.yaml"]
+CMD ["/opt/mautrix-telegram/docker-run.sh"]
