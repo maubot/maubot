@@ -45,22 +45,27 @@ class PluginInstance:
             self.loader = PluginLoader.find(self.type)
         except KeyError:
             self.log.error(f"Failed to find loader for type {self.type}")
-            self.db_instance.enabled = False
+            self.enabled = False
             return
         self.client = Client.get(self.primary_user)
         if not self.client:
             self.log.error(f"Failed to get client for user {self.primary_user}")
-            self.db_instance.enabled = False
+            self.enabled = False
+        self.log.debug("Plugin instance dependencies loaded")
 
     async def start(self) -> None:
-        self.log.debug(f"Starting...")
+        if not self.enabled:
+            self.log.warn(f"Plugin disabled, not starting.")
+            return
         cls = self.loader.load()
         self.plugin = cls(self.client.client, self.id, self.log)
         self.loader.references |= {self}
         await self.plugin.start()
+        self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "
+                      f"with user {self.client.id}")
 
     async def stop(self) -> None:
-        self.log.debug("Stopping...")
+        self.log.debug("Stopping plugin instance...")
         self.loader.references -= {self}
         await self.plugin.stop()
         self.plugin = None

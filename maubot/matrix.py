@@ -13,13 +13,49 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Union, Callable
+from typing import Dict, List, Union, Callable, Awaitable
+import attr
+import commonmark
 
 from mautrix import Client as MatrixClient
 from mautrix.client import EventHandler
-from mautrix.types import EventType, MessageEvent
+from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
+                           MessageType, TextMessageEventContent, Format)
 
 from .command_spec import ParsedCommand, CommandSpec
+
+
+class MaubotMessageEvent(MessageEvent):
+    _client: MatrixClient
+
+    def __init__(self, base: MessageEvent, client: MatrixClient):
+        super().__init__(**{a.name.lstrip("_"): getattr(base, a.name)
+                            for a in attr.fields(MessageEvent)})
+        self._client = client
+
+    def respond(self, content: Union[str, MessageEventContent],
+                event_type: EventType = EventType.ROOM_MESSAGE,
+                markdown: bool = True) -> Awaitable[EventID]:
+        if isinstance(content, str):
+            content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
+            if markdown:
+                content.format = Format.HTML
+                content.formatted_body = commonmark.commonmark(content.body)
+        return self._client.send_message_event(self.room_id, event_type, content)
+
+    def reply(self, content: Union[str, MessageEventContent],
+              event_type: EventType = EventType.ROOM_MESSAGE,
+              markdown: bool = True) -> Awaitable[EventID]:
+        if isinstance(content, str):
+            content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
+            if markdown:
+                content.format = Format.HTML
+                content.formatted_body = commonmark.commonmark(content.body)
+        content.set_reply(self)
+        return self._client.send_message_event(self.room_id, event_type, content)
+
+    def mark_read(self) -> Awaitable[None]:
+        return self._client.send_receipt(self.room_id, self.event_id, "m.read")
 
 
 class MaubotMatrixClient(MatrixClient):
@@ -75,3 +111,16 @@ class MaubotMatrixClient(MatrixClient):
             self.command_handlers[command].remove(handler)
         except (KeyError, ValueError):
             pass
+
+    def call_handlers(self, event: Event) -> Awaitable[None]:
+        if isinstance(event, MessageEvent):
+            if event.sender == self.mxid:
+                return
+            event = MaubotMessageEvent(event, self)
+        return super().call_handlers(event)
+
+    async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
+        event = await super().get_event(room_id, event_id)
+        if isinstance(event, MessageEvent):
+            return MaubotMessageEvent(event, self)
+        return event
