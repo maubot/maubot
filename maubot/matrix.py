@@ -112,12 +112,12 @@ class MaubotMatrixClient(MatrixClient):
         except (KeyError, ValueError):
             pass
 
-    def call_handlers(self, event: Event) -> Awaitable[None]:
+    async def call_handlers(self, event: Event) -> None:
         if isinstance(event, MessageEvent):
             if event.sender == self.mxid:
                 return
             event = MaubotMessageEvent(event, self)
-        return super().call_handlers(event)
+        return await super().call_handlers(event)
 
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
         event = await super().get_event(room_id, event_id)
