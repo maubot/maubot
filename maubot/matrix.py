@@ -84,6 +84,8 @@ class MaubotMatrixClient(MatrixClient):
             pass
 
     async def _command_event_handler(self, evt: MessageEvent) -> None:
+        if evt.sender == self.mxid or evt.content.msgtype != MessageType.TEXT:
+            return
         for command in self.commands:
             if command.match(evt):
                 await self._trigger_command(command, evt)
@@ -114,8 +116,6 @@ class MaubotMatrixClient(MatrixClient):
 
     async def call_handlers(self, event: Event) -> None:
         if isinstance(event, MessageEvent):
-            if event.sender == self.mxid:
-                return
             event = MaubotMessageEvent(event, self)
         return await super().call_handlers(event)
 
