@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import copy
 import sys
+import signal
 
 from .config import Config
 from .db import Base, init as init_db
@@ -63,16 +64,20 @@ plugins = PluginInstance.all()
 for plugin in plugins:
     plugin.load()
 
+signal.signal(signal.SIGINT, signal.default_int_handler)
+signal.signal(signal.SIGTERM, signal.default_int_handler)
+
 try:
     loop.run_until_complete(asyncio.gather(
         server.start(),
         *[plugin.start() for plugin in plugins]))
-    log.debug("Startup actions complete, running forever.")
+    log.debug("Startup actions complete, running forever")
     loop.run_forever()
 except KeyboardInterrupt:
-    log.debug("Keyboard interrupt received, stopping...")
+    log.debug("Interrupt received, stopping HTTP clients/servers and saving database")
     for client in Client.cache.values():
         client.stop()
     db_session.commit()
     loop.run_until_complete(server.stop())
+    log.debug("Everything stopped, shutting down")
     sys.exit(0)
