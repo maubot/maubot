@@ -21,7 +21,6 @@ import json
 
 from mautrix.types import UserID, FilterID, SyncToken, ContentURI
 from mautrix.client.api.types.util import Serializable
-from mautrix import ClientStore
 
 from .command_spec import CommandSpec
 
