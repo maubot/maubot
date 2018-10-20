@@ -14,8 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, List, Optional
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml import YAML
 import logging
+import io
 
+from mautrix.util import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
 
 from .db import DBPlugin
@@ -24,6 +28,9 @@ from .loader import PluginLoader
 from .plugin_base import Plugin
 
 log = logging.getLogger("maubot.plugin")
+
+yaml = YAML()
+yaml.indent(4)
 
 
 class PluginInstance:
@@ -34,10 +41,12 @@ class PluginInstance:
     loader: PluginLoader
     client: Client
     plugin: Plugin
+    config: BaseProxyConfig
 
     def __init__(self, db_instance: DBPlugin):
         self.db_instance = db_instance
         self.log = logging.getLogger(f"maubot.plugin.{self.id}")
+        self.config = None
         self.cache[self.id] = self
 
     def load(self) -> None:
@@ -53,12 +62,31 @@ class PluginInstance:
             self.enabled = False
         self.log.debug("Plugin instance dependencies loaded")
 
+    def load_config(self) -> CommentedMap:
+        return yaml.load(self.db_instance.config)
+
+    def load_config_base(self) -> Optional[RecursiveDict[CommentedMap]]:
+        try:
+            base = self.loader.read_file("base-config.yaml")
+            return yaml.load(base.decode("utf-8"))
+        except (FileNotFoundError, KeyError):
+            return None
+
+    def save_config(self, data: RecursiveDict[CommentedMap]) -> None:
+        buf = io.StringIO()
+        yaml.dump(data, buf)
+        self.db_instance.config = buf.getvalue()
+
     async def start(self) -> None:
         if not self.enabled:
-            self.log.warn(f"Plugin disabled, not starting.")
+            self.log.warning(f"Plugin disabled, not starting.")
             return
         cls = self.loader.load()
-        self.plugin = cls(self.client.client, self.id, self.log)
+        config_class = cls.get_config_class()
+        if config_class:
+            self.config = config_class(self.load_config, self.load_config_base,
+                                       self.save_config)
+        self.plugin = cls(self.client.client, self.id, self.log, self.config)
         self.loader.references |= {self}
         await self.plugin.start()
         self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "

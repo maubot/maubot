@@ -16,10 +16,10 @@
 import random
 import string
 
-from mautrix.util import BaseConfig
+from mautrix.util import BaseFileConfig
 
 
-class Config(BaseConfig):
+class Config(BaseFileConfig):
     @staticmethod
     def _new_token() -> str:
         return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(64))

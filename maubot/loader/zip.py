@@ -41,6 +41,7 @@ class ZippedPluginLoader(PluginLoader):
     main_module: str
     _loaded: Type[PluginClass]
     _importer: zipimporter
+    _file: ZipFile
 
     def __init__(self, path: str) -> None:
         super().__init__()
@@ -76,10 +77,13 @@ class ZippedPluginLoader(PluginLoader):
                 f"id='{self.id}' "
                 f"loaded={self._loaded is not None}>")
 
+    def read_file(self, path: str) -> bytes:
+        return self._file.read(path)
+
     def _load_meta(self) -> None:
         try:
-            file = ZipFile(self.path)
-            data = file.read("maubot.ini")
+            self._file = ZipFile(self.path)
+            data = self._file.read("maubot.ini")
         except FileNotFoundError as e:
             raise MaubotZipImportError("Maubot plugin not found") from e
         except BadZipFile as e:

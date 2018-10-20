@@ -58,6 +58,7 @@ class DBPlugin(Base):
     primary_user: UserID = Column(String(255),
                                   ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
                                   nullable=False)
+    config: str = Column(Text, nullable=False, default='')
 
 
 class DBClient(Base):

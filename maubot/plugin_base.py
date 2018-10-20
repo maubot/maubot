@@ -13,30 +13,40 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TYPE_CHECKING
+from typing import Type, Optional, TYPE_CHECKING
 from logging import Logger
-from abc import ABC
+from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
     from .client import MaubotMatrixClient
     from .command_spec import CommandSpec
+    from mautrix.util import BaseProxyConfig
 
 
 class Plugin(ABC):
     client: 'MaubotMatrixClient'
     id: str
     log: Logger
+    config: Optional['BaseProxyConfig']
 
-    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger) -> None:
+    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger,
+                 config: Optional['BaseProxyConfig']) -> None:
         self.client = client
         self.id = plugin_instance_id
         self.log = log
+        self.config = config
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
         self.client.set_command_spec(self.id, spec)
 
+    @abstractmethod
     async def start(self) -> None:
         pass
 
+    @abstractmethod
     async def stop(self) -> None:
         pass
+
+    @classmethod
+    def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
+        return None

@@ -70,6 +70,7 @@ class ParsedCommand:
     def _init_active(self, command: Command) -> None:
         self.name = command.syntax
         self.is_passive = False
+        self.arguments = []
 
         regex_builder = []
         sw_builder = []

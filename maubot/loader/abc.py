@@ -48,6 +48,10 @@ class PluginLoader(ABC):
         pass
 
     @abstractmethod
+    def read_file(self, path: str) -> bytes:
+        pass
+
+    @abstractmethod
     def load(self) -> Type[PluginClass]:
         pass
 
