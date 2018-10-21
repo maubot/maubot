@@ -68,14 +68,25 @@ for plugin in plugins:
 signal.signal(signal.SIGINT, signal.default_int_handler)
 signal.signal(signal.SIGTERM, signal.default_int_handler)
 
+stop = False
+
+
+async def periodic_commit():
+    while not stop:
+        await asyncio.sleep(60)
+        db_session.commit()
+
+
 try:
     loop.run_until_complete(asyncio.gather(
         server.start(),
         *[plugin.start() for plugin in plugins]))
     log.debug("Startup actions complete, running forever")
+    loop.run_until_complete(periodic_commit())
     loop.run_forever()
 except KeyboardInterrupt:
     log.debug("Interrupt received, stopping HTTP clients/servers and saving database")
+    stop = True
     for client in Client.cache.values():
         client.stop()
     db_session.commit()
