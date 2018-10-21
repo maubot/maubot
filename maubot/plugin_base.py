@@ -17,6 +17,9 @@ from typing import Type, Optional, TYPE_CHECKING
 from logging import Logger
 from abc import ABC, abstractmethod
 
+from sqlalchemy.engine.base import Engine
+import sqlalchemy as sql
+
 if TYPE_CHECKING:
     from .client import MaubotMatrixClient
     from .command_spec import CommandSpec
@@ -35,6 +38,9 @@ class Plugin(ABC):
         self.id = plugin_instance_id
         self.log = log
         self.config = config
+
+    def request_db_engine(self) -> Engine:
+        return sql.create_engine(f"sqlite:///{self.id}.db")
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
         self.client.set_command_spec(self.id, spec)

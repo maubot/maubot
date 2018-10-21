@@ -64,7 +64,7 @@ class ParsedCommand:
         self.name = command.name
         self.is_passive = True
         self.match_against = command.match_against
-        self.matches = re.compile(command.matches)
+        self.matches = re.compile(command.matches, re.UNICODE)
         self.match_event = command.match_event
 
     def _init_active(self, command: Command) -> None:
@@ -90,7 +90,7 @@ class ParsedCommand:
                     sw_builder.append(word)
                 regex_builder.append(re.escape(word))
         self.starts_with = "!" + " ".join(sw_builder)
-        self.matches = re.compile("^!" + " ".join(regex_builder) + "$")
+        self.matches = re.compile("^!" + " ".join(regex_builder) + "$", re.UNICODE)
         self.match_against = "body"
 
     def match(self, evt: MessageEvent) -> bool:
