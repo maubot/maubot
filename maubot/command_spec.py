@@ -31,7 +31,7 @@ class Argument(SerializableAttrs['Argument']):
 @dataclass
 class Command(SerializableAttrs['Command']):
     syntax: str
-    arguments: Dict[str, Argument]
+    arguments: Dict[str, Argument] = {}
     description: str = None
 
 
@@ -80,7 +80,9 @@ class ParsedCommand:
             arg = command.arguments.get(word, None)
             if arg is not None and len(word) > 0:
                 argument_encountered = True
-                regex = f"({arg.matches})" if arg.required else f"(?:{arg.matches})?"
+                regex = f"({arg.matches})"
+                if not arg.required:
+                    regex += "?"
                 self.arguments.append(word)
                 regex_builder.append(regex)
             else:
