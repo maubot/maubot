@@ -16,7 +16,7 @@
 import random
 import string
 
-from mautrix.util import BaseFileConfig
+from mautrix.util import BaseFileConfig, ConfigUpdateHelper
 
 
 class Config(BaseFileConfig):
@@ -24,10 +24,11 @@ class Config(BaseFileConfig):
     def _new_token() -> str:
         return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(64))
 
-    def update(self):
-        base, copy, copy_dict = self._pre_update()
+    def do_update(self, helper: ConfigUpdateHelper) -> None:
+        base, copy, _ = helper
         copy("database")
         copy("plugin_directories")
+        copy("plugin_db_directory")
         copy("server.hostname")
         copy("server.port")
         copy("server.listen")
@@ -37,4 +38,5 @@ class Config(BaseFileConfig):
             base["server.shared_secret"] = self._new_token()
         else:
             base["server.shared_secret"] = shared_secret
+        copy("admins")
         copy("logging")

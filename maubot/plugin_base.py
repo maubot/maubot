@@ -16,6 +16,7 @@
 from typing import Type, Optional, TYPE_CHECKING
 from logging import Logger
 from abc import ABC, abstractmethod
+import os.path
 
 from sqlalchemy.engine.base import Engine
 import sqlalchemy as sql
@@ -33,14 +34,15 @@ class Plugin(ABC):
     config: Optional['BaseProxyConfig']
 
     def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger,
-                 config: Optional['BaseProxyConfig']) -> None:
+                 config: Optional['BaseProxyConfig'], db_base_path: str) -> None:
         self.client = client
         self.id = plugin_instance_id
         self.log = log
         self.config = config
+        self.__db_base_path = db_base_path
 
     def request_db_engine(self) -> Engine:
-        return sql.create_engine(f"sqlite:///{self.id}.db")
+        return sql.create_engine(f"sqlite:///{os.path.join(self.__db_base_path, self.id)}.db")
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
         self.client.set_command_spec(self.id, spec)

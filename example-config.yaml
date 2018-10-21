@@ -5,6 +5,9 @@
 #   Postgres: postgres://username:password@hostname/dbname
 database: sqlite:///maubot.db
 
+# The directory where plugin databases should be stored.
+plugin_db_directory: ./plugins
+
 # If multiple directories have a plugin with the same name, the first directory is used.
 plugin_directories:
 - ./plugins

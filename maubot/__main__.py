@@ -27,7 +27,7 @@ from .db import Base, init as init_db
 from .server import MaubotServer
 from .client import Client, init as init_client
 from .loader import ZippedPluginLoader
-from .plugin import PluginInstance
+from .plugin import PluginInstance, init as init_plugin_instance_class
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -57,6 +57,7 @@ loop = asyncio.get_event_loop()
 
 init_db(db_session)
 init_client(loop)
+init_plugin_instance_class(config)
 server = MaubotServer(config, loop)
 ZippedPluginLoader.load_all(*config["plugin_directories"])
 plugins = PluginInstance.all()
