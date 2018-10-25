@@ -1,0 +1,25 @@
+{
+  "name": "maubot-manager",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "node-sass": "^4.9.4",
+    "react": "^16.6.0",
+    "react-dom": "^16.6.0",
+    "react-scripts": "2.0.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    "last 5 firefox versions",
+    "last 3 and_ff versions",
+    "last 5 chrome versions",
+    "last 3 and_chr versions",
+    "last 2 safari versions",
+    "last 2 ios_saf versions"
+  ]
+}
