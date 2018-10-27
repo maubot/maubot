@@ -59,9 +59,9 @@ paths:
               type: string
               format: binary
               example: The plugin maubot archive (.mbp)
-  '/plugin/{type}':
+  '/plugin/{id}':
     parameters:
-    - name: type
+    - name: id
       in: path
       description: The ID of the plugin to get
       required: true
@@ -94,15 +94,26 @@ paths:
         404:
           description: Plugin not found
         412:
-          description: Instances of the uploaded plugin type exists, so the plugin can't be deleted
-  '/instance/{type}/{id}':
+          description: One or more plugin instances of this type exist
+
+  /instances:
+    get:
+      operationId: get_instances
+      summary: Get all plugin instances
+      tags: [Plugin instances]
+      responses:
+        200:
+          description: The list of instances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PluginInstance'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  '/instance/{id}':
     parameters:
-    - name: type
-      in: path
-      description: The ID of the plugin whose instance to get
-      required: true
-      schema:
-        type: string
     - name: id
       in: path
       description: The ID of the instance to get
@@ -137,7 +148,7 @@ paths:
           description: Plugin or instance not found
     put:
       operationId: update_instance
-      summary: Edit the details of a plugin instance
+      summary: Create a plugin instance or edit the details of an existing plugin instance
       tags: [Plugin instances]
       responses:
         200:
@@ -188,7 +199,7 @@ paths:
           description: Client not found
     put:
       operationId: update_client
-      summary: Update a Matrix client
+      summary: Create or update a Matrix client
       tags: [Client]
       responses:
         200:
@@ -218,6 +229,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         404:
           description: Client not found
+        412:
+          description: One or more plugin instances with this as their primary client exist
 
 components:
   responses:
