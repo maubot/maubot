@@ -1,0 +1,319 @@
+openapi: 3.0.0
+info:
+  title: Maubot Management
+  version: 0.1.0
+  description: The API to manage a [maubot](https://github.com/maubot/maubot) instance
+  license:
+    name: GNU Affero General Public License version 3
+    url: 'https://github.com/maubot/maubot/blob/master/LICENSE'
+security:
+  - bearer: []
+servers:
+  - url: /_matrix/maubot/v1
+
+paths:
+  /plugins:
+    get:
+      operationId: get_plugins
+      summary: Get the list of installed plugins
+      tags: [Plugin]
+      responses:
+        200:
+          description: The list of plugins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plugin'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  /plugins/upload:
+    post:
+      operationId: upload_plugin
+      summary: Upload a new plugin
+      tags: [Plugin]
+      responses:
+        200:
+          description: Plugin uploaded and replaced current version successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        201:
+          description: New plugin uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        412:
+          description: >-
+            Instances of the uploaded plugin type are currently active,
+            therefore the plugin can't be updated
+      requestBody:
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+              example: The plugin maubot archive (.mbp)
+  '/plugin/{type}':
+    parameters:
+    - name: type
+      in: path
+      description: The ID of the plugin to get
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: get_plugin
+      summary: Get information about a specific plugin
+      tags: [Plugin]
+      responses:
+        200:
+          description: Plugin found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Plugin not found
+    delete:
+      operationId: delete_plugin
+      summary: Delete a plugin
+      tags: [Plugin]
+      responses:
+        204:
+          description: Plugin deleted
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Plugin not found
+        412:
+          description: Instances of the uploaded plugin type exists, so the plugin can't be deleted
+  '/instance/{type}/{id}':
+    parameters:
+    - name: type
+      in: path
+      description: The ID of the plugin whose instance to get
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: path
+      description: The ID of the instance to get
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: get_instance
+      summary: Get information about a specific plugin instance
+      tags: [Plugin instances]
+      responses:
+        200:
+          description: Plugin instance found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginInstance'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Plugin or instance not found
+    delete:
+      operationId: delete_instance
+      summary: Delete a specific plugin instance
+      tags: [Plugin instances]
+      responses:
+        204:
+          description: Plugin instance deleted
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Plugin or instance not found
+    put:
+      operationId: update_instance
+      summary: Edit the details of a plugin instance
+      tags: [Plugin instances]
+      responses:
+        200:
+          description: Plugin instance edited
+        201:
+          description: Plugin instance created
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Plugin or instance not found
+
+  '/clients':
+    get:
+      operationId: get_clients
+      summary: Get the list of Matrix clients
+      tags: [Client]
+      responses:
+        200:
+          description: The list of plugins
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClientList'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  '/client/{user_id}':
+    parameters:
+    - name: user_id
+      in: path
+      description: The Matrix user ID of the client to get
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: get_client
+      summary: Get information about a specific Matrix client
+      tags: [Client]
+      responses:
+        200:
+          description: Client found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Client not found
+    put:
+      operationId: update_client
+      summary: Update a Matrix client
+      tags: [Client]
+      responses:
+        200:
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        201:
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Client not found
+    delete:
+      operationId: delete_client
+      summary: Delete a Matrix client
+      tags: [Client]
+      responses:
+        204:
+          description: Client deleted
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Client not found
+
+components:
+  responses:
+    Unauthorized:
+      description: Invalid or missing access token
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: Required authentication for all endpoints
+  schemas:
+    Plugin:
+      type: object
+      properties:
+        id:
+          type: string
+          example: xyz.maubot.jesaribot
+        version:
+          type: string
+          example: 2.0.0
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginInstance'
+    PluginInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          example: jesaribot
+          readOnly: true
+        type:
+          type: string
+          example: xyz.maubot.jesaribot
+        enabled:
+          type: boolean
+          example: true
+        primary_user:
+          type: string
+          example: '@putkiteippi:maunium.net'
+    MatrixClientList:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            example: '@putkiteippi:maunium.net'
+          homeserver:
+            type: string
+            example: 'https://maunium.net'
+          enabled:
+            type: boolean
+            example: true
+          sync:
+            type: boolean
+            example: true
+          autojoin:
+            type: boolean
+            example: true
+          displayname:
+            type: string
+            example: J. E. Saarinen
+          avatar_url:
+            type: string
+            example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
+          instance_count:
+            type: integer
+            example: 1
+    MatrixClient:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '@putkiteippi:maunium.net'
+        homeserver:
+          type: string
+          example: 'https://maunium.net'
+        access_token:
+          type: string
+        enabled:
+          type: boolean
+          example: true
+        sync:
+          type: boolean
+          example: true
+        autojoin:
+          type: boolean
+          example: true
+        displayname:
+          type: string
+          example: J. E. Saarinen
+        avatar_url:
+          type: string
+          example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginInstance'

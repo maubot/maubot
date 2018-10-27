@@ -8,7 +8,7 @@ pip-selfcheck.json
 __pycache__
 
 *.db
-*.yaml
+/*.yaml
 !example-config.yaml
 
 logs/
