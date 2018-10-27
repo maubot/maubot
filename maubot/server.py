@@ -23,13 +23,15 @@ from .__meta__ import __version__
 
 
 class MaubotServer:
-    def __init__(self, config: Config, loop: asyncio.AbstractEventLoop):
+    def __init__(self, config: Config, management: web.Application,
+                 loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop or asyncio.get_event_loop()
         self.app = web.Application(loop=self.loop)
         self.config = config
 
         path = PathBuilder(config["server.base_path"])
         self.add_route(Method.GET, path.version, self.version)
+        self.app.add_subapp(config["server.base_path"], management)
 
         as_path = PathBuilder(config["server.appservice_base_path"])
         self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)

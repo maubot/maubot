@@ -15,11 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import TypeVar, Type, Dict, Set, TYPE_CHECKING
 from abc import ABC, abstractmethod
+import asyncio
 
 from ..plugin_base import Plugin
 
 if TYPE_CHECKING:
-    from ..plugin import PluginInstance
+    from ..instance import PluginInstance
 
 PluginClass = TypeVar("PluginClass", bound=Plugin)
 
@@ -42,6 +43,12 @@ class PluginLoader(ABC):
     def find(cls, plugin_id: str) -> 'PluginLoader':
         return cls.id_cache[plugin_id]
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "version": self.version,
+        }
+
     @property
     @abstractmethod
     def source(self) -> str:
@@ -50,6 +57,12 @@ class PluginLoader(ABC):
     @abstractmethod
     def read_file(self, path: str) -> bytes:
         pass
+
+    async def stop_instances(self) -> None:
+        await asyncio.gather([instance.stop() for instance in self.references if instance.running])
+
+    async def start_instances(self) -> None:
+        await asyncio.gather([instance.start() for instance in self.references if instance.enabled])
 
     @abstractmethod
     def load(self) -> Type[PluginClass]:
@@ -61,4 +74,8 @@ class PluginLoader(ABC):
 
     @abstractmethod
     def unload(self) -> None:
+        pass
+
+    @abstractmethod
+    def delete(self) -> None:
         pass

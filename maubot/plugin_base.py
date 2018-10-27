@@ -24,7 +24,7 @@ import sqlalchemy as sql
 if TYPE_CHECKING:
     from .client import MaubotMatrixClient
     from .command_spec import CommandSpec
-    from mautrix.util import BaseProxyConfig
+    from mautrix.util.config import BaseProxyConfig
 
 
 class Plugin(ABC):

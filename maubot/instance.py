@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, List, Optional
+from sqlalchemy.orm import Session
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml import YAML
 import logging
 import io
 
-from mautrix.util import BaseProxyConfig, RecursiveDict
+from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
 
 from .db import DBPlugin
@@ -35,6 +36,7 @@ yaml.indent(4)
 
 
 class PluginInstance:
+    db: Session = None
     mb_config: Config = None
     cache: Dict[str, 'PluginInstance'] = {}
     plugin_directories: List[str] = []
@@ -44,12 +46,23 @@ class PluginInstance:
     client: Client
     plugin: Plugin
     config: BaseProxyConfig
+    running: bool
 
     def __init__(self, db_instance: DBPlugin):
         self.db_instance = db_instance
         self.log = logging.getLogger(f"maubot.plugin.{self.id}")
         self.config = None
+        self.running = False
         self.cache[self.id] = self
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "enabled": self.enabled,
+            "running": self.running,
+            "primary_user": self.primary_user,
+        }
 
     def load(self) -> None:
         try:
@@ -63,6 +76,13 @@ class PluginInstance:
             self.log.error(f"Failed to get client for user {self.primary_user}")
             self.enabled = False
         self.log.debug("Plugin instance dependencies loaded")
+        self.loader.references.add(self)
+        self.client.references.add(self)
+
+    def delete(self) -> None:
+        self.loader.references.remove(self)
+        self.db.delete(self.db_instance)
+        # TODO delete plugin db
 
     def load_config(self) -> CommentedMap:
         return yaml.load(self.db_instance.config)
@@ -90,14 +110,14 @@ class PluginInstance:
                                        self.save_config)
         self.plugin = cls(self.client.client, self.id, self.log, self.config,
                           self.mb_config["plugin_db_directory"])
-        self.loader.references |= {self}
         await self.plugin.start()
+        self.running = True
         self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "
                       f"with user {self.client.id}")
 
     async def stop(self) -> None:
         self.log.debug("Stopping plugin instance...")
-        self.loader.references -= {self}
+        self.running = False
         await self.plugin.stop()
         self.plugin = None
 
@@ -130,10 +150,6 @@ class PluginInstance:
     def type(self) -> str:
         return self.db_instance.type
 
-    @type.setter
-    def type(self, value: str) -> None:
-        self.db_instance.type = value
-
     @property
     def enabled(self) -> bool:
         return self.db_instance.enabled
@@ -153,5 +169,6 @@ class PluginInstance:
     # endregion
 
 
-def init(config: Config):
+def init(db: Session, config: Config):
+    PluginInstance.db = db
     PluginInstance.mb_config = config

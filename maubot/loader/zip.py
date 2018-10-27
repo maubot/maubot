@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Tuple
 from zipfile import ZipFile, BadZipFile
 import configparser
 import logging
@@ -60,8 +60,15 @@ class ZippedPluginLoader(PluginLoader):
         self.id_cache[self.id] = self
         self.log.debug(f"Preloaded plugin {self.id} from {self.path}")
 
+    def to_dict(self) -> dict:
+        return {
+            **super().to_dict(),
+            "path": self.path
+        }
+
     @classmethod
     def get(cls, path: str) -> 'ZippedPluginLoader':
+        path = os.path.abspath(path)
         try:
             return cls.path_cache[path]
         except KeyError:
@@ -80,10 +87,11 @@ class ZippedPluginLoader(PluginLoader):
     def read_file(self, path: str) -> bytes:
         return self._file.read(path)
 
-    def _load_meta(self) -> None:
+    @staticmethod
+    def _open_meta(source) -> Tuple[ZipFile, configparser.ConfigParser]:
         try:
-            self._file = ZipFile(self.path)
-            data = self._file.read("maubot.ini")
+            file = ZipFile(source)
+            data = file.read("maubot.ini")
         except FileNotFoundError as e:
             raise MaubotZipImportError("Maubot plugin not found") from e
         except BadZipFile as e:
@@ -92,7 +100,14 @@ class ZippedPluginLoader(PluginLoader):
             raise MaubotZipImportError("File does not contain a maubot plugin definition") from e
         config = configparser.ConfigParser()
         try:
-            config.read_string(data.decode("utf-8"), source=f"{self.path}/maubot.ini")
+            config.read_string(data.decode("utf-8"))
+        except (configparser.Error, KeyError, IndexError, ValueError) as e:
+            raise MaubotZipImportError("Maubot plugin definition in file is invalid") from e
+        return file, config
+
+    @classmethod
+    def _read_meta(cls, config: configparser.ConfigParser) -> Tuple[str, str, List[str], str, str]:
+        try:
             meta = config["maubot"]
             meta_id = meta["ID"]
             version = meta["Version"]
@@ -103,10 +118,21 @@ class ZippedPluginLoader(PluginLoader):
                 main_module, main_class = main_class.split("/")[:2]
         except (configparser.Error, KeyError, IndexError, ValueError) as e:
             raise MaubotZipImportError("Maubot plugin definition in file is invalid") from e
-        if self.id and meta_id != self.id:
+        return meta_id, version, modules, main_class, main_module
+
+    @classmethod
+    def verify_meta(cls, source) -> Tuple[str, str]:
+        _, config = cls._open_meta(source)
+        meta = cls._read_meta(config)
+        return meta[0], meta[1]
+
+    def _load_meta(self) -> None:
+        file, config = self._open_meta(self.path)
+        meta = self._read_meta(config)
+        if self.id and meta[0] != self.id:
             raise MaubotZipImportError("Maubot plugin ID changed during reload")
-        self.id, self.version, self.modules = meta_id, version, modules
-        self.main_class, self.main_module = main_class, main_module
+        self.id, self.version, self.modules, self.main_class, self.main_module = meta
+        self._file = file
 
     def _get_importer(self, reset_cache: bool = False) -> zipimporter:
         try:
@@ -161,7 +187,7 @@ class ZippedPluginLoader(PluginLoader):
         self._loaded = None
         self.log.debug(f"Unloaded plugin {self.id} at {self.path}")
 
-    def destroy(self) -> None:
+    def delete(self) -> None:
         self.unload()
         try:
             del self.path_cache[self.path]
@@ -171,24 +197,12 @@ class ZippedPluginLoader(PluginLoader):
             del self.id_cache[self.id]
         except KeyError:
             pass
-        self.id = None
-        self.path = None
-        self.version = None
-        self.modules = None
         if self._importer:
             self._importer.remove_cache()
             self._importer = None
         self._loaded = None
-
-    @classmethod
-    def load_all(cls, *args: str) -> None:
-        cls.log.debug("Preloading plugins...")
-        for directory in args:
-            for file in os.listdir(directory):
-                if not file.endswith(".mbp"):
-                    continue
-                path = os.path.join(directory, file)
-                try:
-                    ZippedPluginLoader.get(path)
-                except (MaubotZipImportError, IDConflictError):
-                    cls.log.exception(f"Failed to load plugin at {path}")
+        os.remove(self.path)
+        self.id = None
+        self.path = None
+        self.version = None
+        self.modules = None

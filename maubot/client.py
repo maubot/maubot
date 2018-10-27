@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, TYPE_CHECKING
 from aiohttp import ClientSession
 import asyncio
 import logging
@@ -24,6 +24,9 @@ from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStat
 from .db import DBClient
 from .matrix import MaubotMatrixClient
 
+if TYPE_CHECKING:
+    from .instance import PluginInstance
+
 log = logging.getLogger("maubot.client")
 
 
@@ -32,6 +35,7 @@ class Client:
     cache: Dict[UserID, 'Client'] = {}
     http_client: ClientSession = None
 
+    references: Set['PluginInstance']
     db_instance: DBClient
     client: MaubotMatrixClient
 
@@ -39,6 +43,7 @@ class Client:
         self.db_instance = db_instance
         self.cache[self.id] = self
         self.log = log.getChild(self.id)
+        self.references = set()
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
                                          log=self.log, loop=self.loop, store=self.db_instance)
