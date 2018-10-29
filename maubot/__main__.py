@@ -28,7 +28,7 @@ from .config import Config
 from .db import Base, init as init_db
 from .server import MaubotServer
 from .client import Client, init as init_client
-from .loader import ZippedPluginLoader, MaubotZipImportError, IDConflictError
+from .loader import ZippedPluginLoader
 from .instance import PluginInstance, init as init_plugin_instance_class
 from .management.api import init as init_management
 from .__meta__ import __version__
@@ -64,31 +64,9 @@ init_plugin_instance_class(db_session, config)
 management_api = init_management(config, loop)
 server = MaubotServer(config, management_api, loop)
 
-trash_path = config["plugin_directories.trash"]
-
-
-def trash(file_path: str, new_name: Optional[str] = None) -> None:
-    if trash_path == "delete":
-        os.remove(file_path)
-    else:
-        new_name = new_name or f"{int(time())}-{os.path.basename(file_path)}"
-        os.rename(file_path, os.path.abspath(os.path.join(trash_path, new_name)))
-
-
-ZippedPluginLoader.log.debug("Preloading plugins...")
-for directory in config["plugin_directories.load"]:
-    for file in os.listdir(directory):
-        if not file.endswith(".mbp"):
-            continue
-        path = os.path.abspath(os.path.join(directory, file))
-        try:
-            ZippedPluginLoader.get(path)
-        except MaubotZipImportError:
-            ZippedPluginLoader.log.exception(f"Failed to load plugin at {path}, trashing...")
-            trash(path)
-        except IDConflictError:
-            ZippedPluginLoader.log.warn(f"Duplicate plugin ID at {path}, trashing...")
-            trash(path)
+ZippedPluginLoader.trash_path = config["plugin_directories.trash"]
+ZippedPluginLoader.directories = config["plugin_directories.load"]
+ZippedPluginLoader.load_all()
 
 plugins = PluginInstance.all()
 

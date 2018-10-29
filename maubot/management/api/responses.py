@@ -33,6 +33,30 @@ ErrPluginNotFound = web.json_response({
 ErrPluginInUse = web.json_response({
     "error": "Plugin instances of this type still exist",
     "errcode": "plugin_in_use",
-})
+}, status=web.HTTPPreconditionFailed)
 
-RespDeleted = web.Response(status=204)
+
+def ErrInputPluginInvalid(error) -> web.Response:
+    return web.json_response({
+        "error": str(error),
+        "errcode": "plugin_invalid",
+    }, status=web.HTTPBadRequest)
+
+
+def ErrPluginReloadFailed(error) -> web.Response:
+    return web.json_response({
+        "error": str(error),
+        "errcode": "plugin_invalid",
+    }, status=web.HTTPInternalServerError)
+
+
+ErrNotImplemented = web.json_response({
+    "error": "Not implemented",
+    "errcode": "not_implemented",
+}, status=web.HTTPNotImplemented)
+
+RespOK = web.json_response({
+    "success": True,
+}, status=web.HTTPOk)
+
+RespDeleted = web.Response(status=web.HTTPNoContent)

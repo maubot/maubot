@@ -13,8 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Type, Tuple
+from typing import Dict, List, Type, Tuple, Optional
 from zipfile import ZipFile, BadZipFile
+from time import time
 import configparser
 import logging
 import sys
@@ -31,7 +32,9 @@ class MaubotZipImportError(Exception):
 
 class ZippedPluginLoader(PluginLoader):
     path_cache: Dict[str, 'ZippedPluginLoader'] = {}
-    log = logging.getLogger("maubot.loader.zip")
+    log: logging.Logger = logging.getLogger("maubot.loader.zip")
+    trash_path: str = "delete"
+    directories: List[str] = []
 
     path: str
     id: str
@@ -84,7 +87,7 @@ class ZippedPluginLoader(PluginLoader):
                 f"id='{self.id}' "
                 f"loaded={self._loaded is not None}>")
 
-    def read_file(self, path: str) -> bytes:
+    async def read_file(self, path: str) -> bytes:
         return self._file.read(path)
 
     @staticmethod
@@ -159,7 +162,14 @@ class ZippedPluginLoader(PluginLoader):
             except ZipImportError as e:
                 raise MaubotZipImportError(f"Module {module} not found in file") from e
 
-    def load(self, reset_cache: bool = False) -> Type[PluginClass]:
+    async def load(self, reset_cache: bool = False) -> Type[PluginClass]:
+        try:
+            return self._load(reset_cache)
+        except MaubotZipImportError:
+            self.log.exception(f"Failed to load {self.id} v{self.version}")
+            raise
+
+    def _load(self, reset_cache: bool = False) -> Type[PluginClass]:
         if self._loaded is not None and not reset_cache:
             return self._loaded
         importer = self._get_importer(reset_cache=reset_cache)
@@ -176,19 +186,19 @@ class ZippedPluginLoader(PluginLoader):
         self.log.debug(f"Loaded and imported plugin {self.id} from {self.path}")
         return plugin
 
-    def reload(self) -> Type[PluginClass]:
-        self.unload()
-        return self.load(reset_cache=True)
+    async def reload(self) -> Type[PluginClass]:
+        await self.unload()
+        return await self.load(reset_cache=True)
 
-    def unload(self) -> None:
+    async def unload(self) -> None:
         for name, mod in list(sys.modules.items()):
             if getattr(mod, "__file__", "").startswith(self.path):
                 del sys.modules[name]
         self._loaded = None
         self.log.debug(f"Unloaded plugin {self.id} at {self.path}")
 
-    def delete(self) -> None:
-        self.unload()
+    async def delete(self) -> None:
+        await self.unload()
         try:
             del self.path_cache[self.path]
         except KeyError:
@@ -206,3 +216,28 @@ class ZippedPluginLoader(PluginLoader):
         self.path = None
         self.version = None
         self.modules = None
+
+    @classmethod
+    def trash(cls, file_path: str, new_name: Optional[str] = None, reason: str = "error") -> None:
+        if cls.trash_path == "delete":
+            os.remove(file_path)
+        else:
+            new_name = new_name or f"{int(time())}-{reason}-{os.path.basename(file_path)}"
+            os.rename(file_path, os.path.abspath(os.path.join(cls.trash_path, new_name)))
+
+    @classmethod
+    def load_all(cls):
+        cls.log.debug("Preloading plugins...")
+        for directory in cls.directories:
+            for file in os.listdir(directory):
+                if not file.endswith(".mbp"):
+                    continue
+                path = os.path.abspath(os.path.join(directory, file))
+                try:
+                    cls.get(path)
+                except MaubotZipImportError:
+                    cls.log.exception(f"Failed to load plugin at {path}, trashing...")
+                    cls.trash(path)
+                except IDConflictError:
+                    cls.log.error(f"Duplicate plugin ID at {path}, trashing...")
+                    cls.trash(path)

@@ -55,7 +55,7 @@ class PluginLoader(ABC):
         pass
 
     @abstractmethod
-    def read_file(self, path: str) -> bytes:
+    async def read_file(self, path: str) -> bytes:
         pass
 
     async def stop_instances(self) -> None:
@@ -65,17 +65,17 @@ class PluginLoader(ABC):
         await asyncio.gather([instance.start() for instance in self.references if instance.enabled])
 
     @abstractmethod
-    def load(self) -> Type[PluginClass]:
+    async def load(self) -> Type[PluginClass]:
         pass
 
     @abstractmethod
-    def reload(self) -> Type[PluginClass]:
+    async def reload(self) -> Type[PluginClass]:
         pass
 
     @abstractmethod
-    def unload(self) -> None:
+    async def unload(self) -> None:
         pass
 
     @abstractmethod
-    def delete(self) -> None:
+    async def delete(self) -> None:
         pass

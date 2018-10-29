@@ -32,6 +32,7 @@ paths:
     post:
       operationId: upload_plugin
       summary: Upload a new plugin
+      description: Upload a new plugin. If the plugin already exists, enabled instances will be restarted.
       tags: [Plugin]
       responses:
         200:
@@ -81,10 +82,11 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Plugin not found
+          $ref: '#/components/responses/PluginNotFound'
     delete:
       operationId: delete_plugin
       summary: Delete a plugin
+      description: Delete a plugin. All instances of the plugin must be deleted before deleting the plugin.
       tags: [Plugin]
       responses:
         204:
@@ -92,9 +94,28 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Plugin not found
+          $ref: '#/components/responses/PluginNotFound'
         412:
           description: One or more plugin instances of this type exist
+  /plugin/{id}/reload:
+    parameters:
+    - name: id
+      in: path
+      description: The ID of the plugin to get
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: reload_plugin
+      summary: Reload a plugin from disk
+      tags: [Plugin]
+      responses:
+        200:
+          description: Plugin reloaded
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/PluginNotFound'
 
   /instances:
     get:
@@ -134,7 +155,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Plugin or instance not found
+          $ref: '#/components/responses/InstanceNotFound'
     delete:
       operationId: delete_instance
       summary: Delete a specific plugin instance
@@ -145,7 +166,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Plugin or instance not found
+          $ref: '#/components/responses/InstanceNotFound'
     put:
       operationId: update_instance
       summary: Create a plugin instance or edit the details of an existing plugin instance
@@ -158,7 +179,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Plugin or instance not found
+          $ref: '#/components/responses/InstanceNotFound'
 
   '/clients':
     get:
@@ -196,7 +217,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Client not found
+          $ref: '#/components/responses/ClientNotFound'
     put:
       operationId: update_client
       summary: Create or update a Matrix client
@@ -217,7 +238,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Client not found
+          $ref: '#/components/responses/ClientNotFound'
     delete:
       operationId: delete_client
       summary: Delete a Matrix client
@@ -228,7 +249,7 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
-          description: Client not found
+          $ref: '#/components/responses/ClientNotFound'
         412:
           description: One or more plugin instances with this as their primary client exist
 
@@ -236,6 +257,12 @@ components:
   responses:
     Unauthorized:
       description: Invalid or missing access token
+    PluginNotFound:
+      description: Plugin not found
+    ClientNotFound:
+      description: Client not found
+    InstanceNotFound:
+      description: Plugin instance not found
   securitySchemes:
     bearer:
       type: http
