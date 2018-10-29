@@ -43,6 +43,7 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         maubot=maubot.__main__:main
+        mbp=maubot.cli.__main__:main
     """,
     data_files=[
         (".", ["example-config.yaml"]),
