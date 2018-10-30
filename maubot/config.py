@@ -16,7 +16,7 @@
 import random
 import string
 
-from mautrix.util import BaseFileConfig, ConfigUpdateHelper
+from mautrix.util.config import BaseFileConfig, ConfigUpdateHelper
 
 
 class Config(BaseFileConfig):

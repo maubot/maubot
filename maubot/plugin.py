@@ -19,7 +19,7 @@ from ruamel.yaml import YAML
 import logging
 import io
 
-from mautrix.util import BaseProxyConfig, RecursiveDict
+from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
 
 from .db import DBPlugin
