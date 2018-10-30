@@ -36,19 +36,26 @@ ErrPluginInUse = web.json_response({
 }, status=web.HTTPPreconditionFailed)
 
 
-def ErrInputPluginInvalid(error) -> web.Response:
+def plugin_import_error(error: str, stacktrace: str) -> web.Response:
     return web.json_response({
-        "error": str(error),
+        "error": error,
+        "stacktrace": stacktrace,
         "errcode": "plugin_invalid",
     }, status=web.HTTPBadRequest)
 
 
-def ErrPluginReloadFailed(error) -> web.Response:
+def plugin_reload_error(error: str, stacktrace: str) -> web.Response:
     return web.json_response({
-        "error": str(error),
-        "errcode": "plugin_invalid",
+        "error": error,
+        "stacktrace": stacktrace,
+        "errcode": "plugin_reload_fail",
     }, status=web.HTTPInternalServerError)
 
+
+ErrUnsupportedPluginLoader = web.json_response({
+    "error": "Existing plugin with same ID uses unsupported plugin loader",
+    "errcode": "unsupported_plugin_loader",
+}, status=web.HTTPBadRequest)
 
 ErrNotImplemented = web.json_response({
     "error": "Not implemented",

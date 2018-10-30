@@ -15,11 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
 from io import BytesIO
+import traceback
 import os.path
 
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
-from .responses import (ErrPluginNotFound, ErrPluginInUse, ErrInputPluginInvalid,
-                        ErrPluginReloadFailed, RespDeleted, RespOK)
+from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
+                        plugin_reload_error, RespDeleted, RespOK, ErrUnsupportedPluginLoader)
 from . import routes, config
 
 
@@ -62,7 +63,55 @@ async def reload_plugin(request: web.Request) -> web.Response:
     plugin = PluginLoader.id_cache.get(plugin_id, None)
     if not plugin:
         return ErrPluginNotFound
-    return await reload(plugin)
+
+    await plugin.stop_instances()
+    try:
+        await plugin.reload()
+    except MaubotZipImportError as e:
+        return plugin_reload_error(str(e), traceback.format_exc())
+    await plugin.start_instances()
+    return RespOK
+
+
+async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Response:
+    path = os.path.join(config["plugin_directories.upload"], f"{pid}-v{version}.mbp")
+    with open(path, "wb") as p:
+        p.write(content)
+    try:
+        ZippedPluginLoader.get(path)
+    except MaubotZipImportError as e:
+        ZippedPluginLoader.trash(path)
+        return plugin_import_error(str(e), traceback.format_exc())
+    return RespOK
+
+
+async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str
+                                    ) -> web.Response:
+    dirname = os.path.dirname(plugin.path)
+    filename = os.path.basename(plugin.path)
+    if plugin.version in filename:
+        filename = filename.replace(plugin.version, new_version)
+    else:
+        filename = filename.rstrip(".mbp") + new_version + ".mbp"
+    path = os.path.join(dirname, filename)
+    with open(path, "wb") as p:
+        p.write(content)
+    old_path = plugin.path
+    plugin.path = path
+    await plugin.stop_instances()
+    try:
+        await plugin.reload()
+    except MaubotZipImportError as e:
+        plugin.path = old_path
+        try:
+            await plugin.reload()
+        except MaubotZipImportError:
+            pass
+        await plugin.start_instances()
+        return plugin_import_error(str(e), traceback.format_exc())
+    await plugin.start_instances()
+    ZippedPluginLoader.trash(plugin.path, reason="update")
+    return RespOK
 
 
 @routes.post("/plugins/upload")
@@ -72,40 +121,11 @@ async def upload_plugin(request: web.Request) -> web.Response:
     try:
         pid, version = ZippedPluginLoader.verify_meta(file)
     except MaubotZipImportError as e:
-        return ErrInputPluginInvalid(e)
+        return plugin_import_error(str(e), traceback.format_exc())
     plugin = PluginLoader.id_cache.get(pid, None)
     if not plugin:
-        path = os.path.join(config["plugin_directories.upload"], f"{pid}-v{version}.mbp")
-        with open(path, "wb") as p:
-            p.write(content)
-        try:
-            ZippedPluginLoader.get(path)
-        except MaubotZipImportError as e:
-            ZippedPluginLoader.trash(path)
-            # TODO log error?
-            return ErrInputPluginInvalid(e)
+        return await upload_new_plugin(content, pid, version)
     elif isinstance(plugin, ZippedPluginLoader):
-        dirname = os.path.dirname(plugin.path)
-        filename = os.path.basename(plugin.path)
-        if plugin.version in filename:
-            filename = filename.replace(plugin.version, version)
-        else:
-            filename = filename.rstrip(".mbp") + version + ".mbp"
-        path = os.path.join(dirname, filename)
-        with open(path, "wb") as p:
-            p.write(content)
-        ZippedPluginLoader.trash(plugin.path, reason="update")
-        plugin.path = path
-        return await reload(plugin)
+        return await upload_replacement_plugin(plugin, content, version)
     else:
-        return web.json_response({})
-
-
-async def reload(plugin: PluginLoader) -> web.Response:
-    await plugin.stop_instances()
-    try:
-        await plugin.reload()
-    except MaubotZipImportError as e:
-        return ErrPluginReloadFailed(e)
-    await plugin.start_instances()
-    return RespOK
+        return ErrUnsupportedPluginLoader
