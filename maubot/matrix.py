@@ -84,7 +84,7 @@ class MaubotMatrixClient(MatrixClient):
             pass
 
     async def _command_event_handler(self, evt: MessageEvent) -> None:
-        if evt.sender == self.mxid or evt.content.msgtype != MessageType.TEXT:
+        if evt.sender == self.mxid or evt.content.msgtype == MessageType.NOTICE:
             return
         for command in self.commands:
             if command.match(evt):
