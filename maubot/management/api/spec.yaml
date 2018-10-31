@@ -231,12 +231,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MatrixClientList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatrixClient'
         401:
           $ref: '#/components/responses/Unauthorized'
-  '/client/{user_id}':
+  '/client/{id}':
     parameters:
-    - name: user_id
+    - name: id
       in: path
       description: The Matrix user ID of the client to get
       required: true
@@ -338,38 +340,12 @@ components:
         enabled:
           type: boolean
           example: true
+        started:
+          type: boolean
+          example: true
         primary_user:
           type: string
           example: '@putkiteippi:maunium.net'
-    MatrixClientList:
-      type: array
-      items:
-        type: object
-        properties:
-          id:
-            type: string
-            example: '@putkiteippi:maunium.net'
-          homeserver:
-            type: string
-            example: 'https://maunium.net'
-          enabled:
-            type: boolean
-            example: true
-          sync:
-            type: boolean
-            example: true
-          autojoin:
-            type: boolean
-            example: true
-          displayname:
-            type: string
-            example: J. E. Saarinen
-          avatar_url:
-            type: string
-            example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
-          instance_count:
-            type: integer
-            example: 1
     MatrixClient:
       type: object
       properties:
@@ -383,6 +359,9 @@ components:
         access_token:
           type: string
         enabled:
+          type: boolean
+          example: true
+        started:
           type: boolean
           example: true
         sync:

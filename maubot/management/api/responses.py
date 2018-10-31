@@ -36,6 +36,11 @@ ErrPluginNotFound = web.json_response({
     "errcode": "plugin_not_found",
 }, status=HTTPStatus.NOT_FOUND)
 
+ErrClientNotFound = web.json_response({
+    "error": "Client not found",
+    "errcode": "client_not_found",
+}, status=HTTPStatus.NOT_FOUND)
+
 ErrPathNotFound = web.json_response({
     "error": "Resource not found",
     "errcode": "resource_not_found",

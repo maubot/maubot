@@ -24,16 +24,9 @@ from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
 from .base import routes, get_config
 
 
-def _plugin_to_dict(plugin: PluginLoader) -> dict:
-    return {
-        **plugin.to_dict(),
-        "instances": [instance.to_dict() for instance in plugin.references]
-    }
-
-
 @routes.get("/plugins")
 async def get_plugins(_) -> web.Response:
-    return web.json_response([_plugin_to_dict(plugin) for plugin in PluginLoader.id_cache.values()])
+    return web.json_response([plugin.to_dict() for plugin in PluginLoader.id_cache.values()])
 
 
 @routes.get("/plugin/{id}")
@@ -42,7 +35,7 @@ async def get_plugin(request: web.Request) -> web.Response:
     plugin = PluginLoader.id_cache.get(plugin_id, None)
     if not plugin:
         return ErrPluginNotFound
-    return web.json_response(_plugin_to_dict(plugin))
+    return web.json_response(plugin.to_dict())
 
 
 @routes.delete("/plugin/{id}")
@@ -78,11 +71,11 @@ async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Respo
     with open(path, "wb") as p:
         p.write(content)
     try:
-        ZippedPluginLoader.get(path)
+        plugin = ZippedPluginLoader.get(path)
     except MaubotZipImportError as e:
         ZippedPluginLoader.trash(path)
         return plugin_import_error(str(e), traceback.format_exc())
-    return RespOK
+    return web.json_response(plugin.to_dict())
 
 
 async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str
@@ -110,7 +103,7 @@ async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, 
         return plugin_import_error(str(e), traceback.format_exc())
     await plugin.start_instances()
     ZippedPluginLoader.trash(old_path, reason="update")
-    return RespOK
+    return web.json_response(plugin.to_dict())
 
 
 @routes.post("/plugins/upload")

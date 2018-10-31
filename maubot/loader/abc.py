@@ -47,6 +47,7 @@ class PluginLoader(ABC):
         return {
             "id": self.id,
             "version": self.version,
+            "instances": [instance.to_dict() for instance in self.references],
         }
 
     @property

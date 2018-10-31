@@ -75,6 +75,7 @@ class PluginInstance:
         if not self.client:
             self.log.error(f"Failed to get client for user {self.primary_user}")
             self.enabled = False
+            return
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
@@ -93,8 +94,11 @@ class PluginInstance:
         self.db_instance.config = buf.getvalue()
 
     async def start(self) -> None:
-        if not self.enabled:
-            self.log.warning(f"Plugin disabled, not starting.")
+        if self.running:
+            self.log.warning("Ignoring start() call to already started plugin")
+            return
+        elif not self.enabled:
+            self.log.warning("Plugin disabled, not starting.")
             return
         cls = await self.loader.load()
         config_class = cls.get_config_class()
@@ -118,6 +122,9 @@ class PluginInstance:
                       f"with user {self.client.id}")
 
     async def stop(self) -> None:
+        if not self.running:
+            self.log.warning("Ignoring stop() call to non-running plugin")
+            return
         self.log.debug("Stopping plugin instance...")
         self.running = False
         await self.plugin.stop()

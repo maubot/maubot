@@ -57,7 +57,7 @@ Base.metadata.create_all()
 loop = asyncio.get_event_loop()
 
 init_db(db_session)
-init_client(loop)
+clients = init_client(loop)
 init_plugin_instance_class(db_session, config)
 management_api = init_management(config, loop)
 server = MaubotServer(config, management_api, loop)
@@ -84,9 +84,10 @@ async def periodic_commit():
 
 
 try:
-    loop.run_until_complete(asyncio.gather(
-        server.start(),
-        *[plugin.start() for plugin in plugins]))
+    log.debug("Starting server")
+    loop.run_until_complete(server.start())
+    log.debug("Starting clients and plugins")
+    loop.run_until_complete(asyncio.gather(*[client.start() for client in clients]))
     log.debug("Startup actions complete, running forever")
     loop.run_until_complete(periodic_commit())
     loop.run_forever()

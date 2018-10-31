@@ -42,6 +42,7 @@ class DBClient(Base):
     id: UserID = Column(String(255), primary_key=True)
     homeserver: str = Column(String(255), nullable=False)
     access_token: str = Column(String(255), nullable=False)
+    enabled: bool = Column(Boolean, nullable=False, default=False)
 
     next_batch: SyncToken = Column(String(255), nullable=False, default="")
     filter_id: FilterID = Column(String(255), nullable=False, default="")
