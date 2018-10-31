@@ -27,8 +27,9 @@ config: Config = None
 
 def is_valid_token(token: str) -> bool:
     data = verify_token(config["server.unshared_secret"], token)
-    user_id = data.get("user_id", None)
-    return user_id is not None and user_id in config["admins"]
+    if not data:
+        return False
+    return config.is_admin(data.get("user_id", None))
 
 
 def create_token(user: UserID) -> str:
@@ -40,7 +41,9 @@ def create_token(user: UserID) -> str:
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
     global config
     config = cfg
-    from .middleware import auth, error, log
-    app = web.Application(loop=loop, middlewares=[auth, log, error])
+    from .middleware import auth, error
+    from .auth import web as _
+    from .plugin import web as _
+    app = web.Application(loop=loop, middlewares=[auth, error])
     app.add_routes(routes)
     return app

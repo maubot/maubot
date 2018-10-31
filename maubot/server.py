@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
+import logging
 import asyncio
 
 from mautrix.api import PathBuilder, Method
@@ -23,6 +24,8 @@ from .__meta__ import __version__
 
 
 class MaubotServer:
+    log: logging.Logger = logging.getLogger("maubot.server")
+
     def __init__(self, config: Config, management: web.Application,
                  loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop or asyncio.get_event_loop()
@@ -45,6 +48,7 @@ class MaubotServer:
         await self.runner.setup()
         site = web.TCPSite(self.runner, self.config["server.hostname"], self.config["server.port"])
         await site.start()
+        self.log.info(f"Listening on {site.name}")
 
     async def stop(self) -> None:
         await self.runner.cleanup()

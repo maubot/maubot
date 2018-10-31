@@ -27,6 +27,9 @@ if TYPE_CHECKING:
     from mautrix.util.config import BaseProxyConfig
 
 
+DatabaseNotConfigured = ValueError("A database for this maubot instance has not been configured.")
+
+
 class Plugin(ABC):
     client: 'MaubotMatrixClient'
     id: str
@@ -41,7 +44,9 @@ class Plugin(ABC):
         self.config = config
         self.__db_base_path = db_base_path
 
-    def request_db_engine(self) -> Engine:
+    def request_db_engine(self) -> Optional[Engine]:
+        if not self.__db_base_path:
+            raise DatabaseNotConfigured
         return sql.create_engine(f"sqlite:///{os.path.join(self.__db_base_path, self.id)}.db")
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:

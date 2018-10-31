@@ -207,8 +207,10 @@ class ZippedPluginLoader(PluginLoader):
         self.log.debug(f"Loaded and imported plugin {self.id} from {self.path}")
         return plugin
 
-    async def reload(self) -> Type[PluginClass]:
+    async def reload(self, new_path: Optional[str] = None) -> Type[PluginClass]:
         await self.unload()
+        if new_path is not None:
+            self.path = new_path
         return await self.load(reset_cache=True)
 
     async def unload(self) -> None:

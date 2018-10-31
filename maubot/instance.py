@@ -87,13 +87,6 @@ class PluginInstance:
     def load_config(self) -> CommentedMap:
         return yaml.load(self.db_instance.config)
 
-    def load_config_base(self) -> Optional[RecursiveDict[CommentedMap]]:
-        try:
-            base = self.loader.read_file("base-config.yaml")
-            return RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
-        except (FileNotFoundError, KeyError):
-            return None
-
     def save_config(self, data: RecursiveDict[CommentedMap]) -> None:
         buf = io.StringIO()
         yaml.dump(data, buf)
@@ -103,14 +96,23 @@ class PluginInstance:
         if not self.enabled:
             self.log.warning(f"Plugin disabled, not starting.")
             return
-        cls = self.loader.load()
+        cls = await self.loader.load()
         config_class = cls.get_config_class()
         if config_class:
-            self.config = config_class(self.load_config, self.load_config_base,
-                                       self.save_config)
+            try:
+                base = await self.loader.read_file("base-config.yaml")
+                base_file = RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
+            except (FileNotFoundError, KeyError):
+                base_file = None
+            self.config = config_class(self.load_config, lambda: base_file, self.save_config)
         self.plugin = cls(self.client.client, self.id, self.log, self.config,
-                          self.mb_config["plugin_db_directory"])
-        await self.plugin.start()
+                          self.mb_config["plugin_directories.db"])
+        try:
+            await self.plugin.start()
+        except Exception:
+            self.log.exception("Failed to start instance")
+            self.enabled = False
+            return
         self.running = True
         self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "
                       f"with user {self.client.id}")

@@ -13,27 +13,48 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from http import HTTPStatus
 from aiohttp import web
+
+ErrBadAuth = web.json_response({
+    "error": "Invalid username or password",
+    "errcode": "invalid_auth",
+}, status=HTTPStatus.UNAUTHORIZED)
 
 ErrNoToken = web.json_response({
     "error": "Authorization token missing",
     "errcode": "auth_token_missing",
-}, status=web.HTTPUnauthorized)
+}, status=HTTPStatus.UNAUTHORIZED)
 
 ErrInvalidToken = web.json_response({
     "error": "Invalid authorization token",
     "errcode": "auth_token_invalid",
-}, status=web.HTTPUnauthorized)
+}, status=HTTPStatus.UNAUTHORIZED)
 
 ErrPluginNotFound = web.json_response({
     "error": "Plugin not found",
     "errcode": "plugin_not_found",
-}, status=web.HTTPNotFound)
+}, status=HTTPStatus.NOT_FOUND)
+
+ErrPathNotFound = web.json_response({
+    "error": "Resource not found",
+    "errcode": "resource_not_found",
+}, status=HTTPStatus.NOT_FOUND)
+
+ErrMethodNotAllowed = web.json_response({
+    "error": "Method not allowed",
+    "errcode": "method_not_allowed",
+}, status=HTTPStatus.METHOD_NOT_ALLOWED)
 
 ErrPluginInUse = web.json_response({
     "error": "Plugin instances of this type still exist",
     "errcode": "plugin_in_use",
-}, status=web.HTTPPreconditionFailed)
+}, status=HTTPStatus.PRECONDITION_FAILED)
+
+ErrBodyNotJSON = web.json_response({
+    "error": "Request body is not JSON",
+    "errcode": "body_not_json",
+}, status=HTTPStatus.BAD_REQUEST)
 
 
 def plugin_import_error(error: str, stacktrace: str) -> web.Response:
@@ -41,7 +62,7 @@ def plugin_import_error(error: str, stacktrace: str) -> web.Response:
         "error": error,
         "stacktrace": stacktrace,
         "errcode": "plugin_invalid",
-    }, status=web.HTTPBadRequest)
+    }, status=HTTPStatus.BAD_REQUEST)
 
 
 def plugin_reload_error(error: str, stacktrace: str) -> web.Response:
@@ -49,21 +70,21 @@ def plugin_reload_error(error: str, stacktrace: str) -> web.Response:
         "error": error,
         "stacktrace": stacktrace,
         "errcode": "plugin_reload_fail",
-    }, status=web.HTTPInternalServerError)
+    }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 ErrUnsupportedPluginLoader = web.json_response({
     "error": "Existing plugin with same ID uses unsupported plugin loader",
     "errcode": "unsupported_plugin_loader",
-}, status=web.HTTPBadRequest)
+}, status=HTTPStatus.BAD_REQUEST)
 
 ErrNotImplemented = web.json_response({
     "error": "Not implemented",
     "errcode": "not_implemented",
-}, status=web.HTTPNotImplemented)
+}, status=HTTPStatus.NOT_IMPLEMENTED)
 
 RespOK = web.json_response({
     "success": True,
-}, status=web.HTTPOk)
+}, status=HTTPStatus.OK)
 
-RespDeleted = web.Response(status=web.HTTPNoContent)
+RespDeleted = web.Response(status=HTTPStatus.NO_CONTENT)

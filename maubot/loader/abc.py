@@ -59,10 +59,12 @@ class PluginLoader(ABC):
         pass
 
     async def stop_instances(self) -> None:
-        await asyncio.gather([instance.stop() for instance in self.references if instance.running])
+        await asyncio.gather(*[instance.stop() for instance
+                               in self.references if instance.running])
 
     async def start_instances(self) -> None:
-        await asyncio.gather([instance.start() for instance in self.references if instance.enabled])
+        await asyncio.gather(*[instance.start() for instance
+                               in self.references if instance.enabled])
 
     @abstractmethod
     async def load(self) -> Type[PluginClass]:

@@ -92,25 +92,24 @@ async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, 
     if plugin.version in filename:
         filename = filename.replace(plugin.version, new_version)
     else:
-        filename = filename.rstrip(".mbp") + new_version + ".mbp"
+        filename = filename.rstrip(".mbp")
+        filename = f"{filename}-v{new_version}.mbp"
     path = os.path.join(dirname, filename)
     with open(path, "wb") as p:
         p.write(content)
     old_path = plugin.path
-    plugin.path = path
     await plugin.stop_instances()
     try:
-        await plugin.reload()
+        await plugin.reload(new_path=path)
     except MaubotZipImportError as e:
-        plugin.path = old_path
         try:
-            await plugin.reload()
+            await plugin.reload(new_path=old_path)
+            await plugin.start_instances()
         except MaubotZipImportError:
             pass
-        await plugin.start_instances()
         return plugin_import_error(str(e), traceback.format_exc())
     await plugin.start_instances()
-    ZippedPluginLoader.trash(plugin.path, reason="update")
+    ZippedPluginLoader.trash(old_path, reason="update")
     return RespOK
 
 

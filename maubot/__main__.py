@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from sqlalchemy import orm
-from time import time
 import sqlalchemy as sql
 import logging.config
 import argparse
@@ -22,7 +21,6 @@ import asyncio
 import signal
 import copy
 import sys
-import os
 
 from .config import Config
 from .db import Base, init as init_db

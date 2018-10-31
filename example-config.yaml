@@ -30,8 +30,10 @@ server:
     # Set to "generate" to generate and save a new token at startup.
     unshared_secret: generate
 
+# List of administrator users. Plaintext passwords will be bcrypted on startup. Set empty password
+# to prevent normal login. Root is a special user that can't have a password and will always exist.
 admins:
-- "@admin:example.com"
+    root: ""
 
 # Python logging configuration.
 #
