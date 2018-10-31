@@ -7,16 +7,50 @@ info:
     name: GNU Affero General Public License version 3
     url: 'https://github.com/maubot/maubot/blob/master/LICENSE'
 security:
-  - bearer: []
+- bearer: []
 servers:
-  - url: /_matrix/maubot/v1
+- url: /_matrix/maubot/v1
 
 paths:
+  /login:
+    post:
+      operationId: login
+      summary: Log in with the unshared secret or username+password
+      tags: [Authentication]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Set either username+password or secret.
+              properties:
+                secret:
+                  type: string
+                  description: The unshared server secret for root login
+                username:
+                  type: string
+                  description: The username for normal login
+                password:
+                  type: string
+                  description: The password for normal login
+      responses:
+        200:
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        401:
+          description: Invalid credentials
+
   /plugins:
     get:
       operationId: get_plugins
       summary: Get the list of installed plugins
-      tags: [Plugin]
+      tags: [Plugins]
       responses:
         200:
           description: The list of plugins
@@ -33,7 +67,7 @@ paths:
       operationId: upload_plugin
       summary: Upload a new plugin
       description: Upload a new plugin. If the plugin already exists, enabled instances will be restarted.
-      tags: [Plugin]
+      tags: [Plugins]
       responses:
         200:
           description: Plugin uploaded and replaced current version successfully
@@ -71,7 +105,7 @@ paths:
     get:
       operationId: get_plugin
       summary: Get information about a specific plugin
-      tags: [Plugin]
+      tags: [Plugins]
       responses:
         200:
           description: Plugin found
@@ -87,7 +121,7 @@ paths:
       operationId: delete_plugin
       summary: Delete a plugin
       description: Delete a plugin. All instances of the plugin must be deleted before deleting the plugin.
-      tags: [Plugin]
+      tags: [Plugins]
       responses:
         204:
           description: Plugin deleted
@@ -108,7 +142,7 @@ paths:
     post:
       operationId: reload_plugin
       summary: Reload a plugin from disk
-      tags: [Plugin]
+      tags: [Plugins]
       responses:
         200:
           description: Plugin reloaded
@@ -171,6 +205,11 @@ paths:
       operationId: update_instance
       summary: Create a plugin instance or edit the details of an existing plugin instance
       tags: [Plugin instances]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginInstance'
       responses:
         200:
           description: Plugin instance edited
@@ -185,7 +224,7 @@ paths:
     get:
       operationId: get_clients
       summary: Get the list of Matrix clients
-      tags: [Client]
+      tags: [Clients]
       responses:
         200:
           description: The list of plugins
@@ -206,7 +245,7 @@ paths:
     get:
       operationId: get_client
       summary: Get information about a specific Matrix client
-      tags: [Client]
+      tags: [Clients]
       responses:
         200:
           description: Client found
@@ -221,7 +260,12 @@ paths:
     put:
       operationId: update_client
       summary: Create or update a Matrix client
-      tags: [Client]
+      tags: [Clients]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrixClient'
       responses:
         200:
           description: Client updated
@@ -242,7 +286,7 @@ paths:
     delete:
       operationId: delete_client
       summary: Delete a Matrix client
-      tags: [Client]
+      tags: [Clients]
       responses:
         204:
           description: Client deleted
@@ -288,7 +332,6 @@ components:
         id:
           type: string
           example: jesaribot
-          readOnly: true
         type:
           type: string
           example: xyz.maubot.jesaribot
@@ -333,6 +376,7 @@ components:
         id:
           type: string
           example: '@putkiteippi:maunium.net'
+          readOnly: true
         homeserver:
           type: string
           example: 'https://maunium.net'
@@ -355,5 +399,6 @@ components:
           example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
         instances:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/PluginInstance'

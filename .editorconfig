@@ -11,3 +11,6 @@ max_line_length = 99
 
 [*.json]
 indent_size = 2
+
+[spec.yaml]
+indent_size = 2
