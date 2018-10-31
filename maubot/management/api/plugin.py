@@ -21,7 +21,7 @@ import os.path
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
 from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
                         plugin_reload_error, RespDeleted, RespOK, ErrUnsupportedPluginLoader)
-from . import routes, config
+from .base import routes, get_config
 
 
 def _plugin_to_dict(plugin: PluginLoader) -> dict:
@@ -74,7 +74,7 @@ async def reload_plugin(request: web.Request) -> web.Response:
 
 
 async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Response:
-    path = os.path.join(config["plugin_directories.upload"], f"{pid}-v{version}.mbp")
+    path = os.path.join(get_config()["plugin_directories.upload"], f"{pid}-v{version}.mbp")
     with open(path, "wb") as p:
         p.write(content)
     try:

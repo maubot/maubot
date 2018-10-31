@@ -17,7 +17,7 @@ from typing import Callable, Awaitable
 from aiohttp import web
 
 from .responses import ErrNoToken, ErrInvalidToken, ErrPathNotFound, ErrMethodNotAllowed
-from . import is_valid_token
+from .auth import is_valid_token
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
 

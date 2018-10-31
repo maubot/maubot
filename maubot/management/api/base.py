@@ -14,17 +14,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
-from asyncio import AbstractEventLoop
 
 from ...config import Config
-from .base import routes, set_config
-from .middleware import auth, error
-from .auth import web as _
-from .plugin import web as _
+
+routes: web.RouteTableDef = web.RouteTableDef()
+_config: Config = None
 
 
-def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
-    set_config(cfg)
-    app = web.Application(loop=loop, middlewares=[auth, error])
-    app.add_routes(routes)
-    return app
+def set_config(config: Config) -> None:
+    global _config
+    _config = config
+
+
+def get_config() -> Config:
+    return _config

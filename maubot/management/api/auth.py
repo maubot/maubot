@@ -16,8 +16,24 @@
 from aiohttp import web
 import json
 
-from . import routes, config, create_token
+from mautrix.types import UserID
+from mautrix.util.signed_token import sign_token, verify_token
+
+from .base import routes, get_config
 from .responses import ErrBadAuth, ErrBodyNotJSON
+
+
+def is_valid_token(token: str) -> bool:
+    data = verify_token(get_config()["server.unshared_secret"], token)
+    if not data:
+        return False
+    return get_config().is_admin(data.get("user_id", None))
+
+
+def create_token(user: UserID) -> str:
+    return sign_token(get_config()["server.unshared_secret"], {
+        "user_id": user,
+    })
 
 
 @routes.post("/login")
