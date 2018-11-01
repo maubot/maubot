@@ -43,7 +43,7 @@ async def login(request: web.Request) -> web.Response:
     except json.JSONDecodeError:
         return ErrBodyNotJSON
     secret = data.get("secret")
-    if secret and config["server.unshared_secret"] == secret:
+    if secret and get_config()["server.unshared_secret"] == secret:
         user = data.get("user") or "root"
         return web.json_response({
             "token": create_token(user),
@@ -51,7 +51,7 @@ async def login(request: web.Request) -> web.Response:
 
     username = data.get("username")
     password = data.get("password")
-    if config.check_password(username, password):
+    if get_config().check_password(username, password):
         return web.json_response({
             "token": create_token(username),
         })
