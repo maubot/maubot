@@ -32,8 +32,8 @@ log = logging.getLogger("maubot.client")
 
 
 class Client:
-    log: logging.Logger
-    loop: asyncio.AbstractEventLoop
+    log: logging.Logger = None
+    loop: asyncio.AbstractEventLoop = None
     cache: Dict[UserID, 'Client'] = {}
     http_client: ClientSession = None
 

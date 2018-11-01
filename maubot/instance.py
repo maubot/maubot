@@ -17,6 +17,7 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml import YAML
+from asyncio import AbstractEventLoop
 import logging
 import io
 
@@ -38,6 +39,7 @@ yaml.indent(4)
 class PluginInstance:
     db: Session = None
     mb_config: Config = None
+    loop: AbstractEventLoop = None
     cache: Dict[str, 'PluginInstance'] = {}
     plugin_directories: List[str] = []
 
@@ -109,8 +111,8 @@ class PluginInstance:
             except (FileNotFoundError, KeyError):
                 base_file = None
             self.config = config_class(self.load_config, lambda: base_file, self.save_config)
-        self.plugin = cls(self.client.client, self.id, self.log, self.config,
-                          self.mb_config["plugin_directories.db"])
+        self.plugin = cls(self.client.client, self.loop, self.client.http_client, self.id,
+                          self.log, self.config, self.mb_config["plugin_directories.db"])
         try:
             await self.plugin.start()
         except Exception:
@@ -178,6 +180,7 @@ class PluginInstance:
     # endregion
 
 
-def init(db: Session, config: Config):
+def init(db: Session, config: Config, loop: AbstractEventLoop):
     PluginInstance.db = db
     PluginInstance.mb_config = config
+    PluginInstance.loop = loop

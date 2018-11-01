@@ -16,6 +16,8 @@
 from typing import Type, Optional, TYPE_CHECKING
 from logging import Logger
 from abc import ABC, abstractmethod
+from asyncio import AbstractEventLoop
+from aiohttp import ClientSession
 import os.path
 
 from sqlalchemy.engine.base import Engine
@@ -34,11 +36,15 @@ class Plugin(ABC):
     client: 'MaubotMatrixClient'
     id: str
     log: Logger
+    loop: AbstractEventLoop
     config: Optional['BaseProxyConfig']
 
-    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger,
-                 config: Optional['BaseProxyConfig'], db_base_path: str) -> None:
+    def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
+                 plugin_instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
+                 db_base_path: str) -> None:
         self.client = client
+        self.loop = loop
+        self.http = http
         self.id = plugin_instance_id
         self.log = log
         self.config = config
