@@ -5,3 +5,4 @@ alembic
 commonmark
 ruamel.yaml
 attrs
+bcrypt

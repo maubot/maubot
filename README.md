@@ -1,6 +1,8 @@
 # maubot
 A plugin-based [Matrix](https://matrix.org) bot system written in Python.
 
+Management API spec: [maubot.xyz/spec](https://maubot.xyz/spec)
+
 ## Discussion
 Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 
@@ -13,12 +15,12 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [dice](https://github.com/maubot/dice) - A combined dice rolling and calculator bot.
 * [karma](https://github.com/maubot/karma) - A user karma tracker bot.
 * [xkcd](https://github.com/maubot/xkcd) - A bot to view xkcd comics.
+* [echo](https://github.com/maubot/echo) - A bot that echoes pings and other stuff.
 
 ### Upcoming
 * rss - A bot that posts new RSS entries to rooms.
 * dictionary - A bot to get the dictionary definitions of words.
 * poll - A simple poll bot.
-* echo - A very simple echo bot.
 * reminder - A bot to ping you about something after a certain amount of time.
 * github - A GitHub client and webhook receiver bot.
 * wolfram - A Wolfram Alpha bot

@@ -15,11 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import TypeVar, Type, Dict, Set, TYPE_CHECKING
 from abc import ABC, abstractmethod
+import asyncio
 
 from ..plugin_base import Plugin
 
 if TYPE_CHECKING:
-    from ..plugin import PluginInstance
+    from ..instance import PluginInstance
 
 PluginClass = TypeVar("PluginClass", bound=Plugin)
 
@@ -42,23 +43,42 @@ class PluginLoader(ABC):
     def find(cls, plugin_id: str) -> 'PluginLoader':
         return cls.id_cache[plugin_id]
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "version": self.version,
+            "instances": [instance.to_dict() for instance in self.references],
+        }
+
     @property
     @abstractmethod
     def source(self) -> str:
         pass
 
     @abstractmethod
-    def read_file(self, path: str) -> bytes:
+    async def read_file(self, path: str) -> bytes:
+        pass
+
+    async def stop_instances(self) -> None:
+        await asyncio.gather(*[instance.stop() for instance
+                               in self.references if instance.started])
+
+    async def start_instances(self) -> None:
+        await asyncio.gather(*[instance.start() for instance
+                               in self.references if instance.enabled])
+
+    @abstractmethod
+    async def load(self) -> Type[PluginClass]:
         pass
 
     @abstractmethod
-    def load(self) -> Type[PluginClass]:
+    async def reload(self) -> Type[PluginClass]:
         pass
 
     @abstractmethod
-    def reload(self) -> Type[PluginClass]:
+    async def unload(self) -> None:
         pass
 
     @abstractmethod
-    def unload(self) -> None:
+    async def delete(self) -> None:
         pass

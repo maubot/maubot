@@ -28,6 +28,7 @@ setuptools.setup(
         "commonmark>=0.8.1,<1",
         "ruamel.yaml>=0.15.35,<0.16",
         "attrs>=18.1.0,<19",
+        "bcrypt>=3.1.4,<4",
     ],
 
     classifiers=[
@@ -47,4 +48,8 @@ setuptools.setup(
     data_files=[
         (".", ["example-config.yaml"]),
     ],
+    package_data={
+        "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",
+                   "management/frontend/build/static/js/*"],
+    },
 )

@@ -13,38 +13,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Type
-from sqlalchemy import (Column, String, Boolean, ForeignKey, Text, TypeDecorator)
-from sqlalchemy.orm import Query, scoped_session
+from typing import cast
+
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text
+from sqlalchemy.orm import Query, Session, sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
-import json
+import sqlalchemy as sql
 
 from mautrix.types import UserID, FilterID, SyncToken, ContentURI
-from mautrix.client.api.types.util import Serializable
 
-from .command_spec import CommandSpec
+from .config import Config
 
 Base: declarative_base = declarative_base()
-
-
-def make_serializable_alchemy(serializable_type: Type[Serializable]):
-    class SerializableAlchemy(TypeDecorator):
-        impl = Text
-
-        @property
-        def python_type(self):
-            return serializable_type
-
-        def process_literal_param(self, value: Serializable, _) -> str:
-            return json.dumps(value.serialize()) if value is not None else None
-
-        def process_bind_param(self, value: Serializable, _) -> str:
-            return json.dumps(value.serialize()) if value is not None else None
-
-        def process_result_value(self, value: str, _) -> serializable_type:
-            return serializable_type.deserialize(json.loads(value)) if value is not None else None
-
-    return SerializableAlchemy
 
 
 class DBPlugin(Base):
@@ -67,6 +47,7 @@ class DBClient(Base):
     id: UserID = Column(String(255), primary_key=True)
     homeserver: str = Column(String(255), nullable=False)
     access_token: str = Column(String(255), nullable=False)
+    enabled: bool = Column(Boolean, nullable=False, default=False)
 
     next_batch: SyncToken = Column(String(255), nullable=False, default="")
     filter_id: FilterID = Column(String(255), nullable=False, default="")
@@ -78,20 +59,14 @@ class DBClient(Base):
     avatar_url: ContentURI = Column(String(255), nullable=False, default="")
 
 
-class DBCommandSpec(Base):
-    query: Query
-    __tablename__ = "command_spec"
+def init(config: Config) -> Session:
+    db_engine: sql.engine.Engine = sql.create_engine(config["database"])
+    db_factory = sessionmaker(bind=db_engine)
+    db_session = scoped_session(db_factory)
+    Base.metadata.bind = db_engine
+    Base.metadata.create_all()
 
-    plugin: str = Column(String(255),
-                         ForeignKey("plugin.id", onupdate="CASCADE", ondelete="CASCADE"),
-                         primary_key=True)
-    client: UserID = Column(String(255),
-                            ForeignKey("client.id", onupdate="CASCADE", ondelete="CASCADE"),
-                            primary_key=True)
-    spec: CommandSpec = Column(make_serializable_alchemy(CommandSpec), nullable=False)
+    DBPlugin.query = db_session.query_property()
+    DBClient.query = db_session.query_property()
 
-
-def init(session: scoped_session) -> None:
-    DBPlugin.query = session.query_property()
-    DBClient.query = session.query_property()
-    DBCommandSpec.query = session.query_property()
+    return cast(Session, db_session)

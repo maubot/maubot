@@ -5,27 +5,35 @@
 #   Postgres: postgres://username:password@hostname/dbname
 database: sqlite:///maubot.db
 
-# The directory where plugin databases should be stored.
-plugin_db_directory: ./plugins
-
-# If multiple directories have a plugin with the same name, the first directory is used.
 plugin_directories:
-- ./plugins
+    # The directory where uploaded new plugins should be stored.
+    upload: ./plugins
+    # The directories from which plugins should be loaded.
+    # Duplicate plugin IDs will be moved to the trash.
+    load:
+    - ./plugins
+    # The directory where old plugin versions and conflicting plugins should be moved.
+    # Set to "delete" to delete files immediately.
+    trash: ./trash
+    # The directory where plugin databases should be stored.
+    db: ./plugins
 
 server:
     # The IP and port to listen to.
     hostname: 0.0.0.0
     port: 29316
     # The base management API path.
-    base_path: /_matrix/maubot
+    base_path: /_matrix/maubot/v1
     # The base appservice API path. Use / for legacy appservice API and /_matrix/app/v1 for v1.
     appservice_base_path: /_matrix/app/v1
-    # The shared secret to authorize users of the API.
+    # The shared secret to sign API access tokens.
     # Set to "generate" to generate and save a new token at startup.
-    shared_secret: generate
+    unshared_secret: generate
 
+# List of administrator users. Plaintext passwords will be bcrypted on startup. Set empty password
+# to prevent normal login. Root is a special user that can't have a password and will always exist.
 admins:
-- "@admin:example.com"
+    root: ""
 
 # Python logging configuration.
 #
