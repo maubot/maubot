@@ -41,6 +41,31 @@ ErrClientNotFound = web.json_response({
     "errcode": "client_not_found",
 }, status=HTTPStatus.NOT_FOUND)
 
+ErrPrimaryUserNotFound = web.json_response({
+    "error": "Client for given primary user not found",
+    "errcode": "primary_user_not_found",
+}, status=HTTPStatus.NOT_FOUND)
+
+ErrInstanceNotFound = web.json_response({
+    "error": "Plugin instance not found",
+    "errcode": "instance_not_found",
+}, status=HTTPStatus.NOT_FOUND)
+
+ErrPluginTypeNotFound = web.json_response({
+    "error": "Given plugin type not found",
+    "errcode": "plugin_type_not_found",
+}, status=HTTPStatus.NOT_FOUND)
+
+ErrPluginTypeRequired = web.json_response({
+    "error": "Plugin type is required when creating plugin instances",
+    "errcode": "plugin_type_required",
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrPrimaryUserRequired = web.json_response({
+    "error": "Primary user is required when creating plugin instances",
+    "errcode": "primary_user_required",
+}, status=HTTPStatus.BAD_REQUEST)
+
 ErrPathNotFound = web.json_response({
     "error": "Resource not found",
     "errcode": "resource_not_found",

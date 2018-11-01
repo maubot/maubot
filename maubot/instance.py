@@ -48,13 +48,14 @@ class PluginInstance:
     client: Client
     plugin: Plugin
     config: BaseProxyConfig
-    running: bool
+    base_cfg: RecursiveDict[CommentedMap]
+    started: bool
 
     def __init__(self, db_instance: DBPlugin):
         self.db_instance = db_instance
         self.log = logging.getLogger(f"maubot.plugin.{self.id}")
         self.config = None
-        self.running = False
+        self.started = False
         self.cache[self.id] = self
 
     def to_dict(self) -> dict:
@@ -62,7 +63,7 @@ class PluginInstance:
             "id": self.id,
             "type": self.type,
             "enabled": self.enabled,
-            "running": self.running,
+            "started": self.started,
             "primary_user": self.primary_user,
         }
 
@@ -71,19 +72,26 @@ class PluginInstance:
             self.loader = PluginLoader.find(self.type)
         except KeyError:
             self.log.error(f"Failed to find loader for type {self.type}")
-            self.enabled = False
+            self.db_instance.enabled = False
             return
         self.client = Client.get(self.primary_user)
         if not self.client:
             self.log.error(f"Failed to get client for user {self.primary_user}")
-            self.enabled = False
+            self.db_instance.enabled = False
             return
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
 
     def delete(self) -> None:
-        self.loader.references.remove(self)
+        if self.loader is not None:
+            self.loader.references.remove(self)
+        if self.client is not None:
+            self.client.references.remove(self)
+        try:
+            del self.cache[self.id]
+        except KeyError:
+            pass
         self.db.delete(self.db_instance)
         # TODO delete plugin db
 
@@ -96,7 +104,7 @@ class PluginInstance:
         self.db_instance.config = buf.getvalue()
 
     async def start(self) -> None:
-        if self.running:
+        if self.started:
             self.log.warning("Ignoring start() call to already started plugin")
             return
         elif not self.enabled:
@@ -107,28 +115,28 @@ class PluginInstance:
         if config_class:
             try:
                 base = await self.loader.read_file("base-config.yaml")
-                base_file = RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
+                self.base_cfg = RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
             except (FileNotFoundError, KeyError):
-                base_file = None
-            self.config = config_class(self.load_config, lambda: base_file, self.save_config)
+                self.base_cfg = None
+            self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
         self.plugin = cls(self.client.client, self.loop, self.client.http_client, self.id,
                           self.log, self.config, self.mb_config["plugin_directories.db"])
         try:
             await self.plugin.start()
         except Exception:
             self.log.exception("Failed to start instance")
-            self.enabled = False
+            self.db_instance.enabled = False
             return
-        self.running = True
+        self.started = True
         self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "
                       f"with user {self.client.id}")
 
     async def stop(self) -> None:
-        if not self.running:
+        if not self.started:
             self.log.warning("Ignoring stop() call to non-running plugin")
             return
         self.log.debug("Stopping plugin instance...")
-        self.running = False
+        self.started = False
         try:
             await self.plugin.stop()
         except Exception:
@@ -150,6 +158,37 @@ class PluginInstance:
     def all(cls) -> List['PluginInstance']:
         return [cls.get(plugin.id, plugin) for plugin in DBPlugin.query.all()]
 
+    def update_id(self, new_id: str) -> None:
+        if new_id is not None and new_id != self.id:
+            self.db_instance.id = new_id
+
+    def update_config(self, config: str) -> None:
+        if not config or self.db_instance.config == config:
+            return
+        self.db_instance.config = config
+        if self.started and self.plugin is not None:
+            self.plugin.on_external_config_update()
+
+    async def update_primary_user(self, primary_user: UserID) -> bool:
+        client = Client.get(primary_user)
+        if not client:
+            return False
+        await self.stop()
+        self.db_instance.primary_user = client.id
+        self.client.references.remove(self)
+        self.client = client
+        await self.start()
+        self.log.debug(f"Primary user switched to {self.client.id}")
+        return True
+
+    async def update_started(self, started: bool) -> None:
+        if started is not None and started != self.started:
+            await (self.start() if started else self.stop())
+
+    def update_enabled(self, enabled: bool) -> None:
+        if enabled is not None and enabled != self.enabled:
+            self.db_instance.enabled = enabled
+
     # region Properties
 
     @property
@@ -168,22 +207,15 @@ class PluginInstance:
     def enabled(self) -> bool:
         return self.db_instance.enabled
 
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        self.db_instance.enabled = value
-
     @property
     def primary_user(self) -> UserID:
         return self.db_instance.primary_user
 
-    @primary_user.setter
-    def primary_user(self, value: UserID) -> None:
-        self.db_instance.primary_user = value
-
     # endregion
 
 
-def init(db: Session, config: Config, loop: AbstractEventLoop):
+def init(db: Session, config: Config, loop: AbstractEventLoop) -> List[PluginInstance]:
     PluginInstance.db = db
     PluginInstance.mb_config = config
     PluginInstance.loop = loop
+    return PluginInstance.all()

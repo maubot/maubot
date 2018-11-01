@@ -23,6 +23,7 @@ import os
 
 from ..lib.zipimport import zipimporter, ZipImportError
 from ..plugin_base import Plugin
+from ..config import Config
 from .abc import PluginLoader, PluginClass, IDConflictError
 
 
@@ -264,3 +265,9 @@ class ZippedPluginLoader(PluginLoader):
                 except IDConflictError:
                     cls.log.error(f"Duplicate plugin ID at {path}, trashing...")
                     cls.trash(path)
+
+
+def init(config: Config) -> None:
+    ZippedPluginLoader.trash_path = config["plugin_directories.trash"]
+    ZippedPluginLoader.directories = config["plugin_directories.load"]
+    ZippedPluginLoader.load_all()

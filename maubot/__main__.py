@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from sqlalchemy import orm
-import sqlalchemy as sql
 import logging.config
 import argparse
 import asyncio
@@ -23,11 +21,11 @@ import copy
 import sys
 
 from .config import Config
-from .db import Base, init as init_db
+from .db import init as init_db
 from .server import MaubotServer
-from .client import Client, init as init_client
-from .loader import ZippedPluginLoader
-from .instance import PluginInstance, init as init_plugin_instance_class
+from .client import Client, init as init_client_class
+from .loader.zip import init as init_zip_loader
+from .instance import init as init_plugin_instance_class
 from .management.api import init as init_management
 from .__meta__ import __version__
 
@@ -46,27 +44,16 @@ config.update()
 
 logging.config.dictConfig(copy.deepcopy(config["logging"]))
 log = logging.getLogger("maubot.init")
-log.debug(f"Initializing maubot {__version__}")
-
-db_engine: sql.engine.Engine = sql.create_engine(config["database"])
-db_factory = orm.sessionmaker(bind=db_engine)
-db_session = orm.scoping.scoped_session(db_factory)
-Base.metadata.bind = db_engine
-Base.metadata.create_all()
+log.info(f"Initializing maubot {__version__}")
 
 loop = asyncio.get_event_loop()
 
-init_db(db_session)
-clients = init_client(loop)
-init_plugin_instance_class(db_session, config, loop)
+init_zip_loader(config)
+db_session = init_db(config)
+clients = init_client_class(db_session, loop)
+plugins = init_plugin_instance_class(db_session, config, loop)
 management_api = init_management(config, loop)
 server = MaubotServer(config, management_api, loop)
-
-ZippedPluginLoader.trash_path = config["plugin_directories.trash"]
-ZippedPluginLoader.directories = config["plugin_directories.load"]
-ZippedPluginLoader.load_all()
-
-plugins = PluginInstance.all()
 
 for plugin in plugins:
     plugin.load()
@@ -74,29 +61,31 @@ for plugin in plugins:
 signal.signal(signal.SIGINT, signal.default_int_handler)
 signal.signal(signal.SIGTERM, signal.default_int_handler)
 
-stop = False
-
 
 async def periodic_commit():
-    while not stop:
+    while True:
         await asyncio.sleep(60)
         db_session.commit()
 
 
+periodic_commit_task: asyncio.Future = None
+
 try:
-    log.debug("Starting server")
+    log.info("Starting server")
     loop.run_until_complete(server.start())
-    log.debug("Starting clients and plugins")
+    log.info("Starting clients and plugins")
     loop.run_until_complete(asyncio.gather(*[client.start() for client in clients]))
-    log.debug("Startup actions complete, running forever")
-    loop.run_until_complete(periodic_commit())
+    log.info("Startup actions complete, running forever")
+    periodic_commit_task = asyncio.ensure_future(periodic_commit(), loop=loop)
     loop.run_forever()
 except KeyboardInterrupt:
     log.debug("Interrupt received, stopping HTTP clients/servers and saving database")
-    stop = True
+    if periodic_commit_task is not None:
+        periodic_commit_task.cancel()
     for client in Client.cache.values():
         client.stop()
     db_session.commit()
     loop.run_until_complete(server.stop())
+    loop.close()
     log.debug("Everything stopped, shutting down")
     sys.exit(0)

@@ -13,11 +13,16 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import cast
+
 from sqlalchemy import Column, String, Boolean, ForeignKey, Text
-from sqlalchemy.orm import Query, scoped_session
+from sqlalchemy.orm import Query, Session, sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy as sql
 
 from mautrix.types import UserID, FilterID, SyncToken, ContentURI
+
+from .config import Config
 
 Base: declarative_base = declarative_base()
 
@@ -54,6 +59,14 @@ class DBClient(Base):
     avatar_url: ContentURI = Column(String(255), nullable=False, default="")
 
 
-def init(session: scoped_session) -> None:
-    DBPlugin.query = session.query_property()
-    DBClient.query = session.query_property()
+def init(config: Config) -> Session:
+    db_engine: sql.engine.Engine = sql.create_engine(config["database"])
+    db_factory = sessionmaker(bind=db_engine)
+    db_session = scoped_session(db_factory)
+    Base.metadata.bind = db_engine
+    Base.metadata.create_all()
+
+    DBPlugin.query = db_session.query_property()
+    DBClient.query = db_session.query_property()
+
+    return cast(Session, db_session)

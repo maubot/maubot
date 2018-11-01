@@ -346,6 +346,9 @@ components:
         primary_user:
           type: string
           example: '@putkiteippi:maunium.net'
+        config:
+          type: string
+          example: "YAML"
     MatrixClient:
       type: object
       properties:

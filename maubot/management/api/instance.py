@@ -13,57 +13,88 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
 from json import JSONDecodeError
 
-from mautrix.types import UserID
+from aiohttp import web
 
-from ...db import DBClient
+from ...db import DBPlugin
+from ...instance import PluginInstance
+from ...loader import PluginLoader
 from ...client import Client
 from .base import routes
-from .responses import ErrNotImplemented, ErrClientNotFound, ErrBodyNotJSON
+from .responses import (ErrInstanceNotFound, ErrBodyNotJSON, RespDeleted, ErrPrimaryUserNotFound,
+                        ErrPluginTypeRequired, ErrPrimaryUserRequired, ErrPluginTypeNotFound)
 
 
 @routes.get("/instances")
 async def get_instances(_: web.Request) -> web.Response:
-    return web.json_response([client.to_dict() for client in Client.cache.values()])
+    return web.json_response([instance.to_dict() for instance in PluginInstance.cache.values()])
 
 
 @routes.get("/instance/{id}")
 async def get_instance(request: web.Request) -> web.Response:
-    user_id = request.match_info.get("id", None)
-    client = Client.get(user_id, None)
-    if not client:
-        return ErrClientNotFound
-    return web.json_response(client.to_dict())
+    instance_id = request.match_info.get("id", "").lower()
+    instance = PluginInstance.get(instance_id, None)
+    if not instance:
+        return ErrInstanceNotFound
+    return web.json_response(instance.to_dict())
 
 
-async def create_instance(user_id: UserID, data: dict) -> web.Response:
-    return ErrNotImplemented
+async def create_instance(instance_id: str, data: dict) -> web.Response:
+    plugin_type = data.get("type", None)
+    primary_user = data.get("primary_user", None)
+    if not plugin_type:
+        return ErrPluginTypeRequired
+    elif not primary_user:
+        return ErrPrimaryUserRequired
+    elif not Client.get(primary_user):
+        return ErrPrimaryUserNotFound
+    try:
+        PluginLoader.find(plugin_type)
+    except KeyError:
+        return ErrPluginTypeNotFound
+    db_instance = DBPlugin(id=instance_id, type=plugin_type, enabled=data.get("enabled", True),
+                           primary_user=primary_user, config=data.get("config", ""))
+    instance = PluginInstance(db_instance)
+    instance.load()
+    PluginInstance.db.add(db_instance)
+    PluginInstance.db.commit()
+    await instance.start()
+    return web.json_response(instance.to_dict())
 
 
-async def update_instance(client: Client, data: dict) -> web.Response:
-    return ErrNotImplemented
+async def update_instance(instance: PluginInstance, data: dict) -> web.Response:
+    if not await instance.update_primary_user(data.get("primary_user")):
+        return ErrPrimaryUserNotFound
+    instance.update_id(data.get("id", None))
+    instance.update_enabled(data.get("enabled", None))
+    instance.update_config(data.get("config", None))
+    await instance.update_started(data.get("started", None))
+    instance.db.commit()
+    return web.json_response(instance.to_dict())
 
 
 @routes.put("/instance/{id}")
 async def update_instance(request: web.Request) -> web.Response:
-    user_id = request.match_info.get("id", None)
-    client = Client.get(user_id, None)
+    instance_id = request.match_info.get("id", "").lower()
+    instance = PluginInstance.get(instance_id, None)
     try:
         data = await request.json()
     except JSONDecodeError:
         return ErrBodyNotJSON
-    if not client:
-        return await create_instance(user_id, data)
+    if not instance:
+        return await create_instance(instance_id, data)
     else:
-        return await update_instance(client, data)
+        return await update_instance(instance, data)
 
 
 @routes.delete("/instance/{id}")
 async def delete_instance(request: web.Request) -> web.Response:
-    user_id = request.match_info.get("id", None)
-    client = Client.get(user_id, None)
-    if not client:
-        return ErrClientNotFound
-    return ErrNotImplemented
+    instance_id = request.match_info.get("id", "").lower()
+    instance = PluginInstance.get(instance_id, None)
+    if not instance:
+        return ErrInstanceNotFound
+    if instance.started:
+        await instance.stop()
+    instance.delete()
+    return RespDeleted

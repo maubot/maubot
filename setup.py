@@ -48,4 +48,8 @@ setuptools.setup(
     data_files=[
         (".", ["example-config.yaml"]),
     ],
+    package_data={
+        "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",
+                   "management/frontend/build/static/js/*"],
+    },
 )

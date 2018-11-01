@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from .command_spec import CommandSpec
     from mautrix.util.config import BaseProxyConfig
 
-
 DatabaseNotConfigured = ValueError("A database for this maubot instance has not been configured.")
 
 
@@ -69,3 +68,7 @@ class Plugin(ABC):
     @classmethod
     def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
         return None
+
+    def on_external_config_update(self) -> None:
+        if self.config:
+            self.config.load_and_update()

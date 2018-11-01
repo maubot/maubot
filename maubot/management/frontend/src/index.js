@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
 import ReactDOM from "react-dom"
-import "./style/base"
+import "./style/index.sass"
 import MaubotManager from "./MaubotManager"
 
 ReactDOM.render(<MaubotManager/>, document.getElementById("root"))

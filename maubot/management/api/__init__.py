@@ -21,6 +21,8 @@ from .base import routes, set_config
 from .middleware import auth, error
 from .auth import web as _
 from .plugin import web as _
+from .instance import web as _
+from .client import web as _
 
 
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
