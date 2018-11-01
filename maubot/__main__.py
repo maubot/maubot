@@ -74,18 +74,21 @@ try:
     log.info("Starting server")
     loop.run_until_complete(server.start())
     log.info("Starting clients and plugins")
-    loop.run_until_complete(asyncio.gather(*[client.start() for client in clients]))
+    loop.run_until_complete(asyncio.gather(*[client.start() for client in clients], loop=loop))
     log.info("Startup actions complete, running forever")
     periodic_commit_task = asyncio.ensure_future(periodic_commit(), loop=loop)
     loop.run_forever()
 except KeyboardInterrupt:
-    log.debug("Interrupt received, stopping HTTP clients/servers and saving database")
+    log.info("Interrupt received, stopping HTTP clients/servers and saving database")
     if periodic_commit_task is not None:
         periodic_commit_task.cancel()
-    for client in Client.cache.values():
-        client.stop()
+    log.debug("Stopping clients")
+    loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()],
+                                           loop=loop))
     db_session.commit()
+    log.debug("Stopping server")
     loop.run_until_complete(server.stop())
+    log.debug("Closing event loop")
     loop.close()
     log.debug("Everything stopped, shutting down")
     sys.exit(0)

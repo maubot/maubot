@@ -92,7 +92,7 @@ class Client:
             self.db_instance.enabled = False
             return
         if not self.filter_id:
-            self.filter_id = await self.client.create_filter(Filter(
+            self.db_instance.filter_id = await self.client.create_filter(Filter(
                 room=RoomFilter(
                     timeline=RoomEventFilter(
                         limit=50,
@@ -122,9 +122,18 @@ class Client:
     def stop_sync(self) -> None:
         self.client.stop()
 
-    def stop(self) -> None:
-        self.started = False
-        self.stop_sync()
+    async def stop(self) -> None:
+        if self.started:
+            self.started = False
+            await self.stop_plugins()
+            self.stop_sync()
+
+    def delete(self) -> None:
+        try:
+            del self.cache[self.id]
+        except KeyError:
+            pass
+        self.db.delete(self.db_instance)
 
     def to_dict(self) -> dict:
         return {
@@ -158,6 +167,44 @@ class Client:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
             await self.client.join_room(evt.room_id)
 
+    async def update_started(self, started: bool) -> None:
+        if started is None or started == self.started:
+            return
+        if started:
+            await self.start()
+        else:
+            await self.stop()
+
+    async def update_displayname(self, displayname: str) -> None:
+        if not displayname or displayname == self.displayname:
+            return
+        self.db_instance.displayname = displayname
+        await self.client.set_displayname(self.displayname)
+
+    async def update_avatar_url(self, avatar_url: ContentURI) -> None:
+        if not avatar_url or avatar_url == self.avatar_url:
+            return
+        self.db_instance.avatar_url = avatar_url
+        await self.client.set_avatar_url(self.avatar_url)
+
+    async def update_access_details(self, access_token: str, homeserver: str) -> None:
+        if not access_token and not homeserver:
+            return
+        elif access_token == self.access_token and homeserver == self.homeserver:
+            return
+        new_client = MaubotMatrixClient(mxid=self.id, base_url=homeserver or self.homeserver,
+                                        token=access_token or self.access_token, loop=self.loop,
+                                        client_session=self.http_client, log=self.log)
+        mxid = await new_client.whoami()
+        if mxid != self.id:
+            raise ValueError("MXID mismatch")
+        new_client.store = self.db_instance
+        self.stop_sync()
+        self.client = new_client
+        self.db_instance.homeserver = homeserver
+        self.db_instance.access_token = access_token
+        self.start_sync()
+
     # region Properties
 
     @property
@@ -172,11 +219,6 @@ class Client:
     def access_token(self) -> str:
         return self.db_instance.access_token
 
-    @access_token.setter
-    def access_token(self, value: str) -> None:
-        self.client.api.token = value
-        self.db_instance.access_token = value
-
     @property
     def enabled(self) -> bool:
         return self.db_instance.enabled
@@ -189,17 +231,9 @@ class Client:
     def next_batch(self) -> SyncToken:
         return self.db_instance.next_batch
 
-    @next_batch.setter
-    def next_batch(self, value: SyncToken) -> None:
-        self.db_instance.next_batch = value
-
     @property
     def filter_id(self) -> FilterID:
         return self.db_instance.filter_id
-
-    @filter_id.setter
-    def filter_id(self, value: FilterID) -> None:
-        self.db_instance.filter_id = value
 
     @property
     def sync(self) -> bool:
@@ -207,7 +241,14 @@ class Client:
 
     @sync.setter
     def sync(self, value: bool) -> None:
+        if value == self.db_instance.sync:
+            return
         self.db_instance.sync = value
+        if self.started:
+            if value:
+                self.start_sync()
+            else:
+                self.stop_sync()
 
     @property
     def autojoin(self) -> bool:
@@ -227,17 +268,9 @@ class Client:
     def displayname(self) -> str:
         return self.db_instance.displayname
 
-    @displayname.setter
-    def displayname(self, value: str) -> None:
-        self.db_instance.displayname = value
-
     @property
     def avatar_url(self) -> ContentURI:
         return self.db_instance.avatar_url
-
-    @avatar_url.setter
-    def avatar_url(self, value: ContentURI) -> None:
-        self.db_instance.avatar_url = value
 
     # endregion
 

@@ -16,6 +16,36 @@
 from http import HTTPStatus
 from aiohttp import web
 
+ErrBodyNotJSON = web.json_response({
+    "error": "Request body is not JSON",
+    "errcode": "body_not_json",
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrPluginTypeRequired = web.json_response({
+    "error": "Plugin type is required when creating plugin instances",
+    "errcode": "plugin_type_required",
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrPrimaryUserRequired = web.json_response({
+    "error": "Primary user is required when creating plugin instances",
+    "errcode": "primary_user_required",
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrBadClientAccessToken = web.json_response({
+    "error": "Invalid access token",
+    "errcode": "bad_client_access_token",
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrBadClientAccessDetails = web.json_response({
+    "error": "Invalid homeserver or access token",
+    "errcode": "bad_client_access_details"
+}, status=HTTPStatus.BAD_REQUEST)
+
+ErrMXIDMismatch = web.json_response({
+    "error": "The Matrix user ID of the client and the user ID of the access token don't match",
+    "errcode": "mxid_mismatch",
+}, status=HTTPStatus.BAD_REQUEST)
+
 ErrBadAuth = web.json_response({
     "error": "Invalid username or password",
     "errcode": "invalid_auth",
@@ -56,16 +86,6 @@ ErrPluginTypeNotFound = web.json_response({
     "errcode": "plugin_type_not_found",
 }, status=HTTPStatus.NOT_FOUND)
 
-ErrPluginTypeRequired = web.json_response({
-    "error": "Plugin type is required when creating plugin instances",
-    "errcode": "plugin_type_required",
-}, status=HTTPStatus.BAD_REQUEST)
-
-ErrPrimaryUserRequired = web.json_response({
-    "error": "Primary user is required when creating plugin instances",
-    "errcode": "primary_user_required",
-}, status=HTTPStatus.BAD_REQUEST)
-
 ErrPathNotFound = web.json_response({
     "error": "Resource not found",
     "errcode": "resource_not_found",
@@ -76,15 +96,20 @@ ErrMethodNotAllowed = web.json_response({
     "errcode": "method_not_allowed",
 }, status=HTTPStatus.METHOD_NOT_ALLOWED)
 
+ErrUserExists = web.json_response({
+    "error": "There is already a client with the user ID of that token",
+    "errcode": "user_exists",
+}, status=HTTPStatus.CONFLICT)
+
 ErrPluginInUse = web.json_response({
     "error": "Plugin instances of this type still exist",
     "errcode": "plugin_in_use",
 }, status=HTTPStatus.PRECONDITION_FAILED)
 
-ErrBodyNotJSON = web.json_response({
-    "error": "Request body is not JSON",
-    "errcode": "body_not_json",
-}, status=HTTPStatus.BAD_REQUEST)
+ErrClientInUse = web.json_response({
+    "error": "Plugin instances with this client as their primary user still exist",
+    "errcode": "client_in_use",
+}, status=HTTPStatus.PRECONDITION_FAILED)
 
 
 def plugin_import_error(error: str, stacktrace: str) -> web.Response:
