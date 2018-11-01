@@ -48,8 +48,8 @@ async def get_client(request: web.Request) -> web.Response:
 async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     homeserver = data.get("homeserver", None)
     access_token = data.get("access_token", None)
-    new_client = MatrixClient(base_url=homeserver, token=access_token, loop=Client.loop,
-                              client_session=Client.http_client)
+    new_client = MatrixClient(mxid="@not:a.mxid", base_url=homeserver, token=access_token,
+                              loop=Client.loop, client_session=Client.http_client)
     try:
         mxid = await new_client.whoami()
     except MatrixInvalidToken:
@@ -62,7 +62,7 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
             return ErrUserExists
     elif mxid != user_id:
         return ErrMXIDMismatch
-    db_instance = DBClient(id=user_id, homeserver=homeserver, access_token=access_token,
+    db_instance = DBClient(id=mxid, homeserver=homeserver, access_token=access_token,
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
                            autojoin=data.get("autojoin", True),
