@@ -14,6 +14,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [media](https://github.com/maubot/media) - A bot that replies with the MXC URI of images you send it.
 * [dice](https://github.com/maubot/dice) - A combined dice rolling and calculator bot.
 * [karma](https://github.com/maubot/karma) - A user karma tracker bot.
+* [xkcd](https://github.com/maubot/xkcd) - A bot to view xkcd comics.
 * [echo](https://github.com/maubot/echo) - A bot that echoes pings and other stuff.
 
 ### Upcoming
