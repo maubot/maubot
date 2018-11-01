@@ -15,8 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
 from io import BytesIO
+from time import time
 import traceback
 import os.path
+import re
 
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
 from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
@@ -81,11 +83,14 @@ async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Respo
 async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str
                                     ) -> web.Response:
     dirname = os.path.dirname(plugin.path)
-    filename = os.path.basename(plugin.path)
-    if plugin.version in filename:
-        filename = filename.replace(plugin.version, new_version)
+    old_filename = os.path.basename(plugin.path)
+    if plugin.version in old_filename:
+        filename = old_filename.replace(plugin.version, new_version)
+        if filename == old_filename:
+            filename = re.sub(f"{re.escape(plugin.version)}(-ts[0-9]+)?",
+                              f"{new_version}-ts{int(time())}", old_filename)
     else:
-        filename = filename.rstrip(".mbp")
+        filename = old_filename.rstrip(".mbp")
         filename = f"{filename}-v{new_version}.mbp"
     path = os.path.join(dirname, filename)
     with open(path, "wb") as p:

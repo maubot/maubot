@@ -58,7 +58,7 @@ loop = asyncio.get_event_loop()
 
 init_db(db_session)
 clients = init_client(loop)
-init_plugin_instance_class(db_session, config)
+init_plugin_instance_class(db_session, config, loop)
 management_api = init_management(config, loop)
 server = MaubotServer(config, management_api, loop)
 

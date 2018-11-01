@@ -151,7 +151,7 @@ class ZippedPluginLoader(PluginLoader):
 
     def _get_importer(self, reset_cache: bool = False) -> zipimporter:
         try:
-            if not self._importer:
+            if not self._importer or self._importer.archive != self.path:
                 self._importer = zipimporter(self.path)
             if reset_cache:
                 self._importer.reset_cache()

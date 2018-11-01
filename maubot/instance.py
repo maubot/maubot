@@ -129,7 +129,10 @@ class PluginInstance:
             return
         self.log.debug("Stopping plugin instance...")
         self.running = False
-        await self.plugin.stop()
+        try:
+            await self.plugin.stop()
+        except Exception:
+            self.log.exception("Failed to stop instance")
         self.plugin = None
 
     @classmethod
