@@ -65,7 +65,7 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
 
 
 async def _update_instance(instance: PluginInstance, data: dict) -> web.Response:
-    if not await instance.update_primary_user(data.get("primary_user")):
+    if not await instance.update_primary_user(data.get("primary_user", None)):
         return ErrPrimaryUserNotFound
     instance.update_id(data.get("id", None))
     instance.update_enabled(data.get("enabled", None))

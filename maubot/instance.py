@@ -170,6 +170,8 @@ class PluginInstance:
             self.plugin.on_external_config_update()
 
     async def update_primary_user(self, primary_user: UserID) -> bool:
+        if not primary_user or primary_user == self.primary_user:
+            return True
         client = Client.get(primary_user)
         if not client:
             return False
