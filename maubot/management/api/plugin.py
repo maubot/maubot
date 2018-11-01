@@ -13,12 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
+from http import HTTPStatus
 from io import BytesIO
 from time import time
 import traceback
 import os.path
 import re
+
+from aiohttp import web
 
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
 from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
@@ -77,7 +79,7 @@ async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Respo
     except MaubotZipImportError as e:
         ZippedPluginLoader.trash(path)
         return plugin_import_error(str(e), traceback.format_exc())
-    return web.json_response(plugin.to_dict())
+    return web.json_response(plugin.to_dict(), status=HTTPStatus.CREATED)
 
 
 async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str

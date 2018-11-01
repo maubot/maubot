@@ -13,7 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Optional
 from json import JSONDecodeError
+from http import HTTPStatus
 
 from aiohttp import web
 
@@ -43,7 +45,7 @@ async def get_client(request: web.Request) -> web.Response:
     return web.json_response(client.to_dict())
 
 
-async def create_client(user_id: UserID, data: dict) -> web.Response:
+async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     homeserver = data.get("homeserver", None)
     access_token = data.get("access_token", None)
     new_client = MatrixClient(base_url=homeserver, token=access_token, loop=Client.loop,
@@ -54,7 +56,7 @@ async def create_client(user_id: UserID, data: dict) -> web.Response:
         return ErrBadClientAccessToken
     except MatrixRequestError:
         return ErrBadClientAccessDetails
-    if user_id == "new":
+    if user_id is None:
         existing_client = Client.get(mxid, None)
         if existing_client is not None:
             return ErrUserExists
@@ -73,7 +75,7 @@ async def create_client(user_id: UserID, data: dict) -> web.Response:
     return web.json_response(client.to_dict())
 
 
-async def update_client(client: Client, data: dict) -> web.Response:
+async def _update_client(client: Client, data: dict) -> web.Response:
     try:
         await client.update_access_details(data.get("access_token", None),
                                            data.get("homeserver", None))
@@ -89,22 +91,30 @@ async def update_client(client: Client, data: dict) -> web.Response:
     client.enabled = data.get("enabled", client.enabled)
     client.autojoin = data.get("autojoin", client.autojoin)
     client.sync = data.get("sync", client.sync)
-    return web.json_response(client.to_dict())
+    return web.json_response(client.to_dict(), status=HTTPStatus.CREATED)
+
+
+@routes.post("/client/new")
+async def create_client(request: web.Request) -> web.Response:
+    try:
+        data = await request.json()
+    except JSONDecodeError:
+        return ErrBodyNotJSON
+    return await _create_client(None, data)
 
 
 @routes.put("/client/{id}")
 async def update_client(request: web.Request) -> web.Response:
     user_id = request.match_info.get("id", None)
-    # /client/new always creates a new client
-    client = Client.get(user_id, None) if user_id != "new" else None
+    client = Client.get(user_id, None)
     try:
         data = await request.json()
     except JSONDecodeError:
         return ErrBodyNotJSON
     if not client:
-        return await create_client(user_id, data)
+        return await _create_client(user_id, data)
     else:
-        return await update_client(client, data)
+        return await _update_client(client, data)
 
 
 @routes.delete("/client/{id}")

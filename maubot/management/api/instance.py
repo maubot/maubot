@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from json import JSONDecodeError
+from http import HTTPStatus
 
 from aiohttp import web
 
@@ -40,7 +41,7 @@ async def get_instance(request: web.Request) -> web.Response:
     return web.json_response(instance.to_dict())
 
 
-async def create_instance(instance_id: str, data: dict) -> web.Response:
+async def _create_instance(instance_id: str, data: dict) -> web.Response:
     plugin_type = data.get("type", None)
     primary_user = data.get("primary_user", None)
     if not plugin_type:
@@ -60,10 +61,10 @@ async def create_instance(instance_id: str, data: dict) -> web.Response:
     PluginInstance.db.add(db_instance)
     PluginInstance.db.commit()
     await instance.start()
-    return web.json_response(instance.to_dict())
+    return web.json_response(instance.to_dict(), status=HTTPStatus.CREATED)
 
 
-async def update_instance(instance: PluginInstance, data: dict) -> web.Response:
+async def _update_instance(instance: PluginInstance, data: dict) -> web.Response:
     if not await instance.update_primary_user(data.get("primary_user")):
         return ErrPrimaryUserNotFound
     instance.update_id(data.get("id", None))
@@ -83,9 +84,9 @@ async def update_instance(request: web.Request) -> web.Response:
     except JSONDecodeError:
         return ErrBodyNotJSON
     if not instance:
-        return await create_instance(instance_id, data)
+        return await _create_instance(instance_id, data)
     else:
-        return await update_instance(instance, data)
+        return await _update_instance(instance, data)
 
 
 @routes.delete("/instance/{id}")
