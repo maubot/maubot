@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
+from time import time
 import json
+
+from aiohttp import web
 
 from mautrix.types import UserID
 from mautrix.util.signed_token import sign_token, verify_token
@@ -47,6 +49,7 @@ async def login(request: web.Request) -> web.Response:
         user = data.get("user") or "root"
         return web.json_response({
             "token": create_token(user),
+            "created_at": int(time()),
         })
 
     username = data.get("username")
@@ -54,6 +57,7 @@ async def login(request: web.Request) -> web.Response:
     if get_config().check_password(username, password):
         return web.json_response({
             "token": create_token(username),
+            "created_at": int(time()),
         })
 
     return ErrBadAuth
