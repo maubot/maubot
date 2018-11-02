@@ -22,7 +22,7 @@ from mautrix.types import UserID
 from mautrix.util.signed_token import sign_token, verify_token
 
 from .base import routes, get_config
-from .responses import ErrBadAuth, ErrBodyNotJSON
+from .responses import ErrBadAuth, ErrBodyNotJSON, ErrNoToken, ErrInvalidToken
 
 
 def is_valid_token(token: str) -> bool:
@@ -38,7 +38,24 @@ def create_token(user: UserID) -> str:
     })
 
 
-@routes.post("/login")
+@routes.post("/auth/ping")
+async def ping(request: web.Request) -> web.Response:
+    token = request.headers.get("Authorization", "")
+    if not token or not token.startswith("Bearer "):
+        return ErrNoToken
+
+    data = verify_token(get_config()["server.unshared_secret"], token[len("Bearer "):])
+    if not data:
+        return ErrInvalidToken
+    user = data.get("user_id", None)
+    if not get_config().is_admin(user):
+        return ErrInvalidToken
+    return web.json_response({
+        "username": user,
+    })
+
+
+@routes.post("/auth/login")
 async def login(request: web.Request) -> web.Response:
     try:
         data = await request.json()

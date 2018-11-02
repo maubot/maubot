@@ -12,7 +12,7 @@ servers:
 - url: /_matrix/maubot/v1
 
 paths:
-  /login:
+  /auth/login:
     post:
       operationId: login
       summary: Log in with the unshared secret or username+password
@@ -45,6 +45,23 @@ paths:
                     type: string
         401:
           description: Invalid credentials
+  /auth/ping:
+    post:
+      operationId: ping
+      summary: Check if the given token is valid
+      tags: [Authentication]
+      responses:
+        200:
+          description: Token is OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+        401:
+          description: Token is not OK
 
   /plugins:
     get:

@@ -21,5 +21,6 @@
     "last 3 and_chr versions",
     "last 2 safari versions",
     "last 2 ios_saf versions"
-  ]
+  ],
+  "proxy": "http://localhost:29316"
 }

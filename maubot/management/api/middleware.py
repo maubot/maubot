@@ -24,7 +24,7 @@ Handler = Callable[[web.Request], Awaitable[web.Response]]
 
 @web.middleware
 async def auth(request: web.Request, handler: Handler) -> web.Response:
-    if request.path.endswith("/login"):
+    if "/auth/" in request.path:
         return await handler(request)
     token = request.headers.get("Authorization", "")
     if not token or not token.startswith("Bearer "):
