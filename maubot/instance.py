@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, List, Optional
-from sqlalchemy.orm import Session
-from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml import YAML
 from asyncio import AbstractEventLoop
 import logging
 import io
+
+from sqlalchemy.orm import Session
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml import YAML
 
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
@@ -56,6 +57,10 @@ class PluginInstance:
         self.log = logging.getLogger(f"maubot.plugin.{self.id}")
         self.config = None
         self.started = False
+        self.loader = None
+        self.client = None
+        self.plugin = None
+        self.base_cfg = None
         self.cache[self.id] = self
 
     def to_dict(self) -> dict:
@@ -94,6 +99,7 @@ class PluginInstance:
         except KeyError:
             pass
         self.db.delete(self.db_instance)
+        self.db.commit()
         # TODO delete plugin db
 
     def load_config(self) -> CommentedMap:

@@ -134,6 +134,7 @@ class Client:
         except KeyError:
             pass
         self.db.delete(self.db_instance)
+        self.db.commit()
 
     def to_dict(self) -> dict:
         return {

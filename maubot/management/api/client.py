@@ -26,14 +26,12 @@ from mautrix.client import Client as MatrixClient
 from ...db import DBClient
 from ...client import Client
 from .base import routes
-from .responses import (RespDeleted, ErrClientNotFound, ErrBodyNotJSON, ErrClientInUse,
-                        ErrBadClientAccessToken, ErrBadClientAccessDetails, ErrMXIDMismatch,
-                        ErrUserExists)
+from .responses import resp
 
 
 @routes.get("/clients")
 async def get_clients(_: web.Request) -> web.Response:
-    return web.json_response([client.to_dict() for client in Client.cache.values()])
+    return resp.found([client.to_dict() for client in Client.cache.values()])
 
 
 @routes.get("/client/{id}")
@@ -41,8 +39,8 @@ async def get_client(request: web.Request) -> web.Response:
     user_id = request.match_info.get("id", None)
     client = Client.get(user_id, None)
     if not client:
-        return ErrClientNotFound
-    return web.json_response(client.to_dict())
+        return resp.client_not_found
+    return resp.found(client.to_dict())
 
 
 async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
@@ -53,15 +51,15 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     try:
         mxid = await new_client.whoami()
     except MatrixInvalidToken:
-        return ErrBadClientAccessToken
+        return resp.bad_client_access_token
     except MatrixRequestError:
-        return ErrBadClientAccessDetails
+        return resp.bad_client_access_details
     if user_id is None:
         existing_client = Client.get(mxid, None)
         if existing_client is not None:
-            return ErrUserExists
+            return resp.user_exists
     elif mxid != user_id:
-        return ErrMXIDMismatch
+        return resp.mxid_mismatch
     db_instance = DBClient(id=mxid, homeserver=homeserver, access_token=access_token,
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
@@ -72,7 +70,7 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     Client.db.add(db_instance)
     Client.db.commit()
     await client.start()
-    return web.json_response(client.to_dict())
+    return resp.created(client.to_dict())
 
 
 async def _update_client(client: Client, data: dict) -> web.Response:
@@ -80,18 +78,18 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         await client.update_access_details(data.get("access_token", None),
                                            data.get("homeserver", None))
     except MatrixInvalidToken:
-        return ErrBadClientAccessToken
+        return resp.bad_client_access_token
     except MatrixRequestError:
-        return ErrBadClientAccessDetails
+        return resp.bad_client_access_details
     except ValueError:
-        return ErrMXIDMismatch
+        return resp.mxid_mismatch
     await client.update_avatar_url(data.get("avatar_url", None))
     await client.update_displayname(data.get("displayname", None))
     await client.update_started(data.get("started", None))
     client.enabled = data.get("enabled", client.enabled)
     client.autojoin = data.get("autojoin", client.autojoin)
     client.sync = data.get("sync", client.sync)
-    return web.json_response(client.to_dict(), status=HTTPStatus.CREATED)
+    return resp.updated(client.to_dict())
 
 
 @routes.post("/client/new")
@@ -99,7 +97,7 @@ async def create_client(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except JSONDecodeError:
-        return ErrBodyNotJSON
+        return resp.body_not_json
     return await _create_client(None, data)
 
 
@@ -110,7 +108,7 @@ async def update_client(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except JSONDecodeError:
-        return ErrBodyNotJSON
+        return resp.body_not_json
     if not client:
         return await _create_client(user_id, data)
     else:
@@ -122,10 +120,10 @@ async def delete_client(request: web.Request) -> web.Response:
     user_id = request.match_info.get("id", None)
     client = Client.get(user_id, None)
     if not client:
-        return ErrClientNotFound
+        return resp.client_not_found
     if len(client.references) > 0:
-        return ErrClientInUse
+        return resp.client_in_use
     if client.started:
         await client.stop()
     client.delete()
-    return RespDeleted
+    return resp.deleted

@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Callable, Awaitable
+import logging
+
 from aiohttp import web
 
-from .responses import ErrNoToken, ErrInvalidToken, ErrPathNotFound, ErrMethodNotAllowed
+from .responses import resp
 from .auth import is_valid_token
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
@@ -28,10 +30,13 @@ async def auth(request: web.Request, handler: Handler) -> web.Response:
         return await handler(request)
     token = request.headers.get("Authorization", "")
     if not token or not token.startswith("Bearer "):
-        return ErrNoToken
+        return resp.no_token
     if not is_valid_token(token[len("Bearer "):]):
-        return ErrInvalidToken
+        return resp.invalid_token
     return await handler(request)
+
+
+log = logging.getLogger("maubot.server")
 
 
 @web.middleware
@@ -39,14 +44,18 @@ async def error(request: web.Request, handler: Handler) -> web.Response:
     try:
         return await handler(request)
     except web.HTTPException as ex:
+        print(ex)
         if ex.status_code == 404:
-            return ErrPathNotFound
+            return resp.path_not_found
         elif ex.status_code == 405:
-            return ErrMethodNotAllowed
+            return resp.method_not_allowed
         return web.json_response({
             "error": f"Unhandled HTTP {ex.status}",
             "errcode": f"unhandled_http_{ex.status}",
         }, status=ex.status)
+    except Exception:
+        log.exception("Error in handler")
+        return resp.internal_server_error
 
 
 req_no = 0

@@ -192,8 +192,10 @@ class ZippedPluginLoader(PluginLoader):
         for module in self.modules:
             try:
                 importer.load_module(module)
-            except ZipImportError as e:
+            except ZipImportError:
                 raise MaubotZipLoadError(f"Module {module} not found in file")
+            except Exception:
+                raise MaubotZipLoadError(f"Failed to load module {module}")
         try:
             main_mod = sys.modules[self.main_module]
         except KeyError as e:
@@ -235,7 +237,7 @@ class ZippedPluginLoader(PluginLoader):
             self._importer.remove_cache()
             self._importer = None
         self._loaded = None
-        os.remove(self.path)
+        self.trash(self.path, reason="delete")
         self.id = None
         self.path = None
         self.version = None

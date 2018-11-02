@@ -22,7 +22,7 @@ from mautrix.types import UserID
 from mautrix.util.signed_token import sign_token, verify_token
 
 from .base import routes, get_config
-from .responses import ErrBadAuth, ErrBodyNotJSON, ErrNoToken, ErrInvalidToken
+from .responses import resp
 
 
 def is_valid_token(token: str) -> bool:
@@ -35,6 +35,7 @@ def is_valid_token(token: str) -> bool:
 def create_token(user: UserID) -> str:
     return sign_token(get_config()["server.unshared_secret"], {
         "user_id": user,
+        "created_at": int(time()),
     })
 
 
@@ -42,17 +43,15 @@ def create_token(user: UserID) -> str:
 async def ping(request: web.Request) -> web.Response:
     token = request.headers.get("Authorization", "")
     if not token or not token.startswith("Bearer "):
-        return ErrNoToken
+        return resp.no_token
 
     data = verify_token(get_config()["server.unshared_secret"], token[len("Bearer "):])
     if not data:
-        return ErrInvalidToken
+        return resp.invalid_token
     user = data.get("user_id", None)
     if not get_config().is_admin(user):
-        return ErrInvalidToken
-    return web.json_response({
-        "username": user,
-    })
+        return resp.invalid_token
+    return resp.pong(user)
 
 
 @routes.post("/auth/login")
@@ -60,21 +59,15 @@ async def login(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except json.JSONDecodeError:
-        return ErrBodyNotJSON
+        return resp.body_not_json
     secret = data.get("secret")
     if secret and get_config()["server.unshared_secret"] == secret:
         user = data.get("user") or "root"
-        return web.json_response({
-            "token": create_token(user),
-            "created_at": int(time()),
-        })
+        return resp.logged_in(create_token(user))
 
     username = data.get("username")
     password = data.get("password")
     if get_config().check_password(username, password):
-        return web.json_response({
-            "token": create_token(username),
-            "created_at": int(time()),
-        })
+        return resp.logged_in(create_token(username))
 
-    return ErrBadAuth
+    return resp.bad_auth

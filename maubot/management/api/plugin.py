@@ -23,14 +23,13 @@ import re
 from aiohttp import web
 
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
-from .responses import (ErrPluginNotFound, ErrPluginInUse, plugin_import_error,
-                        plugin_reload_error, RespDeleted, RespOK, ErrUnsupportedPluginLoader)
+from .responses import resp
 from .base import routes, get_config
 
 
 @routes.get("/plugins")
 async def get_plugins(_) -> web.Response:
-    return web.json_response([plugin.to_dict() for plugin in PluginLoader.id_cache.values()])
+    return resp.found([plugin.to_dict() for plugin in PluginLoader.id_cache.values()])
 
 
 @routes.get("/plugin/{id}")
@@ -38,8 +37,8 @@ async def get_plugin(request: web.Request) -> web.Response:
     plugin_id = request.match_info.get("id", None)
     plugin = PluginLoader.id_cache.get(plugin_id, None)
     if not plugin:
-        return ErrPluginNotFound
-    return web.json_response(plugin.to_dict())
+        return resp.plugin_not_found
+    return resp.found(plugin.to_dict())
 
 
 @routes.delete("/plugin/{id}")
@@ -47,11 +46,11 @@ async def delete_plugin(request: web.Request) -> web.Response:
     plugin_id = request.match_info.get("id", None)
     plugin = PluginLoader.id_cache.get(plugin_id, None)
     if not plugin:
-        return ErrPluginNotFound
+        return resp.plugin_not_found
     elif len(plugin.references) > 0:
-        return ErrPluginInUse
+        return resp.plugin_in_use
     await plugin.delete()
-    return RespDeleted
+    return resp.deleted
 
 
 @routes.post("/plugin/{id}/reload")
@@ -59,15 +58,15 @@ async def reload_plugin(request: web.Request) -> web.Response:
     plugin_id = request.match_info.get("id", None)
     plugin = PluginLoader.id_cache.get(plugin_id, None)
     if not plugin:
-        return ErrPluginNotFound
+        return resp.plugin_not_found
 
     await plugin.stop_instances()
     try:
         await plugin.reload()
     except MaubotZipImportError as e:
-        return plugin_reload_error(str(e), traceback.format_exc())
+        return resp.plugin_reload_error(str(e), traceback.format_exc())
     await plugin.start_instances()
-    return RespOK
+    return resp.ok
 
 
 async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Response:
@@ -78,8 +77,8 @@ async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Respo
         plugin = ZippedPluginLoader.get(path)
     except MaubotZipImportError as e:
         ZippedPluginLoader.trash(path)
-        return plugin_import_error(str(e), traceback.format_exc())
-    return web.json_response(plugin.to_dict(), status=HTTPStatus.CREATED)
+        return resp.plugin_import_error(str(e), traceback.format_exc())
+    return resp.created(plugin.to_dict())
 
 
 async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str
@@ -107,10 +106,10 @@ async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, 
             await plugin.start_instances()
         except MaubotZipImportError:
             pass
-        return plugin_import_error(str(e), traceback.format_exc())
+        return resp.plugin_import_error(str(e), traceback.format_exc())
     await plugin.start_instances()
     ZippedPluginLoader.trash(old_path, reason="update")
-    return web.json_response(plugin.to_dict())
+    return resp.updated(plugin.to_dict())
 
 
 @routes.post("/plugins/upload")
@@ -120,11 +119,11 @@ async def upload_plugin(request: web.Request) -> web.Response:
     try:
         pid, version = ZippedPluginLoader.verify_meta(file)
     except MaubotZipImportError as e:
-        return plugin_import_error(str(e), traceback.format_exc())
+        return resp.plugin_import_error(str(e), traceback.format_exc())
     plugin = PluginLoader.id_cache.get(pid, None)
     if not plugin:
         return await upload_new_plugin(content, pid, version)
     elif isinstance(plugin, ZippedPluginLoader):
         return await upload_replacement_plugin(plugin, content, version)
     else:
-        return ErrUnsupportedPluginLoader
+        return resp.unsupported_plugin_loader

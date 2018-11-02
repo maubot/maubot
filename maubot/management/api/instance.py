@@ -23,13 +23,12 @@ from ...instance import PluginInstance
 from ...loader import PluginLoader
 from ...client import Client
 from .base import routes
-from .responses import (ErrInstanceNotFound, ErrBodyNotJSON, RespDeleted, ErrPrimaryUserNotFound,
-                        ErrPluginTypeRequired, ErrPrimaryUserRequired, ErrPluginTypeNotFound)
+from .responses import resp
 
 
 @routes.get("/instances")
 async def get_instances(_: web.Request) -> web.Response:
-    return web.json_response([instance.to_dict() for instance in PluginInstance.cache.values()])
+    return resp.found([instance.to_dict() for instance in PluginInstance.cache.values()])
 
 
 @routes.get("/instance/{id}")
@@ -37,23 +36,23 @@ async def get_instance(request: web.Request) -> web.Response:
     instance_id = request.match_info.get("id", "").lower()
     instance = PluginInstance.get(instance_id, None)
     if not instance:
-        return ErrInstanceNotFound
-    return web.json_response(instance.to_dict())
+        return resp.instance_not_found
+    return resp.found(instance.to_dict())
 
 
 async def _create_instance(instance_id: str, data: dict) -> web.Response:
     plugin_type = data.get("type", None)
     primary_user = data.get("primary_user", None)
     if not plugin_type:
-        return ErrPluginTypeRequired
+        return resp.plugin_type_required
     elif not primary_user:
-        return ErrPrimaryUserRequired
+        return resp.primary_user_required
     elif not Client.get(primary_user):
-        return ErrPrimaryUserNotFound
+        return resp.primary_user_not_found
     try:
         PluginLoader.find(plugin_type)
     except KeyError:
-        return ErrPluginTypeNotFound
+        return resp.plugin_type_not_found
     db_instance = DBPlugin(id=instance_id, type=plugin_type, enabled=data.get("enabled", True),
                            primary_user=primary_user, config=data.get("config", ""))
     instance = PluginInstance(db_instance)
@@ -61,18 +60,18 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
     PluginInstance.db.add(db_instance)
     PluginInstance.db.commit()
     await instance.start()
-    return web.json_response(instance.to_dict(), status=HTTPStatus.CREATED)
+    return resp.created(instance.to_dict())
 
 
 async def _update_instance(instance: PluginInstance, data: dict) -> web.Response:
     if not await instance.update_primary_user(data.get("primary_user", None)):
-        return ErrPrimaryUserNotFound
+        return resp.primary_user_not_found
     instance.update_id(data.get("id", None))
     instance.update_enabled(data.get("enabled", None))
     instance.update_config(data.get("config", None))
     await instance.update_started(data.get("started", None))
     instance.db.commit()
-    return web.json_response(instance.to_dict())
+    return resp.updated(instance.to_dict())
 
 
 @routes.put("/instance/{id}")
@@ -82,7 +81,7 @@ async def update_instance(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except JSONDecodeError:
-        return ErrBodyNotJSON
+        return resp.body_not_json
     if not instance:
         return await _create_instance(instance_id, data)
     else:
@@ -94,8 +93,8 @@ async def delete_instance(request: web.Request) -> web.Response:
     instance_id = request.match_info.get("id", "").lower()
     instance = PluginInstance.get(instance_id, None)
     if not instance:
-        return ErrInstanceNotFound
+        return resp.instance_not_found
     if instance.started:
         await instance.stop()
     instance.delete()
-    return RespDeleted
+    return resp.deleted
