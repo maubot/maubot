@@ -65,6 +65,7 @@ class PluginInstance:
             "enabled": self.enabled,
             "started": self.started,
             "primary_user": self.primary_user,
+            "config": self.db_instance.config,
         }
 
     def load(self) -> None:
