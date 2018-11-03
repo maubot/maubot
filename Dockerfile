@@ -8,9 +8,12 @@ RUN apk add --no-cache \
       py3-attrs \
       py3-bcrypt \
       py3-cffi \
-      ca-certificates \
- && pip3 install -r requirements.txt
+      ca-certificates &&\
+    pip3 install -r requirements.txt &&\
+    mkdir -p /data /var/log/maubot &&\
+    adduser -D maubot &&\
+    chown -R maubot: /opt/maubot /data /var/log/maubot
 
 VOLUME /data
-
+USER maubot
 CMD ["/opt/maubot/docker-run.sh"]
