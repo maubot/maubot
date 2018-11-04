@@ -16,6 +16,6 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import "./style/index.sass"
-import MaubotManager from "./MaubotManager"
+import App from "./Router"
 
-ReactDOM.render(<MaubotManager/>, document.getElementById("root"))
+ReactDOM.render(<App/>, document.getElementById("root"))

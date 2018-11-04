@@ -14,20 +14,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
+import { BrowserRouter as Router, Route, Redirect } from "react-router-dom"
+import PrivateRoute from "./PrivateRoute"
+import Home from "./Home"
+import Login from "./Login"
 
-class MaubotManager extends Component {
+class MaubotRouter extends Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            authed: localStorage.accessToken !== undefined,
+        }
+    }
+
     render() {
-        return (
-            <div className="maubot-manager">
-                <header>
-
-                </header>
-                <main>
-
-                </main>
+        return <Router>
+            <div className={`maubot-wrapper ${this.state.authed ? "authenticated" : ""}`}>
+                <Route path="/" exact render={() => <Redirect to={{ pathname: "/dashboard" }}/>}/>
+                <PrivateRoute path="/dashboard" component={Home} authed={this.state.authed}/>
+                <Route path="/login" component={Login}/>
             </div>
-        )
+        </Router>
     }
 }
 
-export default MaubotManager
+export default MaubotRouter

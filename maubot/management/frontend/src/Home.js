@@ -13,10 +13,14 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-@import base/vars
-@import base/body
-@import base/elements
+import React, { Component } from "react"
 
-@import lib/spinner
+class Home extends Component {
+    render() {
+        return <main>
 
-@import pages/login
+        </main>
+    }
+}
+
+export default Home

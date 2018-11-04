@@ -1,0 +1,95 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+=button()
+    font-family: $font-stack
+    padding: .375rem 1rem
+    background-color: $background-color
+    border: none
+    border-radius: .25rem
+    color: $inverted-text-color
+    box-sizing: border-box
+    font-size: 1rem
+    cursor: pointer
+
+    &:hover
+        background-color: darken($background-color, 10%)
+
+=link-button()
+    display: inline-block
+    text-align: center
+    text-decoration: none
+
+=main-color-button()
+    background-color: $main-color
+    &:hover
+        background-color: $dark-color
+
+button, .button
+    +button
+
+    &.main-color
+        +main-color-button
+
+=button-group()
+    width: 100%
+    display: flex
+    > button, > .button
+        flex: 1
+        border-radius: 0
+
+        &:first-of-type
+            border-radius: .25rem 0 0 .25rem
+
+        &:last-of-type
+            border-radius: 0 .25rem .25rem 0
+
+        &:first-of-type:last-of-type
+            border-radius: .25rem
+
+=vertical-button-group()
+    display: flex
+    flex-direction: column
+    > button, > .button
+        flex: 1
+        border-radius: 0
+
+        &:first-of-type
+            border-radius: .25rem .25rem 0 0
+
+        &:last-of-type
+            border-radius: 0 0 .25rem .25rem
+
+        &:first-of-type:last-of-type
+            border-radius: .25rem
+
+input, textarea
+    font-family: $font-stack
+    border: 1px solid $border-color
+    background-color: $background-color
+    color: $text-color
+    box-sizing: border-box
+    border-radius: .25rem
+    padding: .375rem 1rem
+    font-size: 1rem
+    resize: vertical
+
+    &:hover, &:focus
+        border-color: $main-color
+
+    &:focus
+        border-width: 2px
+        padding: calc(.375rem - 1px) 1rem

@@ -13,10 +13,32 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-@import base/vars
-@import base/body
-@import base/elements
 
-@import lib/spinner
+.maubot-wrapper:not(.authenticated)
+    background-color: $main-color
 
-@import pages/login
+    text-align: center
+
+.login
+    width: 25rem
+    height: 23.5rem
+    display: inline-block
+    box-sizing: border-box
+    background-color: white
+    border-radius: .25rem
+    margin-top: 3rem
+
+    .title
+        color: $main-color
+        margin: 3rem 0
+
+    input, button
+        width: calc(100% - 5rem)
+        margin: .5rem 2.5rem
+        padding: 1rem
+
+    input:focus
+        padding: calc(1rem - 1px)
+
+    button
+        +main-color-button
