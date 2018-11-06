@@ -18,21 +18,52 @@ import { BrowserRouter as Router, Route, Redirect } from "react-router-dom"
 import PrivateRoute from "./PrivateRoute"
 import Home from "./Home"
 import Login from "./Login"
+import Spinner from "./Spinner"
+import api from "./api"
 
 class MaubotRouter extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            authed: localStorage.accessToken !== undefined,
+            pinged: false,
+            authed: false,
         }
     }
 
+    async componentWillMount() {
+        if (localStorage.accessToken) {
+            await this.ping()
+        }
+        this.setState({ pinged: true })
+    }
+
+    async ping() {
+        try {
+            const username = await api.ping()
+            if (username) {
+                localStorage.username = username
+                this.setState({ authed: true })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    login = async (token) => {
+        localStorage.accessToken = token
+        await this.ping()
+    }
+
     render() {
+        if (!this.state.pinged) {
+            return <Spinner className="maubot-loading"/>
+        }
         return <Router>
             <div className={`maubot-wrapper ${this.state.authed ? "authenticated" : ""}`}>
                 <Route path="/" exact render={() => <Redirect to={{ pathname: "/dashboard" }}/>}/>
                 <PrivateRoute path="/dashboard" component={Home} authed={this.state.authed}/>
-                <Route path="/login" component={Login}/>
+                <PrivateRoute path="/login" render={() => <Login onLogin={this.login}/>}
+                              authed={!this.state.authed} to="/dashboard"/>
             </div>
         </Router>
     }

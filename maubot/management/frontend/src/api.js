@@ -16,14 +16,15 @@
 
 const BASE_PATH = "/_matrix/maubot/v1"
 
-export function login(username, password) {
-    return fetch(`${BASE_PATH}/auth/login`, {
+export async function login(username, password) {
+    const resp = await fetch(`${BASE_PATH}/auth/login`, {
         method: "POST",
         body: JSON.stringify({
             username,
             password,
         }),
     })
+    return await resp.json()
 }
 
 function getHeaders(contentType = "application/json") {
@@ -83,4 +84,11 @@ export async function getClients() {
 export async function getClient(id) {
     const resp = await fetch(`${BASE_PATH}/client/${id}`, { headers: getHeaders() })
     return await resp.json()
+}
+
+export default {
+    login, ping,
+    getInstances, getInstance,
+    getPlugins, getPlugin,  uploadPlugin,
+    getClients, getClient,
 }

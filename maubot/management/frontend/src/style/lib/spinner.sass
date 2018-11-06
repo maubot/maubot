@@ -2,14 +2,11 @@ $green: #008744
 $blue: #0057e7
 $red: #d62d20
 $yellow: #ffa700
-$white: #eee
 
-$width: 100px
-
-.loader
+.spinner
     position: relative
     margin: 0 auto
-    width: $width
+    width: 5rem
 
     &:before
         content: ""
@@ -33,6 +30,14 @@ $width: 100px
             stroke-dashoffset: 0
             animation: dash 1.5s ease-in-out infinite, color 6s ease-in-out infinite
             stroke-linecap: round
+
+=white-spinner()
+    circle
+        stroke: white !important
+
+=thick-spinner($thickness: 5)
+    svg > circle
+        stroke-width: $thickness
 
 @keyframes rotate
     100%

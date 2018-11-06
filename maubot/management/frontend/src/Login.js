@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
+import Spinner from "./Spinner"
+import api from "./api"
 
 class Login extends Component {
     constructor(props, context) {
@@ -21,24 +23,38 @@ class Login extends Component {
         this.state = {
             username: "",
             password: "",
+            loading: false,
+            error: "",
         }
     }
 
     inputChanged = event => this.setState({ [event.target.name]: event.target.value })
 
-    login = () => {
-
+    login = async () => {
+        this.setState({ loading: true })
+        const resp = await api.login(this.state.username, this.state.password)
+        if (resp.token) {
+            await this.props.onLogin(resp.token)
+        } else if (resp.error) {
+            this.setState({ error: resp.error, loading: false })
+        } else {
+            this.setState({ error: "Unknown error", loading: false })
+            console.log("Unknown error:", resp)
+        }
     }
 
     render() {
         return <div className="login-wrapper">
-            <div className="login">
-                <h1 className="title">Maubot Manager</h1>
+            <div className={`login ${this.state.error && "errored"}`}>
+                <h1>Maubot Manager</h1>
                 <input type="text" placeholder="Username" value={this.state.username}
                        name="username" onChange={this.inputChanged}/>
                 <input type="password" placeholder="Password" value={this.state.password}
                        name="password" onChange={this.inputChanged}/>
-                <button onClick={this.login}>Log in</button>
+                <button onClick={this.login}>
+                    {this.state.loading ? <Spinner/> : "Log in"}
+                </button>
+                {this.state.error && <div className="error">{this.state.error}</div>}
             </div>
         </div>
     }

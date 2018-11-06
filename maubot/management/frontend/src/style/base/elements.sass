@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-=button()
+=button($width: null, $height: null, $padding: .375rem 1rem)
     font-family: $font-stack
-    padding: .375rem 1rem
+    padding: $padding
+    width: $width
+    height: $height
     background-color: $background-color
     border: none
     border-radius: .25rem
@@ -38,7 +40,7 @@
     &:hover
         background-color: $dark-color
 
-button, .button
+.button
     +button
 
     &.main-color
@@ -76,15 +78,17 @@ button, .button
         &:first-of-type:last-of-type
             border-radius: .25rem
 
-input, textarea
+=input($width: null, $height: null, $vertical-padding: .375rem, $horizontal-padding: 1rem, $font-size: 1rem)
     font-family: $font-stack
     border: 1px solid $border-color
     background-color: $background-color
     color: $text-color
+    width: $width
+    height: $height
     box-sizing: border-box
     border-radius: .25rem
-    padding: .375rem 1rem
-    font-size: 1rem
+    padding: $vertical-padding $horizontal-padding
+    font-size: $font-size
     resize: vertical
 
     &:hover, &:focus
@@ -92,4 +96,13 @@ input, textarea
 
     &:focus
         border-width: 2px
-        padding: calc(.375rem - 1px) 1rem
+        padding: calc(#{$vertical-padding} - 1px) calc(#{$horizontal-padding} - 1px)
+
+.input, .textarea
+    +input
+
+=notification($color: $error-color)
+    padding: 1rem
+    border-radius: .25rem
+    border: 2px solid $color
+    background-color: lighten($color, 25%)

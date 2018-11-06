@@ -21,24 +21,37 @@
 
 .login
     width: 25rem
-    height: 23.5rem
+    height: 23rem
     display: inline-block
     box-sizing: border-box
     background-color: white
     border-radius: .25rem
     margin-top: 3rem
 
-    .title
+    h1
         color: $main-color
         margin: 3rem 0
 
     input, button
-        width: calc(100% - 5rem)
         margin: .5rem 2.5rem
-        padding: 1rem
+        height: 3rem
+        width: 20rem
 
-    input:focus
-        padding: calc(1rem - 1px)
+    input
+        +input
 
     button
+        +button($width: 20rem, $height: 3rem, $padding: 0)
         +main-color-button
+
+        .spinner
+            +white-spinner
+            +thick-spinner
+            width: 2rem
+
+    &.errored
+        height: 26.5rem
+
+        .error
+            +notification($error-color)
+            margin: .5rem 2.5rem
