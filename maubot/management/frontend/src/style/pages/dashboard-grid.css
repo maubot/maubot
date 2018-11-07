@@ -1,0 +1,6 @@
+.dashboard {
+    grid-template:
+        [row1-start] "title topbar" 3.5rem [row1-end]
+        [row2-start] "sidebar main" auto [row2-end]
+        / 15rem auto;
+}

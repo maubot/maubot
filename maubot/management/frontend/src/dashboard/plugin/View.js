@@ -13,45 +13,12 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import React, { Component } from "react"
 
-.maubot-wrapper:not(.authenticated)
-    background-color: $primary
+class PluginView extends Component {
+    render() {
+        return <div>{this.props.plugin.id}</div>
+    }
+}
 
-    text-align: center
-
-.login
-    width: 25rem
-    height: 23rem
-    display: inline-block
-    box-sizing: border-box
-    background-color: white
-    border-radius: .25rem
-    margin-top: 3rem
-
-    h1
-        color: $primary
-        margin: 3rem 0
-
-    input, button
-        margin: .5rem 2.5rem
-        height: 3rem
-        width: 20rem
-
-    input
-        +input
-
-    button
-        +button($width: 20rem, $height: 3rem, $padding: 0)
-        +main-color-button
-
-        .spinner
-            +white-spinner
-            +thick-spinner
-            width: 2rem
-
-    &.errored
-        height: 26.5rem
-
-        .error
-            +notification($error)
-            margin: .5rem 2.5rem
+export default PluginView

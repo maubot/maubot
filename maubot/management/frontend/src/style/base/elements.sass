@@ -36,9 +36,9 @@
     text-decoration: none
 
 =main-color-button()
-    background-color: $main-color
+    background-color: $primary
     &:hover
-        background-color: $dark-color
+        background-color: $primary-dark
 
 .button
     +button
@@ -92,7 +92,7 @@
     resize: vertical
 
     &:hover, &:focus
-        border-color: $main-color
+        border-color: $primary
 
     &:focus
         border-width: 2px
@@ -101,8 +101,8 @@
 .input, .textarea
     +input
 
-=notification($color: $error-color)
+=notification($border: $error-dark, $background: transparentize($error-light, 0.5))
     padding: 1rem
     border-radius: .25rem
-    border: 2px solid $color
-    background-color: lighten($color, 25%)
+    border: 2px solid $border
+    background-color: $background

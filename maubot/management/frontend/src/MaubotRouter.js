@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { BrowserRouter as Router, Route, Redirect } from "react-router-dom"
-import PrivateRoute from "./PrivateRoute"
-import Home from "./Home"
+import { BrowserRouter as Router, Switch } from "react-router-dom"
+import PrivateRoute from "./components/PrivateRoute"
+import Dashboard from "./dashboard"
 import Login from "./Login"
-import Spinner from "./Spinner"
+import Spinner from "./components/Spinner"
 import api from "./api"
 
 class MaubotRouter extends Component {
@@ -43,6 +43,8 @@ class MaubotRouter extends Component {
             if (username) {
                 localStorage.username = username
                 this.setState({ authed: true })
+            } else {
+                localStorage.accessToken = undefined
             }
         } catch (err) {
             console.error(err)
@@ -60,10 +62,11 @@ class MaubotRouter extends Component {
         }
         return <Router>
             <div className={`maubot-wrapper ${this.state.authed ? "authenticated" : ""}`}>
-                <Route path="/" exact render={() => <Redirect to={{ pathname: "/dashboard" }}/>}/>
-                <PrivateRoute path="/dashboard" component={Home} authed={this.state.authed}/>
-                <PrivateRoute path="/login" render={() => <Login onLogin={this.login}/>}
-                              authed={!this.state.authed} to="/dashboard"/>
+                <Switch>
+                    <PrivateRoute path="/login" render={() => <Login onLogin={this.login}/>}
+                                  authed={!this.state.authed} to="/"/>
+                    <PrivateRoute path="/" component={Dashboard} authed={this.state.authed}/>
+                </Switch>
             </div>
         </Router>
     }
