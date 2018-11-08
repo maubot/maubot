@@ -13,18 +13,6 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
-import { Link } from "react-router-dom"
-import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 
-const ClientListEntry = ({ client }) => (
-    <Link className="client entry" to={`/client/${client.id}`}>
-        <img className="avatar"
-             src={`${client.homeserver}/_matrix/media/r0/download/${client.avatar_url.substr("mxc://".length)}`}
-             alt={client.id.substr(1, 1)}/>
-        <span className="displayname">{client.displayname || client.id}</span>
-        <ChevronRight/>
-    </Link>
-)
-
-export default ClientListEntry
+> .plugin
+    margin: 1rem

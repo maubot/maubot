@@ -16,6 +16,6 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import "./style/index.sass"
-import App from "./MaubotRouter"
+import App from "./pages/Main"
 
 ReactDOM.render(<App/>, document.getElementById("root"))

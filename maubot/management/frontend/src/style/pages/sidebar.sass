@@ -16,13 +16,16 @@
 
 > .sidebar
     grid-area: sidebar
-    background-color: $background-color
+    background-color: white
 
     border-right: 1px solid $border-color
     padding: .5rem
 
+    overflow-y: auto
+
     div.list
-        margin-bottom: 1.5rem
+        &:not(:last-of-type)
+            margin-bottom: 1.5rem
 
         div.title
             h2

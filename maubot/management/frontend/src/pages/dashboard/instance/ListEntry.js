@@ -15,13 +15,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
 import { Link } from "react-router-dom"
-import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
+import { ReactComponent as ChevronRight } from "../../../res/chevron-right.svg"
 
-const PluginListEntry = ({ plugin }) => (
-    <Link className="plugin entry" to={`/plugin/${plugin.id}`}>
-        <span className="id">{plugin.id}</span>
+const InstanceListEntry = ({ instance }) => (
+    <Link className="instance entry" to={`/instance/${instance.id}`}>
+        <span className="id">{instance.id}</span>
         <ChevronRight/>
     </Link>
 )
 
-export default PluginListEntry
+export default InstanceListEntry

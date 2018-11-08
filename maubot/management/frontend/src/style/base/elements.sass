@@ -19,7 +19,7 @@
     padding: $padding
     width: $width
     height: $height
-    background-color: $background-color
+    background-color: $background
     border: none
     border-radius: .25rem
     color: $inverted-text-color
@@ -28,7 +28,7 @@
     cursor: pointer
 
     &:hover
-        background-color: darken($background-color, 10%)
+        background-color: darken($background, 10%)
 
 =link-button()
     display: inline-block
@@ -81,7 +81,7 @@
 =input($width: null, $height: null, $vertical-padding: .375rem, $horizontal-padding: 1rem, $font-size: 1rem)
     font-family: $font-stack
     border: 1px solid $border-color
-    background-color: $background-color
+    background-color: $background
     color: $text-color
     width: $width
     height: $height

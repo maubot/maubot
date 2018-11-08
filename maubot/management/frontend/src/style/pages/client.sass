@@ -1,0 +1,109 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+> .client
+    margin: 1rem
+
+    div.avatar-container
+        position: relative
+        display: inline-block
+        width: 8rem
+        height: 8rem
+        border-radius: 100%
+        cursor: pointer
+        vertical-align: top
+
+        > img.avatar
+            display: block
+            max-width: 8rem
+            max-height: 8rem
+            border-radius: 100%
+            position: absolute
+            left: 50%
+            top: 50%
+            -webkit-transform: translateY(-50%) translateX(-50%)
+
+        > svg.upload
+            position: absolute
+            display: block
+            visibility: hidden
+
+            width: 6rem
+            height: 6rem
+
+            padding: 1rem
+
+        &:hover
+            > img.avatar
+                opacity: .25
+
+            > svg.upload
+                visibility: visible
+
+    div.info-container
+        display: inline-table
+        vertical-align: top
+
+        margin: 1rem 2rem
+
+        > .row
+            display: table-row
+
+            > .key, > .value
+                display: table-cell
+                padding-bottom: .5rem
+
+            > .key
+                width: 6.5rem
+
+            > .value
+                margin: .5rem
+
+            > .value > .switch
+                width: auto
+                height: 2rem
+
+            > .value > input
+                border: none
+                height: 2rem
+                width: 100%
+
+                box-sizing: border-box
+
+                padding: .375rem 0
+                background-color: $background
+
+                font-size: 1rem
+
+                border-bottom: 1px solid transparent
+
+                &:hover:not(:disabled)
+                    border-bottom: 1px solid $primary
+
+                &:focus:not(:disabled)
+                    border-bottom: 2px solid $primary
+
+//> .client
+    display: table
+
+    > .field
+        display: table-row
+        width: 100%
+
+        > .name, > .value
+            display: table-cell
+            width: 50%
+            text-align: center

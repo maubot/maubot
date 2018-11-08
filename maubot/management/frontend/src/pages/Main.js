@@ -15,13 +15,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
 import { BrowserRouter as Router, Switch } from "react-router-dom"
-import PrivateRoute from "./components/PrivateRoute"
+import PrivateRoute from "../components/PrivateRoute"
+import Spinner from "../components/Spinner"
+import api from "../api"
 import Dashboard from "./dashboard"
 import Login from "./Login"
-import Spinner from "./components/Spinner"
-import api from "./api"
 
-class MaubotRouter extends Component {
+class Main extends Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -72,4 +72,4 @@ class MaubotRouter extends Component {
     }
 }
 
-export default MaubotRouter
+export default Main

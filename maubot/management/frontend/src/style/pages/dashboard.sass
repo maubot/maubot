@@ -18,6 +18,9 @@
 .dashboard
     display: grid
     height: 100%
+    max-width: 60rem
+    margin: auto
+    box-shadow: 0 .5rem .5rem rgba(0, 0, 0, 0.5)
 
     > a.title
         grid-area: title
@@ -31,9 +34,7 @@
         color: $text-color
         text-decoration: none
 
-        z-index: 1
-
-        background-color: $background-color
+        background-color: white
         border-right: 1px solid $primary
         border-bottom: 1px solid $border-color
 
@@ -47,12 +48,14 @@
         align-items: center
         justify-content: center
         background-color: $primary
-        width: 110%
-        margin: 0 -5%
-        box-shadow: 0 .25rem .25rem rgba(0, 0, 0, .25)
+        box-shadow: 0 .25rem .25rem rgba(0, 0, 0, .2)
 
 
     @import "sidebar"
 
-    > main.dashboard
+    > main.view
         grid-area: main
+
+        @import "client"
+        @import "instance"
+        @import "plugin"

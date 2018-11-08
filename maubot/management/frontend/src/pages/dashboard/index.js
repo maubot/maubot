@@ -15,12 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
 import { Route, Switch, Link } from "react-router-dom"
-import api from "../api"
-import { ReactComponent as Plus } from "../res/plus.svg"
+import api from "../../api"
+import { ReactComponent as Plus } from "../../res/plus.svg"
 import InstanceListEntry from "./instance/ListEntry"
 import InstanceView from "./instance/View"
-import ClientListEntry from "./client/ListEntry"
-import ClientView from "./client/View"
+import Client from "./Client"
 import PluginListEntry from "./plugin/ListEntry"
 import PluginView from "./plugin/View"
 
@@ -88,7 +87,7 @@ class Dashboard extends Component {
                         <h2>Clients</h2>
                         <Link to="/new/client"><Plus/></Link>
                     </div>
-                    {this.renderList("client", ClientListEntry)}
+                    {this.renderList("client", Client.ListEntry)}
                 </div>
                 <div className="plugins list">
                     <div className="title">
@@ -98,16 +97,16 @@ class Dashboard extends Component {
                     {this.renderList("plugin", PluginListEntry)}
                 </div>
             </nav>
-            <main className="dashboard">
+            <main className="view">
                 <Switch>
                     <Route path="/" exact render={() => "Hello, World!"}/>
                     <Route path="/new/instance" render={() => <InstanceView/>}/>
-                    <Route path="/new/client" render={() => <ClientView/>}/>
+                    <Route path="/new/client" render={() => <Client/>}/>
                     <Route path="/new/plugin" render={() => <PluginView/>}/>
                     <Route path="/instance/:id" render={({ match }) =>
                         this.renderView("instance", InstanceView, match.params.id)}/>
                     <Route path="/client/:id" render={({ match }) =>
-                        this.renderView("client", ClientView, match.params.id)}/>
+                        this.renderView("client", Client, match.params.id)}/>
                     <Route path="/plugin/:id" render={({ match }) =>
                         this.renderView("plugin", PluginView, match.params.id)}/>
                     <Route render={() => "Not found :("}/>
