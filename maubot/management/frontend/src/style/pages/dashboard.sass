@@ -19,7 +19,7 @@
     display: grid
     height: 100%
 
-    > .title
+    > a.title
         grid-area: title
         display: flex
         align-items: center
@@ -29,6 +29,7 @@
         font-weight: bold
 
         color: $text-color
+        text-decoration: none
 
         z-index: 1
 
@@ -40,7 +41,7 @@
             max-width: 2rem
             margin-right: .5rem
 
-    > .topbar
+    > div.topbar
         grid-area: topbar
         display: flex
         align-items: center
@@ -53,5 +54,5 @@
 
     @import "sidebar"
 
-    > .dashboard
+    > main.dashboard
         grid-area: main

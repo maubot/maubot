@@ -17,7 +17,7 @@ import React, { Component } from "react"
 
 class InstanceView extends Component {
     render() {
-        return <div>{this.props.instance.id}</div>
+        return <div>{this.props.id}</div>
     }
 }
 

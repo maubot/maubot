@@ -68,11 +68,21 @@ export async function getPlugin(id) {
     return await resp.json()
 }
 
-export async function uploadPlugin(data) {
-    const resp = await fetch(`${BASE_PATH}/plugins/upload`, {
-        headers: getHeaders("application/zip"),
-        body: data,
-    })
+export async function uploadPlugin(data, id) {
+    let resp
+    if (id) {
+        resp = await fetch(`${BASE_PATH}/plugin/${id}`, {
+            headers: getHeaders("applcation/zip"),
+            body: data,
+            method: "PUT",
+        })
+    } else {
+        resp = await fetch(`${BASE_PATH}/plugins/upload`, {
+            headers: getHeaders("application/zip"),
+            body: data,
+            method: "POST",
+        })
+    }
     return await resp.json()
 }
 

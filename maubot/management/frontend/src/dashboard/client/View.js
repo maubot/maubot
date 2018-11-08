@@ -17,7 +17,7 @@ import React, { Component } from "react"
 
 class ClientView extends Component {
     render() {
-        return <div>{this.props.client.displayname}</div>
+        return <div>{this.props.displayname}</div>
     }
 }
 

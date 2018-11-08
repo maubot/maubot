@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { Route, Redirect } from "react-router-dom"
+import { Route, Switch, Link } from "react-router-dom"
 import api from "../api"
+import { ReactComponent as Plus } from "../res/plus.svg"
 import InstanceListEntry from "./instance/ListEntry"
 import InstanceView from "./instance/View"
 import ClientListEntry from "./client/ListEntry"
@@ -62,41 +63,55 @@ class Dashboard extends Component {
         if (!entry) {
             return "Not found :("
         }
-        return React.createElement(type, { [field]: entry })
+        return React.createElement(type, entry)
     }
 
     render() {
         return <div className="dashboard">
-            <div className="title">
+            <Link to="/" className="title">
                 <img src="/favicon.png" alt=""/>
                 Maubot Manager
-            </div>
+            </Link>
             <div className="topbar">
                 {localStorage.username}
             </div>
             <nav className="sidebar">
                 <div className="instances list">
-                    <h3 className="title">Instances</h3>
+                    <div className="title">
+                        <h2>Instances</h2>
+                        <Link to="/new/instance"><Plus/></Link>
+                    </div>
                     {this.renderList("instance", InstanceListEntry)}
                 </div>
                 <div className="clients list">
-                    <h3 className="title">Clients</h3>
+                    <div className="title">
+                        <h2>Clients</h2>
+                        <Link to="/new/client"><Plus/></Link>
+                    </div>
                     {this.renderList("client", ClientListEntry)}
                 </div>
                 <div className="plugins list">
-                    <h3 className="title">Plugins</h3>
+                    <div className="title">
+                        <h2>Plugins</h2>
+                        <Link to="/new/plugin"><Plus/></Link>
+                    </div>
                     {this.renderList("plugin", PluginListEntry)}
                 </div>
             </nav>
-            <main>
-                <Route path="/" exact render={() => "Hello, World!"}/>
-                <Route path="/instance/:id" render={({ match }) =>
-                    this.renderView("instance", InstanceView, match.params.id)}/>
-                <Route path="/client/:id" render={({ match }) =>
-                    this.renderView("client", ClientView, match.params.id)}/>
-                <Route path="/plugin/:id" render={({ match }) =>
-                    this.renderView("plugin", PluginView, match.params.id)}/>
-                <Route render={() => <Redirect to={{ pathname: "/" }}/>}/>
+            <main className="dashboard">
+                <Switch>
+                    <Route path="/" exact render={() => "Hello, World!"}/>
+                    <Route path="/new/instance" render={() => <InstanceView/>}/>
+                    <Route path="/new/client" render={() => <ClientView/>}/>
+                    <Route path="/new/plugin" render={() => <PluginView/>}/>
+                    <Route path="/instance/:id" render={({ match }) =>
+                        this.renderView("instance", InstanceView, match.params.id)}/>
+                    <Route path="/client/:id" render={({ match }) =>
+                        this.renderView("client", ClientView, match.params.id)}/>
+                    <Route path="/plugin/:id" render={({ match }) =>
+                        this.renderView("plugin", PluginView, match.params.id)}/>
+                    <Route render={() => "Not found :("}/>
+                </Switch>
             </main>
         </div>
     }

@@ -17,7 +17,7 @@ import React, { Component } from "react"
 
 class PluginView extends Component {
     render() {
-        return <div>{this.props.plugin.id}</div>
+        return <div>{this.props.id}</div>
     }
 }
 
