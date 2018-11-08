@@ -62,6 +62,13 @@ class _Response:
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property
+    def pid_mismatch(self) -> web.Response:
+        return web.json_response({
+            "error": "The ID in the path does not match the ID of the uploaded plugin",
+            "errcode": "pid_mismatch",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @property
     def bad_auth(self) -> web.Response:
         return web.json_response({
             "error": "Invalid username or password",
@@ -136,6 +143,13 @@ class _Response:
         return web.json_response({
             "error": "There is already a client with the user ID of that token",
             "errcode": "user_exists",
+        }, status=HTTPStatus.CONFLICT)
+
+    @property
+    def plugin_exists(self) -> web.Response:
+        return web.json_response({
+            "error": "A plugin with the same ID as the uploaded plugin already exists",
+            "errcode": "plugin_exists"
         }, status=HTTPStatus.CONFLICT)
 
     @property

@@ -85,6 +85,14 @@ paths:
       summary: Upload a new plugin
       description: Upload a new plugin. If the plugin already exists, enabled instances will be restarted.
       tags: [Plugins]
+      parameters:
+      - name: allow_override
+        in: query
+        description: Set to allow overriding existing plugins
+        required: false
+        schema:
+          type: boolean
+          default: false
       responses:
         200:
           description: Plugin uploaded and replaced current version successfully
@@ -102,6 +110,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         401:
           $ref: '#/components/responses/Unauthorized'
+        409:
+          description: Plugin
       requestBody:
         content:
           application/zip:
@@ -150,6 +160,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    put:
+      operationId: put_plugin
+      summary: Upload a new or replacement plugin
+      description: |
+        Upload a new or replacement plugin with the specified ID.
+        A HTTP 400 will be returned if the ID of the uploaded plugin
+        doesn't match the ID in the path. If the plugin already
+        exists, enabled instances will be restarted.
+      tags: [Plugins]
+      responses:
+        200:
+          description: Plugin uploaded and replaced current version successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        201:
+          description: New plugin uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+              example: The plugin maubot archive (.mbp)
   /plugin/{id}/reload:
     parameters:
     - name: id
