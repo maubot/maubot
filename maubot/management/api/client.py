@@ -127,3 +127,16 @@ async def delete_client(request: web.Request) -> web.Response:
         await client.stop()
     client.delete()
     return resp.deleted
+
+
+@routes.post("/client/{id}/avatar")
+async def upload_avatar(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    client = Client.get(user_id, None)
+    if not client:
+        return resp.client_not_found
+    content = await request.read()
+    return web.json_response({
+        "content_uri": await client.client.upload_media(
+            content, request.headers.get("Content-Type", None)),
+    })
