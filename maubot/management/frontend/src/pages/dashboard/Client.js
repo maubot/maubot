@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { Link } from "react-router-dom"
+import { Link, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
 import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTable"
@@ -67,8 +67,22 @@ class Client extends Component {
 
             uploadingAvatar: false,
             saving: false,
+            deleting: false,
             startingOrStopping: false,
+            deleted: false,
+            error: "",
         }
+    }
+
+    get clientInState() {
+        const client = Object.assign({}, this.state)
+        delete client.uploadingAvatar
+        delete client.saving
+        delete client.deleting
+        delete client.startingOrStopping
+        delete client.deleted
+        delete client.error
+        return client
     }
 
     componentWillReceiveProps(nextProps) {
@@ -106,12 +120,30 @@ class Client extends Component {
 
     save = async () => {
         this.setState({ saving: true })
-        const resp = await api.putClient(this.state)
+        const resp = await api.putClient(this.clientInState)
         if (resp.id) {
-            resp.saving = false
-            this.setState(resp)
+            this.props.onChange(resp)
+            if (this.isNew) {
+                this.props.history.push(`/client/${resp.id}`)
+            } else {
+                this.setState({ saving: false, error: "" })
+            }
         } else {
-            console.error(resp)
+            this.setState({ saving: false, error: resp.error })
+        }
+    }
+
+    delete = async () => {
+        if (!window.confirm(`Are you sure you want to delete ${this.state.id}?`)) {
+            return
+        }
+        this.setState({ deleting: true })
+        const resp = await api.deleteClient(this.state.id)
+        if (resp.success) {
+            this.props.onDelete()
+            this.props.history.push("/")
+        } else {
+            this.setState({ deleting: false, error: resp.error })
         }
     }
 
@@ -122,42 +154,54 @@ class Client extends Component {
             started: !this.state.started,
         })
         if (resp.id) {
-            resp.startingOrStopping = false
-            this.setState(resp)
+            this.props.onChange(resp)
+            this.setState({ startingOrStopping: false, error: "" })
         } else {
-            console.error(resp)
+            this.setState({ startingOrStopping: false, error: resp.error })
         }
+    }
+
+    get loading() {
+        return this.state.saving || this.state.startingOrStopping || this.state.deleting
+    }
+
+    get isNew() {
+        return !Boolean(this.props.client)
     }
 
     render() {
         return <div className="client">
-            <div className="sidebar">
+            {!this.isNew && <div className="sidebar">
                 <div className={`avatar-container ${this.state.avatar_url ? "" : "no-avatar"}
                         ${this.state.uploadingAvatar ? "uploading" : ""}`}>
                     <img className="avatar" src={getAvatarURL(this.state)} alt="Avatar"/>
                     <UploadButton className="upload"/>
                     <input className="file-selector" type="file" accept="image/png, image/jpeg"
-                           onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}/>
+                           onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}
+                           onDragEnter={evt => evt.target.parentElement.classList.add("drag")}
+                           onDragLeave={evt => evt.target.parentElement.classList.remove("drag")}/>
                     {this.state.uploadingAvatar && <Spinner/>}
                 </div>
-                {this.props.client && (<>
-                    <div className="started-container">
-                        <span className={`started ${this.state.started}`}/>
-                        <span className="text">{this.state.started ? "Started" : "Stopped"}</span>
-                    </div>
-                    <button className="save" onClick={this.startOrStop}
-                            disabled={this.state.saving || this.state.startingOrStopping}>
+                <div className="started-container">
+                    <span className={`started ${this.props.client.started}
+                            ${this.props.client.enabled ? "" : "disabled"}`}/>
+                    <span className="text">
+                        {this.props.client.started ? "Started" :
+                            (this.props.client.enabled ? "Stopped" : "Disabled")}
+                    </span>
+                </div>
+                {(this.props.client.started || this.props.client.enabled) && (
+                    <button className="save" onClick={this.startOrStop} disabled={this.loading}>
                         {this.state.startingOrStopping ? <Spinner/>
-                            : (this.state.started ? "Stop" : "Start")}
+                            : (this.props.client.started ? "Stop" : "Start")}
                     </button>
-                </>)}
-            </div>
+                )}
+            </div>}
             <div className="info-container">
                 <PrefTable>
-                    <PrefInput rowName="User ID" type="text" disabled={!!this.props.client}
-                               name={this.props.client ? "" : "id"}
-                               value={this.state.id} placeholder="@fancybot:example.com"
-                               onChange={this.inputChange}/>
+                    <PrefInput rowName="User ID" type="text" disabled={!this.isNew}
+                               name={!this.isNew ? "" : "id"} value={this.state.id}
+                               placeholder="@fancybot:example.com" onChange={this.inputChange}/>
                     <PrefInput rowName="Display name" type="text" name="displayname"
                                value={this.state.displayname} placeholder="My fancy bot"
                                onChange={this.inputChange}/>
@@ -167,21 +211,33 @@ class Client extends Component {
                     <PrefInput rowName="Access token" type="text" name="access_token"
                                value={this.state.access_token} onChange={this.inputChange}
                                placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"/>
+                    <PrefInput rowName="Avatar URL" type="text" name="avatar_url"
+                               value={this.state.avatar_url} onChange={this.inputChange}
+                               placeholder="mxc://example.com/mbmwyoTvPhEQPiCskcUsppko"/>
                     <PrefSwitch rowName="Sync" active={this.state.sync}
                                 onToggle={sync => this.setState({ sync })}/>
                     <PrefSwitch rowName="Autojoin" active={this.state.autojoin}
                                 onToggle={autojoin => this.setState({ autojoin })}/>
                     <PrefSwitch rowName="Enabled" active={this.state.enabled}
-                                onToggle={enabled => this.setState({ enabled })}/>
+                                onToggle={enabled => this.setState({
+                                    enabled,
+                                    started: enabled && this.state.started,
+                                })}/>
                 </PrefTable>
-
-                <button className="save" onClick={this.save}
-                        disabled={this.state.saving || this.state.startingOrStopping}>
-                    {this.state.saving ? <Spinner/> : "Save"}
-                </button>
+                <div className="buttons">
+                    {!this.isNew && (
+                        <button className="delete" onClick={this.delete} disabled={this.loading}>
+                            {this.state.deleting ? <Spinner/> : "Delete"}
+                        </button>
+                    )}
+                    <button className="save" onClick={this.save} disabled={this.loading}>
+                        {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
+                    </button>
+                </div>
+                <div className="error">{this.state.error}</div>
             </div>
         </div>
     }
 }
 
-export default Client
+export default withRouter(Client)

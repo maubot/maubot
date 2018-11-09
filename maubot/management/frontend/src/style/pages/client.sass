@@ -21,6 +21,7 @@
     > div.sidebar
         vertical-align: top
         text-align: center
+        width: 8rem
 
         > div
             margin-bottom: 1rem
@@ -68,7 +69,7 @@
                 > input.file-selector
                     cursor: pointer
 
-                &:hover
+                &:hover, &.drag
                     > img.avatar
                         opacity: .25
 
@@ -105,6 +106,10 @@
                     background-color: $error-light
                     box-shadow: 0 0 .75rem .75rem $error-light
 
+                    &.disabled
+                        background-color: $border-color
+                        box-shadow: 0 0 .75rem .75rem $border-color
+
             > span.text
                 display: inline-block
                 margin-left: 1rem
@@ -115,7 +120,19 @@
         margin: 0 1rem
         flex: 1
 
-    button.save
+        > .buttons
+            display: flex
+
+            +button-group
+
+        > .error
+            margin-top: 1rem
+            +notification($error)
+
+            &:empty
+                display: none
+
+    button.save, button.delete
         +button
         +main-color-button
         width: 100%
@@ -126,15 +143,3 @@
             +thick-spinner
             +white-spinner
             width: 2rem
-
-//> .client
-    display: table
-
-    > .field
-        display: table-row
-        width: 100%
-
-        > .name, > .value
-            display: table-cell
-            width: 50%
-            text-align: center

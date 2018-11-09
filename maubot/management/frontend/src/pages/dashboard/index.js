@@ -57,6 +57,18 @@ class Dashboard extends Component {
             React.createElement(type, { key: entry.id, [field]: entry }))
     }
 
+    delete(stateField, id) {
+        const data = Object.assign({}, this.state[stateField])
+        delete data[id]
+        this.setState({ [stateField]: data })
+    }
+
+    add(stateField, entry) {
+        const data = Object.assign({}, this.state[stateField])
+        data[entry.id] = entry
+        this.setState({ [stateField]: data })
+    }
+
     renderView(field, type, id) {
         const stateField = field + "s"
         const entry = this.state[stateField][id]
@@ -65,11 +77,8 @@ class Dashboard extends Component {
         }
         return React.createElement(type, {
             [field]: entry,
-            onChange: newEntry => this.setState({
-                [stateField]: Object.assign({}, this.state[stateField], {
-                    [id]: newEntry,
-                }),
-            }),
+            onDelete: () => this.delete(stateField, id),
+            onChange: newEntry => this.add(stateField, newEntry),
         })
     }
 
@@ -111,7 +120,8 @@ class Dashboard extends Component {
                 <Switch>
                     <Route path="/" exact render={() => "Hello, World!"}/>
                     <Route path="/new/instance" render={() => <InstanceView/>}/>
-                    <Route path="/new/client" render={() => <Client/>}/>
+                    <Route path="/new/client" render={() => <Client
+                        onChange={newEntry => this.add("clients", newEntry)}/>}/>
                     <Route path="/new/plugin" render={() => <PluginView/>}/>
                     <Route path="/instance/:id" render={({ match }) =>
                         this.renderView("instance", InstanceView, match.params.id)}/>

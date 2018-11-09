@@ -114,9 +114,22 @@ export async function putClient(client) {
     return await resp.json()
 }
 
+export async function deleteClient(id) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}`, {
+        headers: getHeaders(),
+        method: "DELETE",
+    })
+    if (resp.status === 204) {
+        return {
+            "success": true,
+        }
+    }
+    return await resp.json()
+}
+
 export default {
     login, ping,
     getInstances, getInstance,
     getPlugins, getPlugin, uploadPlugin,
-    getClients, getClient, uploadAvatar, putClient,
+    getClients, getClient, uploadAvatar, putClient, deleteClient,
 }

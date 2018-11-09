@@ -55,9 +55,16 @@ class _Response:
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property
-    def mxid_mismatch(self) -> web.Response:
+    def bad_client_connection_details(self) -> web.Response:
         return web.json_response({
-            "error": "The Matrix user ID of the client and the user ID of the access token don't match",
+            "error": "Could not connect to homeserver",
+            "errcode": "bad_client_connection_details"
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    def mxid_mismatch(self, found: str) -> web.Response:
+        return web.json_response({
+            "error": "The Matrix user ID of the client and the user ID of the access token don't "
+                     f"match. Access token is for user {found}",
             "errcode": "mxid_mismatch",
         }, status=HTTPStatus.BAD_REQUEST)
 

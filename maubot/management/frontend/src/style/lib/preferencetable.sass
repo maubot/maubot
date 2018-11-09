@@ -48,10 +48,13 @@
 
                 font-size: 1rem
 
-                border-bottom: 1px dotted $primary
+                border-bottom: 1px solid $background
 
-                &:hover:not(:disabled)
-                    border-bottom: 1px solid $primary
+                &:not(:disabled)
+                    border-bottom: 1px dotted $primary
 
-                &:focus:not(:disabled)
-                    border-bottom: 2px solid $primary
+                    &:hover
+                        border-bottom: 1px solid $primary
+
+                    &:focus
+                        border-bottom: 2px solid $primary
