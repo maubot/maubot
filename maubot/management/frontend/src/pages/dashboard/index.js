@@ -58,11 +58,19 @@ class Dashboard extends Component {
     }
 
     renderView(field, type, id) {
-        const entry = this.state[field + "s"][id]
+        const stateField = field + "s"
+        const entry = this.state[stateField][id]
         if (!entry) {
             return "Not found :("
         }
-        return React.createElement(type, entry)
+        return React.createElement(type, {
+            [field]: entry,
+            onChange: newEntry => this.setState({
+                [stateField]: Object.assign({}, this.state[stateField], {
+                    [id]: newEntry,
+                }),
+            }),
+        })
     }
 
     render() {
@@ -72,7 +80,9 @@ class Dashboard extends Component {
                 Maubot Manager
             </Link>
             <div className="topbar">
-                {localStorage.username}
+                <div className="user">
+                    {localStorage.username}
+                </div>
             </div>
             <nav className="sidebar">
                 <div className="instances list">

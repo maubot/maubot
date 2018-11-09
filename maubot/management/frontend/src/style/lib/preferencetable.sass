@@ -1,0 +1,57 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+.preference-table
+    display: table
+
+    width: 100%
+
+    > .row
+        display: table-row
+
+        > .key, > .value
+            display: table-cell
+            padding-bottom: .5rem
+
+        > .key
+            width: 7rem
+
+        > .value
+            margin: .5rem
+
+            > .switch
+                width: auto
+                height: 2rem
+
+            > input
+                border: none
+                height: 2rem
+                width: 100%
+
+                box-sizing: border-box
+
+                padding: .375rem 0
+                background-color: $background
+
+                font-size: 1rem
+
+                border-bottom: 1px dotted $primary
+
+                &:hover:not(:disabled)
+                    border-bottom: 1px solid $primary
+
+                &:focus:not(:disabled)
+                    border-bottom: 2px solid $primary

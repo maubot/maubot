@@ -25,10 +25,12 @@
     color: $inverted-text-color
     box-sizing: border-box
     font-size: 1rem
-    cursor: pointer
 
-    &:hover
-        background-color: darken($background, 10%)
+    &:not(:disabled)
+        cursor: pointer
+
+        &:hover
+            background-color: darken($background, 10%)
 
 =link-button()
     display: inline-block
@@ -37,7 +39,7 @@
 
 =main-color-button()
     background-color: $primary
-    &:hover
+    &:hover:not(:disabled)
         background-color: $primary-dark
 
 .button

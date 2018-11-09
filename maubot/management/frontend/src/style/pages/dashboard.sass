@@ -46,9 +46,19 @@
         grid-area: topbar
         display: flex
         align-items: center
-        justify-content: center
+        justify-content: right
         background-color: $primary
         box-shadow: 0 .25rem .25rem rgba(0, 0, 0, .2)
+        padding: .5rem 1rem
+
+        > div.user
+            display: inline-flex
+            align-items: center
+            height: 100%
+            padding: 0 1rem
+            box-sizing: border-box
+            background-color: $primary-dark
+            border-radius: .25rem
 
 
     @import "sidebar"

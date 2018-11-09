@@ -16,85 +16,116 @@
 
 > .client
     margin: 1rem
+    display: flex
 
-    div.avatar-container
-        position: relative
-        display: inline-block
-        width: 8rem
-        height: 8rem
-        border-radius: 100%
-        cursor: pointer
+    > div.sidebar
         vertical-align: top
+        text-align: center
 
-        > img.avatar
-            display: block
-            max-width: 8rem
-            max-height: 8rem
-            border-radius: 100%
-            position: absolute
-            left: 50%
-            top: 50%
-            -webkit-transform: translateY(-50%) translateX(-50%)
+        > div
+            margin-bottom: 1rem
 
-        > svg.upload
-            position: absolute
-            display: block
-            visibility: hidden
+        > div.avatar-container
+            position: relative
+            width: 8rem
+            height: 8rem
+            border-radius: 50%
+            overflow: hidden
 
-            width: 6rem
-            height: 6rem
+            display: flex
+            align-items: center
+            justify-content: center
 
-            padding: 1rem
-
-        &:hover
             > img.avatar
-                opacity: .25
+                position: absolute
+                display: block
+                max-width: 8rem
+                max-height: 8rem
+                user-select: none
 
             > svg.upload
-                visibility: visible
+                position: absolute
+                display: block
+                visibility: hidden
 
-    div.info-container
-        display: inline-table
-        vertical-align: top
+                width: 6rem
+                height: 6rem
 
-        margin: 1rem 2rem
+                padding: 1rem
+                user-select: none
 
-        > .row
-            display: table-row
+            > input.file-selector
+                position: absolute
+                width: 8rem
+                height: 8rem
+                user-select: none
+                opacity: 0
 
-            > .key, > .value
-                display: table-cell
-                padding-bottom: .5rem
+            > div.spinner
+                +thick-spinner
 
-            > .key
-                width: 6.5rem
+            &:not(.uploading)
+                > input.file-selector
+                    cursor: pointer
 
-            > .value
+                &:hover
+                    > img.avatar
+                        opacity: .25
+
+                    > svg.upload
+                        visibility: visible
+
+                &.no-avatar
+                    > img.avatar
+                        visibility: hidden
+
+                    > svg.upload
+                        visibility: visible
+                        opacity: .5
+
+            &.uploading
+                > img.avatar
+                    opacity: .25
+
+        > div.started-container
+            display: inline-flex
+
+            > span.started
+                display: inline-block
+                height: 0
+                width: 0
+                border-radius: 50%
                 margin: .5rem
 
-            > .value > .switch
-                width: auto
-                height: 2rem
+                &.true
+                    background-color: $primary
+                    box-shadow: 0 0 .75rem .75rem $primary
 
-            > .value > input
-                border: none
-                height: 2rem
-                width: 100%
+                &.false
+                    background-color: $error-light
+                    box-shadow: 0 0 .75rem .75rem $error-light
 
-                box-sizing: border-box
+            > span.text
+                display: inline-block
+                margin-left: 1rem
 
-                padding: .375rem 0
-                background-color: $background
+    > div.info-container
+        vertical-align: top
 
-                font-size: 1rem
+        margin: 0 1rem
+        flex: 1
 
-                border-bottom: 1px solid transparent
+    button.save
+        +button
+        +main-color-button
+        width: 100%
+        height: 2.5rem
+        padding: 0
 
-                &:hover:not(:disabled)
-                    border-bottom: 1px solid $primary
-
-                &:focus:not(:disabled)
-                    border-bottom: 2px solid $primary
+        > .spinner
+            +thick-spinner
+            +white-spinner
+            width: 2rem
 
 //> .client
     display: table

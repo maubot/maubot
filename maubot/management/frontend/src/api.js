@@ -72,7 +72,7 @@ export async function uploadPlugin(data, id) {
     let resp
     if (id) {
         resp = await fetch(`${BASE_PATH}/plugin/${id}`, {
-            headers: getHeaders("applcation/zip"),
+            headers: getHeaders("application/zip"),
             body: data,
             method: "PUT",
         })
@@ -96,9 +96,27 @@ export async function getClient(id) {
     return await resp.json()
 }
 
+export async function uploadAvatar(id, data, mime) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/avatar`, {
+        headers: getHeaders(mime),
+        body: data,
+        method: "POST",
+    })
+    return await resp.json()
+}
+
+export async function putClient(client) {
+    const resp = await fetch(`${BASE_PATH}/client/${client.id}`, {
+        headers: getHeaders(),
+        body: JSON.stringify(client),
+        method: "PUT",
+    })
+    return await resp.json()
+}
+
 export default {
     login, ping,
     getInstances, getInstance,
-    getPlugins, getPlugin,  uploadPlugin,
-    getClients, getClient,
+    getPlugins, getPlugin, uploadPlugin,
+    getClients, getClient, uploadAvatar, putClient,
 }
