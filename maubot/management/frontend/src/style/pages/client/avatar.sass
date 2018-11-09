@@ -1,0 +1,77 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+> div.avatar-container
+    position: relative
+    width: 8rem
+    height: 8rem
+    border-radius: 50%
+    overflow: hidden
+
+    display: flex
+    align-items: center
+    justify-content: center
+
+    > img.avatar
+        position: absolute
+        display: block
+        max-width: 8rem
+        max-height: 8rem
+        user-select: none
+
+    > svg.upload
+        position: absolute
+        display: block
+        visibility: hidden
+
+        width: 6rem
+        height: 6rem
+
+        padding: 1rem
+        user-select: none
+
+    > input.file-selector
+        position: absolute
+        width: 8rem
+        height: 8rem
+        user-select: none
+        opacity: 0
+
+    > div.spinner
+        +thick-spinner
+
+    &:not(.uploading)
+        > input.file-selector
+            cursor: pointer
+
+        &:hover, &.drag
+            > img.avatar
+                opacity: .25
+
+            > svg.upload
+                visibility: visible
+
+        &.no-avatar
+            > img.avatar
+                visibility: hidden
+
+            > svg.upload
+                visibility: visible
+                opacity: .5
+
+    &.uploading
+        > img.avatar
+            opacity: .25

@@ -42,6 +42,10 @@
             display: block
             color: $text-color
             text-decoration: none
+            padding: .25rem
+            border-radius: .25rem
+            height: 2rem
+            box-sizing: border-box
 
             &:not(:hover) > svg
                 display: none
@@ -49,16 +53,18 @@
             > svg
                 float: right
 
-            padding: .25rem
+            &:hover
+                background-color: $primary-light
+
+            &.active
+                background-color: $primary
 
             &.client
-                padding: .25rem
-
                 img.avatar
                     max-height: 1.5rem
                     border-radius: 100%
                     vertical-align: middle
 
-                span.displayname
-                    margin-left: .25rem
-                    vertical-align: middle
+            span.displayname, span.id
+                margin-left: .25rem
+                vertical-align: middle

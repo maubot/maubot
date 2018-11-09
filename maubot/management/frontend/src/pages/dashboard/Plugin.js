@@ -14,11 +14,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
+import { NavLink } from "react-router-dom"
+import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 
-class PluginView extends Component {
+const PluginListEntry = ({ plugin }) => (
+    <NavLink className="plugin entry" to={`/plugin/${plugin.id}`}>
+        <span className="id">{plugin.id}</span>
+        <ChevronRight/>
+    </NavLink>
+)
+
+
+class Plugin extends Component {
+    static ListEntry = PluginListEntry
+
     render() {
         return <div>{this.props.id}</div>
     }
 }
 
-export default PluginView
+export default Plugin

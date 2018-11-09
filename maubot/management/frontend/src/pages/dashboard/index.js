@@ -17,11 +17,9 @@ import React, { Component } from "react"
 import { Route, Switch, Link } from "react-router-dom"
 import api from "../../api"
 import { ReactComponent as Plus } from "../../res/plus.svg"
-import InstanceListEntry from "./instance/ListEntry"
-import InstanceView from "./instance/View"
+import Instance from "./Instance"
 import Client from "./Client"
-import PluginListEntry from "./plugin/ListEntry"
-import PluginView from "./plugin/View"
+import Plugin from "./Plugin"
 
 class Dashboard extends Component {
     constructor(props) {
@@ -99,7 +97,7 @@ class Dashboard extends Component {
                         <h2>Instances</h2>
                         <Link to="/new/instance"><Plus/></Link>
                     </div>
-                    {this.renderList("instance", InstanceListEntry)}
+                    {this.renderList("instance", Instance.ListEntry)}
                 </div>
                 <div className="clients list">
                     <div className="title">
@@ -113,22 +111,24 @@ class Dashboard extends Component {
                         <h2>Plugins</h2>
                         <Link to="/new/plugin"><Plus/></Link>
                     </div>
-                    {this.renderList("plugin", PluginListEntry)}
+                    {this.renderList("plugin", Plugin.ListEntry)}
                 </div>
             </nav>
             <main className="view">
                 <Switch>
                     <Route path="/" exact render={() => "Hello, World!"}/>
-                    <Route path="/new/instance" render={() => <InstanceView/>}/>
+                    <Route path="/new/instance" render={() => <Instance
+                        onChange={newEntry => this.add("instances", newEntry)}/>}/>
                     <Route path="/new/client" render={() => <Client
                         onChange={newEntry => this.add("clients", newEntry)}/>}/>
-                    <Route path="/new/plugin" render={() => <PluginView/>}/>
+                    <Route path="/new/plugin" render={() => <Plugin
+                        onChange={newEntry => this.add("plugins", newEntry)}/>}/>
                     <Route path="/instance/:id" render={({ match }) =>
-                        this.renderView("instance", InstanceView, match.params.id)}/>
+                        this.renderView("instance", Instance, match.params.id)}/>
                     <Route path="/client/:id" render={({ match }) =>
                         this.renderView("client", Client, match.params.id)}/>
                     <Route path="/plugin/:id" render={({ match }) =>
-                        this.renderView("plugin", PluginView, match.params.id)}/>
+                        this.renderView("plugin", Plugin, match.params.id)}/>
                     <Route render={() => "Not found :("}/>
                 </Switch>
             </main>
