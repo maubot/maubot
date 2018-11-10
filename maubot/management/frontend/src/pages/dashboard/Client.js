@@ -222,10 +222,16 @@ class Client extends Component {
         </PrefTable>
     )
 
+    get hasInstances() {
+        return this.state.instances.length > 0
+    }
+
     renderPrefButtons = () => <>
         <div className="buttons">
             {!this.isNew && (
-                <button className="delete" onClick={this.delete} disabled={this.loading}>
+                <button className={`delete ${this.hasInstances ? "disabled-bg" : ""}`}
+                        onClick={this.delete} disabled={this.loading || this.hasInstances}
+                        title={this.hasInstances ? "Can't delete client that is in use" : ""}>
                     {this.state.deleting ? <Spinner/> : "Delete"}
                 </button>
             )}
@@ -238,7 +244,7 @@ class Client extends Component {
 
     renderInstances = () => !this.isNew && (
         <div className="instances">
-            <h3>{this.state.instances.length > 0 ? "Instances" : "No instances :("}</h3>
+            <h3>{this.hasInstances ? "Instances" : "No instances :("}</h3>
             {this.state.instances.map(instance => (
                 <Link className="instance" key={instance.id} to={`/instance/${instance.id}`}>
                     {instance.id}
