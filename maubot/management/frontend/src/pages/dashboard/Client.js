@@ -63,7 +63,6 @@ class Client extends Component {
             saving: false,
             deleting: false,
             startingOrStopping: false,
-            deleted: false,
             error: "",
         }
     }
@@ -74,7 +73,6 @@ class Client extends Component {
         delete client.saving
         delete client.deleting
         delete client.startingOrStopping
-        delete client.deleted
         delete client.error
         delete client.instances
         return client
@@ -117,12 +115,12 @@ class Client extends Component {
         this.setState({ saving: true })
         const resp = await api.putClient(this.clientInState)
         if (resp.id) {
-            this.props.onChange(resp)
             if (this.isNew) {
                 this.props.history.push(`/client/${resp.id}`)
             } else {
                 this.setState({ saving: false, error: "" })
             }
+            this.props.onChange(resp)
         } else {
             this.setState({ saving: false, error: resp.error })
         }
@@ -135,8 +133,8 @@ class Client extends Component {
         this.setState({ deleting: true })
         const resp = await api.deleteClient(this.state.id)
         if (resp.success) {
-            this.props.onDelete()
             this.props.history.push("/")
+            this.props.onDelete()
         } else {
             this.setState({ deleting: false, error: resp.error })
         }
@@ -196,7 +194,7 @@ class Client extends Component {
     renderPreferences = () => (
         <PrefTable>
             <PrefInput rowName="User ID" type="text" disabled={!this.isNew}
-                       name={!this.isNew ? "" : "id"} value={this.state.id}
+                       name={!this.isNew ? "id" : ""} value={this.state.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
             <PrefInput rowName="Display name" type="text" name="displayname"
                        value={this.state.displayname} placeholder="My fancy bot"

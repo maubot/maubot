@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
+import Select from "react-select"
 import Switch from "./Switch"
 
 export const PrefTable = ({ children, wrapperClass }) => {
@@ -49,6 +50,12 @@ export const PrefInput = ({ rowName, ...args }) => (
 export const PrefSwitch = ({ rowName, ...args }) => (
     <PrefRow name={rowName}>
         <Switch {...args}/>
+    </PrefRow>
+)
+
+export const PrefSelect = ({ rowName, ...args }) => (
+    <PrefRow name={rowName}>
+        <Select className="select" {...args}/>
     </PrefRow>
 )
 

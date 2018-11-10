@@ -61,8 +61,11 @@ class Dashboard extends Component {
         this.setState({ [stateField]: data })
     }
 
-    add(stateField, entry) {
+    add(stateField, entry, oldID = undefined) {
         const data = Object.assign({}, this.state[stateField])
+        if (oldID && oldID !== entry.id) {
+            delete data[oldID]
+        }
         data[entry.id] = entry
         this.setState({ [stateField]: data })
     }
@@ -76,7 +79,8 @@ class Dashboard extends Component {
         return React.createElement(type, {
             [field]: entry,
             onDelete: () => this.delete(stateField, id),
-            onChange: newEntry => this.add(stateField, newEntry),
+            onChange: newEntry => this.add(stateField, newEntry, id),
+            ctx: this.state,
         })
     }
 
@@ -117,8 +121,9 @@ class Dashboard extends Component {
             <main className="view">
                 <Switch>
                     <Route path="/" exact render={() => "Hello, World!"}/>
-                    <Route path="/new/instance" render={() => <Instance
-                        onChange={newEntry => this.add("instances", newEntry)}/>}/>
+                    <Route path="/new/instance" render={() =>
+                        <Instance onChange={newEntry => this.add("instances", newEntry)}
+                                  ctx={this.state}/>}/>
                     <Route path="/new/client" render={() => <Client
                         onChange={newEntry => this.add("clients", newEntry)}/>}/>
                     <Route path="/new/plugin" render={() => <Plugin

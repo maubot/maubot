@@ -70,3 +70,26 @@
         @import client/index
         @import instance
         @import plugin
+
+        div.buttons
+            +button-group
+            display: flex
+
+        div.error
+            +notification($error)
+            margin-top: 1rem
+
+            &:empty
+                display: none
+
+        button.save, button.delete
+            +button
+            +main-color-button
+            width: 100%
+            height: 2.5rem
+            padding: 0
+
+            > .spinner
+                +thick-spinner
+                +white-spinner
+                width: 2rem

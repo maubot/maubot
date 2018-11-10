@@ -16,6 +16,40 @@
 
 export const BASE_PATH = "/_matrix/maubot/v1"
 
+function getHeaders(contentType = "application/json") {
+    return {
+        "Content-Type": contentType,
+        "Authorization": `Bearer ${localStorage.accessToken}`,
+    }
+}
+
+async function defaultDelete(type, id) {
+    const resp = await fetch(`${BASE_PATH}/${type}/${id}`, {
+        headers: getHeaders(),
+        method: "DELETE",
+    })
+    if (resp.status === 204) {
+        return {
+            "success": true,
+        }
+    }
+    return await resp.json()
+}
+
+async function defaultPut(type, entry, id = undefined) {
+    const resp = await fetch(`${BASE_PATH}/${type}/${id || entry.id}`, {
+        headers: getHeaders(),
+        body: JSON.stringify(entry),
+        method: "PUT",
+    })
+    return await resp.json()
+}
+
+async function defaultGet(url) {
+    const resp = await fetch(`${BASE_PATH}/${url}`, { headers: getHeaders() })
+    return await resp.json()
+}
+
 export async function login(username, password) {
     const resp = await fetch(`${BASE_PATH}/auth/login`, {
         method: "POST",
@@ -25,13 +59,6 @@ export async function login(username, password) {
         }),
     })
     return await resp.json()
-}
-
-function getHeaders(contentType = "application/json") {
-    return {
-        "Content-Type": contentType,
-        "Authorization": `Bearer ${localStorage.accessToken}`,
-    }
 }
 
 export async function ping() {
@@ -48,25 +75,13 @@ export async function ping() {
     throw json
 }
 
-export async function getInstances() {
-    const resp = await fetch(`${BASE_PATH}/instances`, { headers: getHeaders() })
-    return await resp.json()
-}
+export const getInstances = () => defaultGet("/instances")
+export const getInstance = id => defaultGet(`/instance/${id}`)
+export const putInstance = (instance, id) => defaultPut("instance", instance, id)
+export const deleteInstance = id => defaultDelete("instance", id)
 
-export async function getInstance(id) {
-    const resp = await fetch(`${BASE_PATH}/instance/${id}`, { headers: getHeaders() })
-    return await resp.json()
-}
-
-export async function getPlugins() {
-    const resp = await fetch(`${BASE_PATH}/plugins`, { headers: getHeaders() })
-    return await resp.json()
-}
-
-export async function getPlugin(id) {
-    const resp = await fetch(`${BASE_PATH}/plugin/${id}`, { headers: getHeaders() })
-    return await resp.json()
-}
+export const getPlugins = () => defaultGet("/plugins")
+export const getPlugin = id => defaultGet(`/plugin/${id}`)
 
 export async function uploadPlugin(data, id) {
     let resp
@@ -86,15 +101,8 @@ export async function uploadPlugin(data, id) {
     return await resp.json()
 }
 
-export async function getClients() {
-    const resp = await fetch(`${BASE_PATH}/clients`, { headers: getHeaders() })
-    return await resp.json()
-}
-
-export async function getClient(id) {
-    const resp = await fetch(`${BASE_PATH}/client/${id}`, { headers: getHeaders() })
-    return await resp.json()
-}
+export const getClients = () => defaultGet("/clients")
+export const getClient = id => defaultGet(`/clients/${id}`)
 
 export async function uploadAvatar(id, data, mime) {
     const resp = await fetch(`${BASE_PATH}/client/${id}/avatar`, {
@@ -109,32 +117,13 @@ export function getAvatarURL(id) {
     return `${BASE_PATH}/client/${id}/avatar?access_token=${localStorage.accessToken}`
 }
 
-export async function putClient(client) {
-    const resp = await fetch(`${BASE_PATH}/client/${client.id}`, {
-        headers: getHeaders(),
-        body: JSON.stringify(client),
-        method: "PUT",
-    })
-    return await resp.json()
-}
-
-export async function deleteClient(id) {
-    const resp = await fetch(`${BASE_PATH}/client/${id}`, {
-        headers: getHeaders(),
-        method: "DELETE",
-    })
-    if (resp.status === 204) {
-        return {
-            "success": true,
-        }
-    }
-    return await resp.json()
-}
+export const putClient = client => defaultPut("client", client)
+export const deleteClient = id => defaultDelete("client", id)
 
 export default {
     BASE_PATH,
     login, ping,
-    getInstances, getInstance,
+    getInstances, getInstance, putInstance, deleteInstance,
     getPlugins, getPlugin, uploadPlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
 }

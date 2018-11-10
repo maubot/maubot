@@ -14,8 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
+import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/PreferenceTable"
+import api from "../../api"
+import Spinner from "../../components/Spinner"
 
 const InstanceListEntry = ({ instance }) => (
     <NavLink className="instance entry" to={`/instance/${instance.id}`}>
@@ -27,9 +30,157 @@ const InstanceListEntry = ({ instance }) => (
 class Instance extends Component {
     static ListEntry = InstanceListEntry
 
+    constructor(props) {
+        super(props)
+        this.state = Object.assign(this.initialState, props.instance)
+        this.updateClientOptions()
+    }
+
+    get initialState() {
+        return {
+            id: "",
+            primary_user: "",
+            enabled: true,
+            started: true,
+            type: "",
+
+            saving: false,
+            deleting: false,
+            error: "",
+        }
+    }
+
+    get instanceInState() {
+        const instance = Object.assign({}, this.state)
+        delete instance.saving
+        delete instance.deleting
+        delete instance.error
+        return instance
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState(Object.assign(this.initialState, nextProps.instance), () =>
+            this.updateClientOptions())
+    }
+
+    clientSelectEntry = client => client && {
+        id: client.id,
+        value: client.id,
+        label: (
+            <div className="select-client">
+                <img className="avatar" src={api.getAvatarURL(client.id)} alt=""/>
+                <span className="displayname">{client.displayname || client.id}</span>
+            </div>
+        ),
+    }
+
+    updateClientOptions() {
+        this.clientOptions = Object.values(this.props.ctx.clients).map(this.clientSelectEntry)
+    }
+
+    inputChange = event => {
+        if (!event.target.name) {
+            return
+        }
+        this.setState({ [event.target.name]: event.target.value })
+    }
+
+    save = async () => {
+        this.setState({ saving: true })
+        const resp = await api.putInstance(this.instanceInState, this.props.instance
+            ? this.props.instance.id : undefined)
+        if (resp.id) {
+            if (this.isNew) {
+                this.props.history.push(`/instance/${resp.id}`)
+            } else {
+                if (resp.id !== this.props.instance.id) {
+                    this.props.history.replace(`/instance/${resp.id}`)
+                }
+                this.setState({ saving: false, error: "" })
+            }
+            this.props.onChange(resp)
+        } else {
+            this.setState({ saving: false, error: resp.error })
+        }
+    }
+
+    delete = async () => {
+        if (!window.confirm(`Are you sure you want to delete ${this.state.id}?`)) {
+            return
+        }
+        this.setState({ deleting: true })
+        const resp = await api.deleteInstance(this.state.id)
+        if (resp.success) {
+            this.props.history.push("/")
+            this.props.onDelete()
+        } else {
+            this.setState({ deleting: false, error: resp.error })
+        }
+    }
+
+    get isNew() {
+        return !Boolean(this.props.instance)
+    }
+
+    get selectedClientEntry() {
+        return this.clientSelectEntry(this.props.ctx.clients[this.state.primary_user])
+    }
+
+    get selectedPluginEntry() {
+        return {
+            id: this.state.type,
+            value: this.state.type,
+            label: this.state.type,
+        }
+    }
+
+    get typeOptions() {
+        return Object.values(this.props.ctx.plugins).map(plugin => plugin && {
+            id: plugin.id,
+            value: plugin.id,
+            label: plugin.id,
+        })
+    }
+
+    get loading() {
+        return this.state.deleting || this.state.saving
+    }
+
+    get isValid() {
+        return this.state.id && this.state.primary_user && this.state.type
+    }
+
     render() {
-        return <div>{this.props.id}</div>
+        return <div className="instance">
+            <PrefTable>
+                <PrefInput rowName="ID" type="text" name={"id"} value={this.state.id}
+                           placeholder="fancybotinstance" onChange={this.inputChange}
+                           disabled={!this.isNew}/>
+                <PrefSwitch rowName="Enabled" active={this.state.enabled}
+                            onToggle={enabled => this.setState({ enabled })}/>
+                <PrefSwitch rowName="Running" active={this.state.started}
+                            onToggle={started => this.setState({ started })}/>
+                <PrefSelect rowName="Primary user" options={this.clientOptions}
+                            isSearchable={false} value={this.selectedClientEntry}
+                            onChange={({ id }) => this.setState({ primary_user: id })}/>
+                <PrefSelect rowName="Type" options={this.typeOptions}
+                            value={this.selectedPluginEntry}
+                            onChange={({ id }) => this.setState({ type: id })}/>
+            </PrefTable>
+            <div className="buttons">
+                {!this.isNew && (
+                    <button className="delete" onClick={this.delete} disabled={this.loading}>
+                        {this.state.deleting ? <Spinner/> : "Delete"}
+                    </button>
+                )}
+                <button className={`save ${this.isValid ? "" : "disabled-bg"}`}
+                        onClick={this.save} disabled={this.loading || !this.isValid}>
+                    {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
+                </button>
+            </div>
+            <div className="error">{this.state.error}</div>
+        </div>
     }
 }
 
-export default Instance
+export default withRouter(Instance)
