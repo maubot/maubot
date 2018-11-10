@@ -14,46 +14,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-> div.avatar-container
-    +upload-box
+=upload-box()
+    position: relative
+    overflow: hidden
 
-    width: 8rem
-    height: 8rem
-    border-radius: 50%
-
-    > img.avatar
-        position: absolute
-        display: block
-        max-width: 8rem
-        max-height: 8rem
-        user-select: none
+    display: flex
+    align-items: center
+    justify-content: center
 
     > svg.upload
-        visibility: hidden
+        position: absolute
+        display: block
 
-        width: 6rem
-        height: 6rem
+        padding: 1rem
+        user-select: none
+
 
     > input.file-selector
-        width: 8rem
-        height: 8rem
+        position: absolute
+        user-select: none
+        opacity: 0
+
+    > div.spinner
+        +thick-spinner
 
     &:not(.uploading)
-        &:hover, &.drag
-            > img.avatar
-                opacity: .25
-
-            > svg.upload
-                visibility: visible
-
-        &.no-avatar
-            > img.avatar
-                visibility: hidden
-
-            > svg.upload
-                visibility: visible
-                opacity: .5
-
-    &.uploading
-        > img.avatar
-            opacity: .25
+        > input.file-selector
+            cursor: pointer

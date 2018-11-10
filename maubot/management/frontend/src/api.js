@@ -82,6 +82,7 @@ export const deleteInstance = id => defaultDelete("instance", id)
 
 export const getPlugins = () => defaultGet("/plugins")
 export const getPlugin = id => defaultGet(`/plugin/${id}`)
+export const deletePlugin = id => defaultDelete("plugin", id)
 
 export async function uploadPlugin(data, id) {
     let resp
@@ -124,6 +125,6 @@ export default {
     BASE_PATH,
     login, ping,
     getInstances, getInstance, putInstance, deleteInstance,
-    getPlugins, getPlugin, uploadPlugin,
+    getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
 }

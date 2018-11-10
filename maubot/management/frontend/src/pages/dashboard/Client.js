@@ -220,10 +220,6 @@ class Client extends Component {
         </PrefTable>
     )
 
-    get hasInstances() {
-        return this.state.instances.length > 0
-    }
-
     renderPrefButtons = () => <>
         <div className="buttons">
             {!this.isNew && (
@@ -239,6 +235,10 @@ class Client extends Component {
         </div>
         <div className="error">{this.state.error}</div>
     </>
+
+    get hasInstances() {
+        return this.state.instances.length > 0
+    }
 
     renderInstances = () => !this.isNew && (
         <div className="instances">
