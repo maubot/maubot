@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { BrowserRouter as Router, Switch } from "react-router-dom"
+import { HashRouter as Router, Switch } from "react-router-dom"
 import PrivateRoute from "../components/PrivateRoute"
 import Spinner from "../components/Spinner"
 import api from "../api"

@@ -24,6 +24,11 @@ server:
     port: 29316
     # The base management API path.
     base_path: /_matrix/maubot/v1
+    # The base path for the UI.
+    ui_base_path: /_matrix/maubot
+    # Override path from where to load UI resources.
+    # Set to false to using pkg_resources to find the path.
+    override_resource_path: false
     # The base appservice API path. Use / for legacy appservice API and /_matrix/app/v1 for v1.
     appservice_base_path: /_matrix/app/v1
     # The shared secret to sign API access tokens.

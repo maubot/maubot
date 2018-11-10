@@ -26,7 +26,7 @@ from .server import MaubotServer
 from .client import Client, init as init_client_class
 from .loader.zip import init as init_zip_loader
 from .instance import init as init_plugin_instance_class
-from .management.api import init as init_management
+from .management.api import init as init_management_api
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -52,8 +52,9 @@ init_zip_loader(config)
 db_session = init_db(config)
 clients = init_client_class(db_session, loop)
 plugins = init_plugin_instance_class(db_session, config, loop)
-management_api = init_management(config, loop)
-server = MaubotServer(config, management_api, loop)
+management_api = init_management_api(config, loop)
+server = MaubotServer(config, loop)
+server.app.add_subapp(config["server.base_path"], management_api)
 
 for plugin in plugins:
     plugin.load()

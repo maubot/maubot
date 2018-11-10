@@ -26,6 +26,7 @@
     "last 2 ios_saf versions"
   ],
   "proxy": "http://localhost:29316",
+  "homepage": ".",
   "devDependencies": {
     "sass-lint": "^1.12.1",
     "sass-lint-auto-fix": "^0.15.0"
