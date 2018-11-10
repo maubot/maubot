@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 > div.instance
-    margin: 2rem
+    margin: 2rem 4rem
 
     > div.preference-table
         .select-client
@@ -28,8 +28,10 @@
                 margin-right: .5rem
 
     > div.ace_editor
+        z-index: 0
         height: 15rem !important
-        width: 100% !important
-        font-size: 14px
+        width: calc(100% - 1rem) !important
+        font-size: 12px
+        font-family: "Fira Code", monospace
 
-        margin-bottom: 1rem
+        margin: .75rem .5rem 1.5rem

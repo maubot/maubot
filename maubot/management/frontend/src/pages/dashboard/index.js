@@ -90,10 +90,9 @@ class Dashboard extends Component {
                 <img src="/favicon.png" alt=""/>
                 Maubot Manager
             </Link>
-            <div className="topbar">
-                <div className="user">
-                    {localStorage.username}
-                </div>
+
+            <div className="user">
+                <span>{localStorage.username}</span>
             </div>
             <nav className="sidebar">
                 <div className="instances list">

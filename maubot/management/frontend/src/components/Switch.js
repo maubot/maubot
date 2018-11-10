@@ -42,7 +42,7 @@ class Switch extends Component {
     render() {
         return (
             <div className="switch" data-active={this.state.active} onClick={this.toggle}
-                 tabIndex="0" onKeyPress={this.toggleKeyboard}>
+                 tabIndex="0" onKeyPress={this.toggleKeyboard} id={this.props.id}>
                 <div className="box">
                     <span className="text">
                         <span className="on">{this.props.onText || "On"}</span>

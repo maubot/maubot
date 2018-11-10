@@ -63,8 +63,8 @@ class Instance extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState(Object.assign(this.initialState, nextProps.instance), () =>
-            this.updateClientOptions())
+        this.setState(Object.assign(this.initialState, nextProps.instance))
+        this.updateClientOptions()
     }
 
     clientSelectEntry = client => client && {
@@ -127,7 +127,9 @@ class Instance extends Component {
     }
 
     get selectedClientEntry() {
-        return this.clientSelectEntry(this.props.ctx.clients[this.state.primary_user])
+        return this.state.primary_user
+            ? this.clientSelectEntry(this.props.ctx.clients[this.state.primary_user])
+            : {}
     }
 
     get selectedPluginEntry() {
@@ -159,7 +161,7 @@ class Instance extends Component {
             <PrefTable>
                 <PrefInput rowName="ID" type="text" name={"id"} value={this.state.id}
                            placeholder="fancybotinstance" onChange={this.inputChange}
-                           disabled={!this.isNew}/>
+                           disabled={!this.isNew} fullWidth={true}/>
                 <PrefSwitch rowName="Enabled" active={this.state.enabled}
                             onToggle={enabled => this.setState({ enabled })}/>
                 <PrefSwitch rowName="Running" active={this.state.started}

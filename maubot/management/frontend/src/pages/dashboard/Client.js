@@ -193,18 +193,18 @@ class Client extends Component {
 
     renderPreferences = () => (
         <PrefTable>
-            <PrefInput rowName="User ID" type="text" disabled={!this.isNew}
+            <PrefInput rowName="User ID" type="text" disabled={!this.isNew} fullWidth={true}
                        name={!this.isNew ? "id" : ""} value={this.state.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
-            <PrefInput rowName="Display name" type="text" name="displayname"
-                       value={this.state.displayname} placeholder="My fancy bot"
-                       onChange={this.inputChange}/>
             <PrefInput rowName="Homeserver" type="text" name="homeserver"
                        value={this.state.homeserver} placeholder="https://example.com"
                        onChange={this.inputChange}/>
             <PrefInput rowName="Access token" type="text" name="access_token"
                        value={this.state.access_token} onChange={this.inputChange}
                        placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"/>
+            <PrefInput rowName="Display name" type="text" name="displayname"
+                       value={this.state.displayname} placeholder="My fancy bot"
+                       onChange={this.inputChange}/>
             <PrefInput rowName="Avatar URL" type="text" name="avatar_url"
                        value={this.state.avatar_url} onChange={this.inputChange}
                        placeholder="mxc://example.com/mbmwyoTvPhEQPiCskcUsppko"/>

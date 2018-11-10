@@ -25,6 +25,7 @@
 
     > a.title
         grid-area: title
+        background-color: white
         display: flex
         align-items: center
         justify-content: center
@@ -35,37 +36,34 @@
         color: $text-color
         text-decoration: none
 
-        background-color: white
-        border-right: 1px solid $primary
-        border-bottom: 1px solid $border-color
-
         > img
             max-width: 2rem
             margin-right: .5rem
 
-    > div.topbar
-        grid-area: topbar
+    > div.user
+        grid-area: user
+        background-color: white
+        border-bottom: 1px solid $border-color
         display: flex
         align-items: center
-        justify-content: right
-        background-color: $primary
-        box-shadow: 0 .25rem .25rem rgba(0, 0, 0, .2)
-        padding: .5rem 1rem
-
-        > div.user
-            display: inline-flex
+        justify-content: center
+        span
+            display: flex
             align-items: center
-            height: 100%
-            padding: 0 1rem
+            justify-content: center
+            background-color: $primary
+            color: $inverted-text-color
+            margin: .375rem .5rem
+            width: 100%
+            height: calc(100% - .375rem)
             box-sizing: border-box
-            background-color: $primary-dark
             border-radius: .25rem
-
 
     @import sidebar
 
     > main.view
         grid-area: main
+        border-left: 1px solid $border-color
 
         @import client/index
         @import instance
@@ -74,6 +72,8 @@
         div.buttons
             +button-group
             display: flex
+            margin: 1rem .5rem
+            width: calc(100% - 1rem)
 
         div.error
             +notification($error)
@@ -81,6 +81,12 @@
 
             &:empty
                 display: none
+
+        button.delete
+            background-color: $error-light !important
+
+            &:hover
+                background-color: $error !important
 
         button.save, button.delete
             +button

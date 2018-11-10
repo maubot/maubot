@@ -15,23 +15,30 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 .preference-table
-    display: table
+    display: flex
 
     width: 100%
 
-    > .row
-        display: table-row
+    flex-wrap: wrap
 
-        > .key, > .value
-            display: table-cell
-            padding-bottom: .5rem
+    > .entry
+        display: block
+        width: calc(50% - 1rem)
+        margin: .5rem
 
-        > .key
-            width: 7rem
+        &.full-width
+            width: 100%
+
+        > label, > .value
+            display: block
+            width: 100%
+
+        > label
+            font-size: 0.875rem
+            padding-bottom: .25rem
+            font-weight: lighter
 
         > .value
-            margin: .5rem
-
             > .switch
                 width: auto
                 height: 2rem

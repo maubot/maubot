@@ -22,7 +22,7 @@
 
     cursor: pointer
 
-    border: 1px solid $primary
+    border: 1px solid $error-light
     border-radius: .25rem
     background-color: $background
 
@@ -37,9 +37,9 @@
         transition: .5s
         text-align: center
 
-        color: $text-color
         border-radius: .15rem 0 0 .15rem
-        background-color: $primary
+        background-color: $error-light
+        color: $inverted-text-color
 
         align-items: center
 
@@ -50,7 +50,7 @@
             text-align: center
             vertical-align: middle
 
-            color: $text-color
+            color: $inverted-text-color
             font-size: 1rem
 
             user-select: none
@@ -63,7 +63,9 @@
 
 
     &[data-active=true]
+        border: 1px solid $primary
         > .box
+            background-color: $primary
             transform: translateX(100%)
 
             border-radius: 0 .15rem .15rem 0

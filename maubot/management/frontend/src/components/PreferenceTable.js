@@ -34,28 +34,28 @@ export const PrefTable = ({ children, wrapperClass }) => {
     )
 }
 
-export const PrefRow = ({ name, children }) => (
-    <div className="row">
-        <div className="key">{name}</div>
+export const PrefRow = ({ name, fullWidth = false, labelFor = undefined, children }) => (
+    <div className={`entry ${fullWidth ? "full-width" : ""}`}>
+        <label htmlFor={labelFor}>{name}</label>
         <div className="value">{children}</div>
     </div>
 )
 
-export const PrefInput = ({ rowName, ...args }) => (
-    <PrefRow name={rowName}>
-        <input {...args}/>
+export const PrefInput = ({ rowName, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
+        <input {...args} id={rowName}/>
     </PrefRow>
 )
 
-export const PrefSwitch = ({ rowName, ...args }) => (
-    <PrefRow name={rowName}>
-        <Switch {...args}/>
+export const PrefSwitch = ({ rowName, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
+        <Switch {...args} id={rowName}/>
     </PrefRow>
 )
 
-export const PrefSelect = ({ rowName, ...args }) => (
-    <PrefRow name={rowName}>
-        <Select className="select" {...args}/>
+export const PrefSelect = ({ rowName, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
+        <Select className="select" {...args} id={rowName}/>
     </PrefRow>
 )
 

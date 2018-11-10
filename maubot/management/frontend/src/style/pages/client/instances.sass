@@ -15,15 +15,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 > div.instances
-    margin-top: 1rem
+    margin: 1rem 0
+
+    display: flex
+    flex-wrap: wrap
 
     > h3
-        margin-bottom: .5rem
+        margin: .5rem
+        width: 100%
 
     > a.instance
         display: block
-        width: 100%
+        width: calc(50% - 1rem)
         padding: .375rem .5rem
+        margin: .5rem
         background-color: white
         border-radius: .25rem
         color: $text-color

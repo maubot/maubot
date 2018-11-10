@@ -42,6 +42,7 @@
 
 =main-color-button()
     background-color: $primary
+    color: $inverted-text-color
     &:hover:not(:disabled)
         background-color: $primary-dark
 
@@ -56,16 +57,15 @@
     display: flex
     > button, > .button
         flex: 1
-        border-radius: 0
 
         &:first-of-type
-            border-radius: .25rem 0 0 .25rem
+            margin-right: .5rem
 
         &:last-of-type
-            border-radius: 0 .25rem .25rem 0
+            margin-left: .5rem
 
         &:first-of-type:last-of-type
-            border-radius: .25rem
+            margin: 0
 
 =vertical-button-group()
     display: flex
@@ -105,6 +105,9 @@
 
 .input, .textarea
     +input
+
+input
+    font-family: $font-stack
 
 =notification($border: $error-dark, $background: transparentize($error-light, 0.5))
     padding: 1rem
