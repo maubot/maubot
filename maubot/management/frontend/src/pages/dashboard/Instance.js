@@ -15,6 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
 import { NavLink, withRouter } from "react-router-dom"
+import AceEditor from "react-ace"
+import "brace/mode/yaml"
+import "brace/theme/github"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/PreferenceTable"
 import api from "../../api"
@@ -43,6 +46,7 @@ class Instance extends Component {
             enabled: true,
             started: true,
             type: "",
+            config: "",
 
             saving: false,
             deleting: false,
@@ -167,6 +171,12 @@ class Instance extends Component {
                             value={this.selectedPluginEntry}
                             onChange={({ id }) => this.setState({ type: id })}/>
             </PrefTable>
+            <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
+                       name="config" value={this.state.config}
+                       editorProps={{
+                           fontSize: "10pt",
+                           $blockScrolling: true,
+                       }}/>
             <div className="buttons">
                 {!this.isNew && (
                     <button className="delete" onClick={this.delete} disabled={this.loading}>
