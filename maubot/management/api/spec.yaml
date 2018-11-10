@@ -85,6 +85,21 @@ paths:
       summary: Upload a new plugin
       description: Upload a new plugin. If the plugin already exists, enabled instances will be restarted.
       tags: [Plugins]
+      parameters:
+      - name: allow_override
+        in: query
+        description: Set to allow overriding existing plugins
+        required: false
+        schema:
+          type: boolean
+          default: false
+      requestBody:
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+              example: The plugin maubot archive (.mbp)
       responses:
         200:
           description: Plugin uploaded and replaced current version successfully
@@ -102,13 +117,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         401:
           $ref: '#/components/responses/Unauthorized'
-      requestBody:
-        content:
-          application/zip:
-            schema:
-              type: string
-              format: binary
-              example: The plugin maubot archive (.mbp)
+        409:
+          description: Plugin already exists and allow_override was not specified.
   '/plugin/{id}':
     parameters:
     - name: id
@@ -150,6 +160,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    put:
+      operationId: put_plugin
+      summary: Upload a new or replacement plugin
+      description: |
+        Upload a new or replacement plugin with the specified ID.
+        A HTTP 400 will be returned if the ID of the uploaded plugin
+        doesn't match the ID in the path. If the plugin already
+        exists, enabled instances will be restarted.
+      tags: [Plugins]
+      requestBody:
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+              example: The plugin maubot archive (.mbp)
+      responses:
+        200:
+          description: Plugin uploaded and replaced current version successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        201:
+          description: New plugin uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plugin'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
   /plugin/{id}/reload:
     parameters:
     - name: id
@@ -356,6 +399,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/client/{id}/avatar':
+    parameters:
+    - name: id
+      in: path
+      description: The Matrix user ID of the client to get
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: upload_avatar
+      summary: Upload a profile picture for a bot
+      tags: [Clients]
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+              example: The avatar to upload
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+              example: The avatar to upload
+      responses:
+        200:
+          description: The avatar was uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_uri:
+                    type: string
+                    description: The MXC URI of the uploaded avatar
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
 
 components:
   responses:

@@ -55,10 +55,24 @@ class _Response:
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property
-    def mxid_mismatch(self) -> web.Response:
+    def bad_client_connection_details(self) -> web.Response:
         return web.json_response({
-            "error": "The Matrix user ID of the client and the user ID of the access token don't match",
+            "error": "Could not connect to homeserver",
+            "errcode": "bad_client_connection_details"
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    def mxid_mismatch(self, found: str) -> web.Response:
+        return web.json_response({
+            "error": "The Matrix user ID of the client and the user ID of the access token don't "
+                     f"match. Access token is for user {found}",
             "errcode": "mxid_mismatch",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @property
+    def pid_mismatch(self) -> web.Response:
+        return web.json_response({
+            "error": "The ID in the path does not match the ID of the uploaded plugin",
+            "errcode": "pid_mismatch",
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property
@@ -136,6 +150,13 @@ class _Response:
         return web.json_response({
             "error": "There is already a client with the user ID of that token",
             "errcode": "user_exists",
+        }, status=HTTPStatus.CONFLICT)
+
+    @property
+    def plugin_exists(self) -> web.Response:
+        return web.json_response({
+            "error": "A plugin with the same ID as the uploaded plugin already exists",
+            "errcode": "plugin_exists"
         }, status=HTTPStatus.CONFLICT)
 
     @property

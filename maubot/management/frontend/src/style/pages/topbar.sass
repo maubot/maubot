@@ -1,0 +1,74 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+.topbar
+    background-color: $primary
+
+    display: flex
+    justify-items: center
+    align-items: center
+    padding: 0 .75rem
+
+    @media screen and (min-width: calc(35rem + 1px))
+        display: none
+
+// Hamburger menu based on "Pure CSS Hamburger fold-out menu" codepen by Erik Terwan (MIT license)
+// https://codepen.io/erikterwan/pen/EVzeRP
+
+.hamburger
+    display: block
+    user-select: none
+    cursor: pointer
+
+    > span
+        display: block
+        width: 29px
+        height: 4px
+        margin-bottom: 5px
+        position: relative
+
+        background: white
+        border-radius: 3px
+
+        z-index: 1
+
+        transform-origin: 4px 0
+
+        //transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), background 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), opacity 0.55s ease
+
+        &:nth-of-type(1)
+            transform-origin: 0 0
+
+        &:nth-of-type(3)
+            transform-origin: 0 100%
+
+    transform: translateY(2px)
+
+    &.active
+        transform: translateX(1px) translateY(4px)
+
+    &.active > span
+        opacity: 1
+
+        &:nth-of-type(1)
+            transform: rotate(45deg) translate(-2px, -1px)
+
+        &:nth-of-type(2)
+            opacity: 0
+            transform: rotate(0deg) scale(0.2, 0.2)
+
+        &:nth-of-type(3)
+            transform: rotate(-45deg) translate(0, -1px)

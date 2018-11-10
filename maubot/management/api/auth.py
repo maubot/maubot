@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Optional
 from time import time
 import json
 
@@ -39,13 +40,31 @@ def create_token(user: UserID) -> str:
     })
 
 
-@routes.post("/auth/ping")
-async def ping(request: web.Request) -> web.Response:
+def get_token(request: web.Request) -> str:
     token = request.headers.get("Authorization", "")
     if not token or not token.startswith("Bearer "):
+        token = request.query.get("access_token", None)
+    else:
+        token = token[len("Bearer "):]
+    return token
+
+
+def check_token(request: web.Request) -> Optional[web.Response]:
+    token = get_token(request)
+    if not token:
+        return resp.no_token
+    elif not is_valid_token(token):
+        return resp.invalid_token
+    return None
+
+
+@routes.post("/auth/ping")
+async def ping(request: web.Request) -> web.Response:
+    token = get_token(request)
+    if not token:
         return resp.no_token
 
-    data = verify_token(get_config()["server.unshared_secret"], token[len("Bearer "):])
+    data = verify_token(get_config()["server.unshared_secret"], token)
     if not data:
         return resp.invalid_token
     user = data.get("user_id", None)

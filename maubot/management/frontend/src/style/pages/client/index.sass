@@ -13,9 +13,32 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
-import ReactDOM from "react-dom"
-import "./style/index.sass"
-import App from "./pages/Main"
 
-ReactDOM.render(<App/>, document.getElementById("root"))
+> div.client
+    display: flex
+
+    > div.sidebar
+        vertical-align: top
+        text-align: center
+        width: 8rem
+        margin-right: 1rem
+
+        > div
+            margin-bottom: 1rem
+
+        @import avatar
+        @import started
+
+    > div.info
+        vertical-align: top
+        flex: 1
+
+        > div.instances
+            +instancelist
+
+    @media screen and (max-width: 40rem)
+        flex-wrap: wrap
+
+        > div.sidebar, > div.info
+            width: 100%
+            margin-right: 0

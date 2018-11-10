@@ -1,0 +1,120 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+@import "dashboard-grid"
+
+.dashboard
+    display: grid
+    height: 100%
+    max-width: 60rem
+    margin: auto
+    box-shadow: 0 .5rem .5rem rgba(0, 0, 0, 0.5)
+    background-color: $background
+
+    > a.title
+        grid-area: title
+        background-color: white
+        display: flex
+        align-items: center
+        justify-content: center
+
+        font-size: 1.35rem
+        font-weight: bold
+
+        color: $text-color
+        text-decoration: none
+
+        > img
+            max-width: 2rem
+            margin-right: .5rem
+
+    > div.user
+        grid-area: user
+        background-color: white
+        border-bottom: 1px solid $border-color
+        display: flex
+        align-items: center
+        justify-content: center
+        span
+            display: flex
+            align-items: center
+            justify-content: center
+            background-color: $primary
+            color: $inverted-text-color
+            margin: .375rem .5rem
+            width: 100%
+            height: calc(100% - .375rem)
+            box-sizing: border-box
+            border-radius: .25rem
+
+    @import sidebar
+    @import topbar
+
+    @media screen and (max-width: 35rem)
+        &:not(.sidebar-open)
+            > nav.sidebar, > a.title, > div.user
+                display: none !important
+
+    > main.view
+        grid-area: main
+        border-left: 1px solid $border-color
+
+        overflow-y: auto
+
+        @import client/index
+        @import instance
+        @import plugin
+
+        > .not-found
+            text-align: center
+            margin-top: 5rem
+            font-size: 1.5rem
+
+        > div:not(.not-found)
+            margin: 2rem 4rem
+
+            @media screen and (max-width: 50rem)
+                margin: 2rem 1rem
+
+        div.buttons
+            +button-group
+            display: flex
+            margin: 1rem .5rem
+            width: calc(100% - 1rem)
+
+        div.error
+            +notification($error)
+            margin: 1rem .5rem
+
+            &:empty
+                display: none
+
+        button.delete
+            background-color: $error-light !important
+
+            &:hover
+                background-color: $error !important
+
+        button.save, button.delete
+            +button
+            +main-color-button
+            width: 100%
+            height: 2.5rem
+            padding: 0
+
+            > .spinner
+                +thick-spinner
+                +white-spinner
+                width: 2rem

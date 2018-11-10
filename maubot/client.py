@@ -177,13 +177,13 @@ class Client:
             await self.stop()
 
     async def update_displayname(self, displayname: str) -> None:
-        if not displayname or displayname == self.displayname:
+        if displayname is None or displayname == self.displayname:
             return
         self.db_instance.displayname = displayname
         await self.client.set_displayname(self.displayname)
 
     async def update_avatar_url(self, avatar_url: ContentURI) -> None:
-        if not avatar_url or avatar_url == self.avatar_url:
+        if avatar_url is None or avatar_url == self.avatar_url:
             return
         self.db_instance.avatar_url = avatar_url
         await self.client.set_avatar_url(self.avatar_url)
@@ -198,7 +198,7 @@ class Client:
                                         client_session=self.http_client, log=self.log)
         mxid = await new_client.whoami()
         if mxid != self.id:
-            raise ValueError("MXID mismatch")
+            raise ValueError(f"MXID mismatch: {mxid}")
         new_client.store = self.db_instance
         self.stop_sync()
         self.client = new_client

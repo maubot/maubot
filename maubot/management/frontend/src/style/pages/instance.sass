@@ -13,9 +13,23 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
-import ReactDOM from "react-dom"
-import "./style/index.sass"
-import App from "./pages/Main"
 
-ReactDOM.render(<App/>, document.getElementById("root"))
+> div.instance
+    > div.preference-table
+        .select-client
+            display: flex
+            align-items: center
+
+            img.avatar
+                max-height: 1.375rem
+                border-radius: 50%
+                margin-right: .5rem
+
+    > div.ace_editor
+        z-index: 0
+        height: 15rem !important
+        width: calc(100% - 1rem) !important
+        font-size: 12px
+        font-family: "Fira Code", monospace
+
+        margin: .75rem .5rem 1.5rem

@@ -18,7 +18,6 @@ body
     margin: 0
     padding: 0
     font-size: 16px
-    background-color: $background-color
 
 #root
     position: fixed
@@ -27,27 +26,14 @@ body
     right: 0
     left: 0
 
-//.lindeb
-    > header
-        position: absolute
-        top: 0
-        height: $header-height
-        left: 0
-        right: 0
+.maubot-wrapper
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+    background-color: $background-dark
 
-    > main
-        position: absolute
-        top: $header-height
-        bottom: 0
-        left: 0
-        right: 0
-
-        text-align: center
-
-        > .lindeb-content
-            text-align: left
-            display: inline-block
-            width: 100%
-            max-width: $max-width
-            box-sizing: border-box
-            padding: 0 1rem
+.maubot-loading
+    margin-top: 10rem
+    width: 10rem

@@ -13,9 +13,28 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
-import ReactDOM from "react-dom"
-import "./style/index.sass"
-import App from "./pages/Main"
 
-ReactDOM.render(<App/>, document.getElementById("root"))
+=instancelist()
+    margin: 1rem 0
+
+    display: flex
+    flex-wrap: wrap
+
+    > h3
+        margin: .5rem
+        width: 100%
+
+    > a.instance
+        display: block
+        width: calc(50% - 1rem)
+        padding: .375rem .5rem
+        margin: .5rem
+        background-color: white
+        border-radius: .25rem
+        color: $text-color
+        text-decoration: none
+        box-sizing: border-box
+        border: 1px solid $primary
+
+        &:hover
+            background-color: $primary

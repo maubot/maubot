@@ -20,7 +20,7 @@ from http import HTTPStatus
 from aiohttp import web
 
 from mautrix.types import UserID, SyncToken, FilterID
-from mautrix.errors import MatrixRequestError, MatrixInvalidToken
+from mautrix.errors import MatrixRequestError, MatrixConnectionError, MatrixInvalidToken
 from mautrix.client import Client as MatrixClient
 
 from ...db import DBClient
@@ -54,12 +54,14 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
         return resp.bad_client_access_token
     except MatrixRequestError:
         return resp.bad_client_access_details
+    except MatrixConnectionError:
+        return resp.bad_client_connection_details
     if user_id is None:
         existing_client = Client.get(mxid, None)
         if existing_client is not None:
             return resp.user_exists
     elif mxid != user_id:
-        return resp.mxid_mismatch
+        return resp.mxid_mismatch(mxid)
     db_instance = DBClient(id=mxid, homeserver=homeserver, access_token=access_token,
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
@@ -81,8 +83,10 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         return resp.bad_client_access_token
     except MatrixRequestError:
         return resp.bad_client_access_details
-    except ValueError:
-        return resp.mxid_mismatch
+    except MatrixConnectionError:
+        return resp.bad_client_connection_details
+    except ValueError as e:
+        return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
     await client.update_avatar_url(data.get("avatar_url", None))
     await client.update_displayname(data.get("displayname", None))
     await client.update_started(data.get("started", None))
@@ -127,3 +131,27 @@ async def delete_client(request: web.Request) -> web.Response:
         await client.stop()
     client.delete()
     return resp.deleted
+
+
+@routes.post("/client/{id}/avatar")
+async def upload_avatar(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    client = Client.get(user_id, None)
+    if not client:
+        return resp.client_not_found
+    content = await request.read()
+    return web.json_response({
+        "content_uri": await client.client.upload_media(
+            content, request.headers.get("Content-Type", None)),
+    })
+
+
+@routes.get("/client/{id}/avatar")
+async def download_avatar(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    client = Client.get(user_id, None)
+    if not client:
+        return resp.client_not_found
+    if not client.avatar_url or client.avatar_url == "disable":
+        return web.Response()
+    return web.Response(body=await client.client.download_media(client.avatar_url))

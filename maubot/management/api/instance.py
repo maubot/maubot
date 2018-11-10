@@ -70,6 +70,7 @@ async def _update_instance(instance: PluginInstance, data: dict) -> web.Response
     instance.update_enabled(data.get("enabled", None))
     instance.update_config(data.get("config", None))
     await instance.update_started(data.get("started", None))
+    await instance.update_type(data.get("type", None))
     instance.db.commit()
     return resp.updated(instance.to_dict())
 

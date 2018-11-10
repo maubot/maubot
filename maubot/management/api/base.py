@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
 
+from ...__meta__ import __version__
 from ...config import Config
 
 routes: web.RouteTableDef = web.RouteTableDef()
@@ -28,3 +29,10 @@ def set_config(config: Config) -> None:
 
 def get_config() -> Config:
     return _config
+
+
+@routes.get("/version")
+async def version(_: web.Request) -> web.Response:
+    return web.json_response({
+        "version": __version__
+    })

@@ -14,8 +14,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
-import ReactDOM from "react-dom"
-import "./style/index.sass"
-import App from "./pages/Main"
+import { Route, Redirect } from "react-router-dom"
 
-ReactDOM.render(<App/>, document.getElementById("root"))
+const PrivateRoute = ({ component, render, authed, to = "/login", ...args }) => (
+    <Route
+        {...args}
+        render={(props) => authed === true
+            ? (component ? React.createElement(component, props) : render())
+            : <Redirect to={{ pathname: to }}/>}
+    />
+)
+
+export default PrivateRoute

@@ -186,8 +186,25 @@ class PluginInstance:
         self.db_instance.primary_user = client.id
         self.client.references.remove(self)
         self.client = client
+        self.client.references.add(self)
         await self.start()
         self.log.debug(f"Primary user switched to {self.client.id}")
+        return True
+
+    async def update_type(self, type: str) -> bool:
+        if not type or type == self.type:
+            return True
+        try:
+            loader = PluginLoader.find(type)
+        except KeyError:
+            return False
+        await self.stop()
+        self.db_instance.type = loader.id
+        self.loader.references.remove(self)
+        self.loader = loader
+        self.loader.references.add(self)
+        await self.start()
+        self.log.debug(f"Type switched to {self.loader.id}")
         return True
 
     async def update_started(self, started: bool) -> None:

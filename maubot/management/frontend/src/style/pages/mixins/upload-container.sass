@@ -13,9 +13,31 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
-import ReactDOM from "react-dom"
-import "./style/index.sass"
-import App from "./pages/Main"
 
-ReactDOM.render(<App/>, document.getElementById("root"))
+=upload-box()
+    position: relative
+    overflow: hidden
+
+    display: flex
+    align-items: center
+    justify-content: center
+
+    > svg.upload
+        position: absolute
+        display: block
+
+        padding: 1rem
+        user-select: none
+
+
+    > input.file-selector
+        position: absolute
+        user-select: none
+        opacity: 0
+
+    > div.spinner
+        +thick-spinner
+
+    &:not(.uploading)
+        > input.file-selector
+            cursor: pointer
