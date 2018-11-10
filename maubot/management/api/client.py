@@ -83,6 +83,8 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         return resp.bad_client_access_token
     except MatrixRequestError:
         return resp.bad_client_access_details
+    except MatrixConnectionError:
+        return resp.bad_client_connection_details
     except ValueError as e:
         return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
     await client.update_avatar_url(data.get("avatar_url", None))
@@ -142,3 +144,14 @@ async def upload_avatar(request: web.Request) -> web.Response:
         "content_uri": await client.client.upload_media(
             content, request.headers.get("Content-Type", None)),
     })
+
+
+@routes.get("/client/{id}/avatar")
+async def download_avatar(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    client = Client.get(user_id, None)
+    if not client:
+        return resp.client_not_found
+    if not client.avatar_url or client.avatar_url == "disable":
+        return web.Response()
+    return web.Response(body=await client.client.download_media(client.avatar_url))

@@ -13,14 +13,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
 import logging
 import asyncio
+
+from aiohttp import web
+from aiohttp.abc import AbstractAccessLogger
 
 from mautrix.api import PathBuilder, Method
 
 from .config import Config
 from .__meta__ import __version__
+
+
+class AccessLogger(AbstractAccessLogger):
+    def log(self, request: web.Request, response: web.Response, time: int):
+        self.logger.info(f'{request.remote} "{request.method} {request.path} '
+                         f'{response.status} {response.body_length} '
+                         f'in {round(time, 4)}s"')
 
 
 class MaubotServer:
@@ -39,7 +48,7 @@ class MaubotServer:
         as_path = PathBuilder(config["server.appservice_base_path"])
         self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
 
-        self.runner = web.AppRunner(self.app)
+        self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
 
     def add_route(self, method: Method, path: PathBuilder, handler) -> None:
         self.app.router.add_route(method.value, str(path), handler)

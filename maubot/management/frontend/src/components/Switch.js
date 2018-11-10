@@ -37,9 +37,12 @@ class Switch extends Component {
         }
     }
 
+    toggleKeyboard = evt => (evt.key === " " || evt.key === "Enter") && this.toggle()
+
     render() {
         return (
-            <div className="switch" data-active={this.state.active} onClick={this.toggle}>
+            <div className="switch" data-active={this.state.active} onClick={this.toggle}
+                 tabIndex="0" onKeyPress={this.toggleKeyboard}>
                 <div className="box">
                     <span className="text">
                         <span className="on">{this.props.onText || "On"}</span>

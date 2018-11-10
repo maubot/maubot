@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-const BASE_PATH = "/_matrix/maubot/v1"
+export const BASE_PATH = "/_matrix/maubot/v1"
 
 export async function login(username, password) {
     const resp = await fetch(`${BASE_PATH}/auth/login`, {
@@ -105,6 +105,10 @@ export async function uploadAvatar(id, data, mime) {
     return await resp.json()
 }
 
+export function getAvatarURL(id) {
+    return `${BASE_PATH}/client/${id}/avatar?access_token=${localStorage.accessToken}`
+}
+
 export async function putClient(client) {
     const resp = await fetch(`${BASE_PATH}/client/${client.id}`, {
         headers: getHeaders(),
@@ -128,8 +132,9 @@ export async function deleteClient(id) {
 }
 
 export default {
+    BASE_PATH,
     login, ping,
     getInstances, getInstance,
     getPlugins, getPlugin, uploadPlugin,
-    getClients, getClient, uploadAvatar, putClient, deleteClient,
+    getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
 }

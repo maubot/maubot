@@ -21,14 +21,6 @@ import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTab
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 
-function getAvatarURL(client) {
-    if (!client.avatar_url) {
-        return ""
-    }
-    const id = client.avatar_url.substr("mxc://".length)
-    return `${client.homeserver}/_matrix/media/r0/download/${id}`
-}
-
 const ClientListEntry = ({ client }) => {
     const classes = ["client", "entry"]
     if (!client.enabled) {
@@ -38,7 +30,7 @@ const ClientListEntry = ({ client }) => {
     }
     return (
         <NavLink className={classes.join(" ")} to={`/client/${client.id}`}>
-            <img className="avatar" src={getAvatarURL(client)} alt={client.id.substr(1, 1)}/>
+            <img className="avatar" src={api.getAvatarURL(client.id)} alt=""/>
             <span className="displayname">{client.displayname || client.id}</span>
             <ChevronRight/>
         </NavLink>
@@ -153,8 +145,8 @@ class Client extends Component {
     startOrStop = async () => {
         this.setState({ startingOrStopping: true })
         const resp = await api.putClient({
-            id: this.state.id,
-            started: !this.state.started,
+            id: this.props.client.id,
+            started: !this.props.client.started,
         })
         if (resp.id) {
             this.props.onChange(resp)
@@ -172,11 +164,11 @@ class Client extends Component {
         return !Boolean(this.props.client)
     }
 
-    renderSidebar = () => (
+    renderSidebar = () => !this.isNew && (
         <div className="sidebar">
             <div className={`avatar-container ${this.state.avatar_url ? "" : "no-avatar"}
                         ${this.state.uploadingAvatar ? "uploading" : ""}`}>
-                <img className="avatar" src={getAvatarURL(this.state)} alt="Avatar"/>
+                <img className="avatar" src={api.getAvatarURL(this.state.id)} alt="Avatar"/>
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="image/png, image/jpeg"
                        onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}
@@ -230,9 +222,23 @@ class Client extends Component {
         </PrefTable>
     )
 
-    renderInstances = () => (
+    renderPrefButtons = () => <>
+        <div className="buttons">
+            {!this.isNew && (
+                <button className="delete" onClick={this.delete} disabled={this.loading}>
+                    {this.state.deleting ? <Spinner/> : "Delete"}
+                </button>
+            )}
+            <button className="save" onClick={this.save} disabled={this.loading}>
+                {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
+            </button>
+        </div>
+        <div className="error">{this.state.error}</div>
+    </>
+
+    renderInstances = () => !this.isNew && (
         <div className="instances">
-            <h3>Instances</h3>
+            <h3>{this.state.instances.length > 0 ? "Instances" : "No instances :("}</h3>
             {this.state.instances.map(instance => (
                 <Link className="instance" key={instance.id} to={`/instance/${instance.id}`}>
                     {instance.id}
@@ -241,28 +247,14 @@ class Client extends Component {
         </div>
     )
 
-    renderInfoContainer = () => (
-        <div className="info">
-            {this.renderPreferences()}
-            <div className="buttons">
-                {!this.isNew && (
-                    <button className="delete" onClick={this.delete} disabled={this.loading}>
-                        {this.state.deleting ? <Spinner/> : "Delete"}
-                    </button>
-                )}
-                <button className="save" onClick={this.save} disabled={this.loading}>
-                    {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
-                </button>
-            </div>
-            <div className="error">{this.state.error}</div>
-            {this.renderInstances()}
-        </div>
-    )
-
     render() {
         return <div className="client">
-            {!this.isNew && this.renderSidebar()}
-            {this.renderInfoContainer()}
+            {this.renderSidebar()}
+            <div className="info">
+                {this.renderPreferences()}
+                {this.renderPrefButtons()}
+                {this.renderInstances()}
+            </div>
         </div>
     }
 }

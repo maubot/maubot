@@ -44,7 +44,7 @@ class Main extends Component {
                 localStorage.username = username
                 this.setState({ authed: true })
             } else {
-                localStorage.accessToken = undefined
+                delete localStorage.accessToken
             }
         } catch (err) {
             console.error(err)

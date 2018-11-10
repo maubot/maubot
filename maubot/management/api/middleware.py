@@ -19,7 +19,7 @@ import logging
 from aiohttp import web
 
 from .responses import resp
-from .auth import is_valid_token
+from .auth import check_token
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
 
@@ -28,12 +28,7 @@ Handler = Callable[[web.Request], Awaitable[web.Response]]
 async def auth(request: web.Request, handler: Handler) -> web.Response:
     if "/auth/" in request.path:
         return await handler(request)
-    token = request.headers.get("Authorization", "")
-    if not token or not token.startswith("Bearer "):
-        return resp.no_token
-    if not is_valid_token(token[len("Bearer "):]):
-        return resp.invalid_token
-    return await handler(request)
+    return check_token(request) or await handler(request)
 
 
 log = logging.getLogger("maubot.server")
