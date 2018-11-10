@@ -13,29 +13,25 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React, { Component } from "react"
-import { NavLink, Link } from "react-router-dom"
+import React from "react"
+import { NavLink } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
 import PrefTable, { PrefInput } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
+import BaseMainView from "./BaseMainView"
 
-const PluginListEntry = ({ plugin }) => (
-    <NavLink className="plugin entry" to={`/plugin/${plugin.id}`}>
-        <span className="id">{plugin.id}</span>
+const PluginListEntry = ({ entry }) => (
+    <NavLink className="plugin entry" to={`/plugin/${entry.id}`}>
+        <span className="id">{entry.id}</span>
         <ChevronRight/>
     </NavLink>
 )
 
 
-class Plugin extends Component {
+class Plugin extends BaseMainView {
     static ListEntry = PluginListEntry
-
-    constructor(props) {
-        super(props)
-        this.state = Object.assign(this.initialState, props.plugin)
-    }
 
     get initialState() {
         return {
@@ -50,18 +46,6 @@ class Plugin extends Component {
         }
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState(Object.assign(this.initialState, nextProps.plugin))
-    }
-
-    async readFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.readAsArrayBuffer(file)
-            reader.onload = evt => resolve(evt.target.result)
-            reader.onerror = err => reject(err)
-        })
-    }
     upload = async event => {
         const file = event.target.files[0]
         this.setState({
@@ -80,39 +64,6 @@ class Plugin extends Component {
             this.setState({ saving: false, error: resp.error })
         }
     }
-
-    delete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${this.state.id}?`)) {
-            return
-        }
-        this.setState({ deleting: true })
-        const resp = await api.deletePlugin(this.state.id)
-        if (resp.success) {
-            this.props.history.push("/")
-            this.props.onDelete()
-        } else {
-            this.setState({ deleting: false, error: resp.error })
-        }
-    }
-
-    get isNew() {
-        return !Boolean(this.props.plugin)
-    }
-
-    get hasInstances() {
-        return this.state.instances.length > 0
-    }
-
-    renderInstances = () => !this.isNew && (
-        <div className="instances">
-            <h3>{this.hasInstances ? "Instances" : "No instances :("}</h3>
-            {this.state.instances.map(instance => (
-                <Link className="instance" key={instance.id} to={`/instance/${instance.id}`}>
-                    {instance.id}
-                </Link>
-            ))}
-        </div>
-    )
 
     render() {
         return <div className="plugin">

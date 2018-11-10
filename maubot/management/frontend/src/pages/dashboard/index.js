@@ -29,7 +29,7 @@ class Dashboard extends Component {
             clients: {},
             plugins: {},
         }
-        global.maubot = this
+        window.maubot = this
     }
 
     async componentWillMount() {
@@ -51,8 +51,8 @@ class Dashboard extends Component {
     }
 
     renderList(field, type) {
-        return Object.values(this.state[field + "s"]).map(entry =>
-            React.createElement(type, { key: entry.id, [field]: entry }))
+        return this.state[field] && Object.values(this.state[field]).map(entry =>
+            React.createElement(type, { key: entry.id, entry }))
     }
 
     delete(stateField, id) {
@@ -71,18 +71,23 @@ class Dashboard extends Component {
     }
 
     renderView(field, type, id) {
-        const stateField = field + "s"
-        const entry = this.state[stateField][id]
+        const entry = this.state[field][id]
         if (!entry) {
-            return "Not found :("
+            return this.renderNotFound(field.slice(0, -1))
         }
         return React.createElement(type, {
-            [field]: entry,
-            onDelete: () => this.delete(stateField, id),
-            onChange: newEntry => this.add(stateField, newEntry, id),
+            entry,
+            onDelete: () => this.delete(field, id),
+            onChange: newEntry => this.add(field, newEntry, id),
             ctx: this.state,
         })
     }
+
+    renderNotFound = (thing = "path") => (
+        <div className="not-found">
+            Oops! I'm afraid that {thing} couldn't be found.
+        </div>
+    )
 
     render() {
         return <div className="dashboard">
@@ -100,21 +105,21 @@ class Dashboard extends Component {
                         <h2>Instances</h2>
                         <Link to="/new/instance"><Plus/></Link>
                     </div>
-                    {this.renderList("instance", Instance.ListEntry)}
+                    {this.renderList("instances", Instance.ListEntry)}
                 </div>
                 <div className="clients list">
                     <div className="title">
                         <h2>Clients</h2>
                         <Link to="/new/client"><Plus/></Link>
                     </div>
-                    {this.renderList("client", Client.ListEntry)}
+                    {this.renderList("clients", Client.ListEntry)}
                 </div>
                 <div className="plugins list">
                     <div className="title">
                         <h2>Plugins</h2>
                         <Link to="/new/plugin"><Plus/></Link>
                     </div>
-                    {this.renderList("plugin", Plugin.ListEntry)}
+                    {this.renderList("plugins", Plugin.ListEntry)}
                 </div>
             </nav>
             <main className="view">
@@ -128,12 +133,12 @@ class Dashboard extends Component {
                     <Route path="/new/plugin" render={() => <Plugin
                         onChange={newEntry => this.add("plugins", newEntry)}/>}/>
                     <Route path="/instance/:id" render={({ match }) =>
-                        this.renderView("instance", Instance, match.params.id)}/>
+                        this.renderView("instances", Instance, match.params.id)}/>
                     <Route path="/client/:id" render={({ match }) =>
-                        this.renderView("client", Client, match.params.id)}/>
+                        this.renderView("clients", Client, match.params.id)}/>
                     <Route path="/plugin/:id" render={({ match }) =>
                         this.renderView("plugin", Plugin, match.params.id)}/>
-                    <Route render={() => "Not found :("}/>
+                    <Route render={() => this.renderNotFound()}/>
                 </Switch>
             </main>
         </div>

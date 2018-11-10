@@ -13,36 +13,37 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React, { Component } from "react"
-import { Link, NavLink, withRouter } from "react-router-dom"
+import React from "react"
+import { NavLink, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
 import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
+import BaseMainView from "./BaseMainView"
 
-const ClientListEntry = ({ client }) => {
+const ClientListEntry = ({ entry }) => {
     const classes = ["client", "entry"]
-    if (!client.enabled) {
+    if (!entry.enabled) {
         classes.push("disabled")
-    } else if (!client.started) {
+    } else if (!entry.started) {
         classes.push("stopped")
     }
     return (
-        <NavLink className={classes.join(" ")} to={`/client/${client.id}`}>
-            <img className="avatar" src={api.getAvatarURL(client.id)} alt=""/>
-            <span className="displayname">{client.displayname || client.id}</span>
+        <NavLink className={classes.join(" ")} to={`/client/${entry.id}`}>
+            <img className="avatar" src={api.getAvatarURL(entry.id)} alt=""/>
+            <span className="displayname">{entry.displayname || entry.id}</span>
             <ChevronRight/>
         </NavLink>
     )
 }
 
-class Client extends Component {
+class Client extends BaseMainView {
     static ListEntry = ClientListEntry
 
     constructor(props) {
         super(props)
-        this.state = Object.assign(this.initialState, props.client)
+        this.deleteFunc = api.deleteClient
     }
 
     get initialState() {
@@ -78,26 +79,6 @@ class Client extends Component {
         return client
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState(Object.assign(this.initialState, nextProps.client))
-    }
-
-    inputChange = event => {
-        if (!event.target.name) {
-            return
-        }
-        this.setState({ [event.target.name]: event.target.value })
-    }
-
-    async readFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.readAsArrayBuffer(file)
-            reader.onload = evt => resolve(evt.target.result)
-            reader.onerror = err => reject(err)
-        })
-    }
-
     avatarUpload = async event => {
         const file = event.target.files[0]
         this.setState({
@@ -126,25 +107,11 @@ class Client extends Component {
         }
     }
 
-    delete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${this.state.id}?`)) {
-            return
-        }
-        this.setState({ deleting: true })
-        const resp = await api.deleteClient(this.state.id)
-        if (resp.success) {
-            this.props.history.push("/")
-            this.props.onDelete()
-        } else {
-            this.setState({ deleting: false, error: resp.error })
-        }
-    }
-
     startOrStop = async () => {
         this.setState({ startingOrStopping: true })
         const resp = await api.putClient({
-            id: this.props.client.id,
-            started: !this.props.client.started,
+            id: this.props.entry.id,
+            started: !this.props.entry.started,
         })
         if (resp.id) {
             this.props.onChange(resp)
@@ -156,10 +123,6 @@ class Client extends Component {
 
     get loading() {
         return this.state.saving || this.state.startingOrStopping || this.state.deleting
-    }
-
-    get isNew() {
-        return !Boolean(this.props.client)
     }
 
     renderSidebar = () => !this.isNew && (
@@ -175,17 +138,17 @@ class Client extends Component {
                 {this.state.uploadingAvatar && <Spinner/>}
             </div>
             <div className="started-container">
-                <span className={`started ${this.props.client.started}
-                        ${this.props.client.enabled ? "" : "disabled"}`}/>
+                <span className={`started ${this.props.entry.started}
+                        ${this.props.entry.enabled ? "" : "disabled"}`}/>
                 <span className="text">
-                    {this.props.client.started ? "Started" :
-                        (this.props.client.enabled ? "Stopped" : "Disabled")}
+                    {this.props.entry.started ? "Started" :
+                        (this.props.entry.enabled ? "Stopped" : "Disabled")}
                 </span>
             </div>
-            {(this.props.client.started || this.props.client.enabled) && (
+            {(this.props.entry.started || this.props.entry.enabled) && (
                 <button className="save" onClick={this.startOrStop} disabled={this.loading}>
                     {this.state.startingOrStopping ? <Spinner/>
-                        : (this.props.client.started ? "Stop" : "Start")}
+                        : (this.props.entry.started ? "Stop" : "Start")}
                 </button>
             )}
         </div>
@@ -235,21 +198,6 @@ class Client extends Component {
         </div>
         <div className="error">{this.state.error}</div>
     </>
-
-    get hasInstances() {
-        return this.state.instances.length > 0
-    }
-
-    renderInstances = () => !this.isNew && (
-        <div className="instances">
-            <h3>{this.hasInstances ? "Instances" : "No instances :("}</h3>
-            {this.state.instances.map(instance => (
-                <Link className="instance" key={instance.id} to={`/instance/${instance.id}`}>
-                    {instance.id}
-                </Link>
-            ))}
-        </div>
-    )
 
     render() {
         return <div className="client">

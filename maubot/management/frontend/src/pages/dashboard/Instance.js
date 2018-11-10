@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React, { Component } from "react"
+import React from "react"
 import { NavLink, withRouter } from "react-router-dom"
 import AceEditor from "react-ace"
 import "brace/mode/yaml"
@@ -22,20 +22,21 @@ import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/PreferenceTable"
 import api from "../../api"
 import Spinner from "../../components/Spinner"
+import BaseMainView from "./BaseMainView"
 
-const InstanceListEntry = ({ instance }) => (
-    <NavLink className="instance entry" to={`/instance/${instance.id}`}>
-        <span className="id">{instance.id}</span>
+const InstanceListEntry = ({ entry }) => (
+    <NavLink className="instance entry" to={`/instance/${entry.id}`}>
+        <span className="id">{entry.id}</span>
         <ChevronRight/>
     </NavLink>
 )
 
-class Instance extends Component {
+class Instance extends BaseMainView {
     static ListEntry = InstanceListEntry
 
     constructor(props) {
         super(props)
-        this.state = Object.assign(this.initialState, props.instance)
+        this.deleteFunc = api.deleteInstance
         this.updateClientOptions()
     }
 
@@ -63,7 +64,7 @@ class Instance extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState(Object.assign(this.initialState, nextProps.instance))
+        super.componentWillReceiveProps(nextProps)
         this.updateClientOptions()
     }
 
@@ -82,22 +83,15 @@ class Instance extends Component {
         this.clientOptions = Object.values(this.props.ctx.clients).map(this.clientSelectEntry)
     }
 
-    inputChange = event => {
-        if (!event.target.name) {
-            return
-        }
-        this.setState({ [event.target.name]: event.target.value })
-    }
-
     save = async () => {
         this.setState({ saving: true })
-        const resp = await api.putInstance(this.instanceInState, this.props.instance
-            ? this.props.instance.id : undefined)
+        const resp = await api.putInstance(this.instanceInState, this.props.entry
+            ? this.props.entry.id : undefined)
         if (resp.id) {
             if (this.isNew) {
                 this.props.history.push(`/instance/${resp.id}`)
             } else {
-                if (resp.id !== this.props.instance.id) {
+                if (resp.id !== this.props.entry.id) {
                     this.props.history.replace(`/instance/${resp.id}`)
                 }
                 this.setState({ saving: false, error: "" })
@@ -106,24 +100,6 @@ class Instance extends Component {
         } else {
             this.setState({ saving: false, error: resp.error })
         }
-    }
-
-    delete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${this.state.id}?`)) {
-            return
-        }
-        this.setState({ deleting: true })
-        const resp = await api.deleteInstance(this.state.id)
-        if (resp.success) {
-            this.props.history.push("/")
-            this.props.onDelete()
-        } else {
-            this.setState({ deleting: false, error: resp.error })
-        }
-    }
-
-    get isNew() {
-        return !Boolean(this.props.instance)
     }
 
     get selectedClientEntry() {
