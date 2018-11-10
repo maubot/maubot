@@ -67,6 +67,12 @@ class Plugin extends BaseMainView {
 
     render() {
         return <div className="plugin">
+            {!this.isNew && <PrefTable>
+                <PrefInput rowName="ID" type="text" value={this.state.id} disabled={true}
+                           className="id"/>
+                <PrefInput rowName="Version" type="text" value={this.state.version}
+                           disabled={true}/>
+            </PrefTable>}
             <div className={`upload-box ${this.state.uploading ? "uploading" : ""}`}>
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="application/zip"
@@ -75,20 +81,13 @@ class Plugin extends BaseMainView {
                        onDragLeave={evt => evt.target.parentElement.classList.remove("drag")}/>
                 {this.state.uploading && <Spinner/>}
             </div>
-            {!this.isNew && <>
-                <PrefTable>
-                    <PrefInput rowName="ID" type="text" value={this.state.id} disabled={true}/>
-                    <PrefInput rowName="Version" type="text" value={this.state.version}
-                               disabled={true}/>
-                </PrefTable>
-                <div className="buttons">
-                    <button className={`delete ${this.hasInstances ? "disabled-bg" : ""}`}
-                            onClick={this.delete} disabled={this.loading || this.hasInstances}
-                            title={this.hasInstances ? "Can't delete plugin that is in use" : ""}>
-                        {this.state.deleting ? <Spinner/> : "Delete"}
-                    </button>
-                </div>
-            </>}
+            {!this.isNew && <div className="buttons">
+                <button className={`delete ${this.hasInstances ? "disabled-bg" : ""}`}
+                        onClick={this.delete} disabled={this.loading || this.hasInstances}
+                        title={this.hasInstances ? "Can't delete plugin that is in use" : ""}>
+                    {this.state.deleting ? <Spinner/> : "Delete"}
+                </button>
+            </div>}
             <div className="error">{this.state.error}</div>
             {!this.isNew && this.renderInstances()}
         </div>

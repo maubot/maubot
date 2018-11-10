@@ -137,7 +137,7 @@ class Dashboard extends Component {
                     <Route path="/client/:id" render={({ match }) =>
                         this.renderView("clients", Client, match.params.id)}/>
                     <Route path="/plugin/:id" render={({ match }) =>
-                        this.renderView("plugin", Plugin, match.params.id)}/>
+                        this.renderView("plugins", Plugin, match.params.id)}/>
                     <Route render={() => this.renderNotFound()}/>
                 </Switch>
             </main>

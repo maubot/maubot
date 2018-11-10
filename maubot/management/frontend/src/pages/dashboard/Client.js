@@ -157,7 +157,7 @@ class Client extends BaseMainView {
     renderPreferences = () => (
         <PrefTable>
             <PrefInput rowName="User ID" type="text" disabled={!this.isNew} fullWidth={true}
-                       name={!this.isNew ? "id" : ""} value={this.state.id}
+                       name={!this.isNew ? "id" : ""} value={this.state.id} className="id"
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
             <PrefInput rowName="Homeserver" type="text" name="homeserver"
                        value={this.state.homeserver} placeholder="https://example.com"

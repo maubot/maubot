@@ -135,9 +135,9 @@ class Instance extends BaseMainView {
     render() {
         return <div className="instance">
             <PrefTable>
-                <PrefInput rowName="ID" type="text" name={"id"} value={this.state.id}
+                <PrefInput rowName="ID" type="text" name="id" value={this.state.id}
                            placeholder="fancybotinstance" onChange={this.inputChange}
-                           disabled={!this.isNew} fullWidth={true}/>
+                           disabled={!this.isNew} fullWidth={true} className="id"/>
                 <PrefSwitch rowName="Enabled" active={this.state.enabled}
                             onToggle={enabled => this.setState({ enabled })}/>
                 <PrefSwitch rowName="Running" active={this.state.started}
