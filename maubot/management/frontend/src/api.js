@@ -45,8 +45,8 @@ async function defaultPut(type, entry, id = undefined) {
     return await resp.json()
 }
 
-async function defaultGet(url) {
-    const resp = await fetch(`${BASE_PATH}/${url}`, { headers: getHeaders() })
+async function defaultGet(path) {
+    const resp = await fetch(`${BASE_PATH}${path}`, { headers: getHeaders() })
     return await resp.json()
 }
 
