@@ -16,7 +16,6 @@
 
 > div.client
     display: flex
-    margin: 2rem 4rem
 
     > div.sidebar
         vertical-align: top
@@ -36,3 +35,10 @@
 
         > div.instances
             +instancelist
+
+    @media screen and (max-width: 40rem)
+        flex-wrap: wrap
+
+        > div.sidebar, > div.info
+            width: 100%
+            margin-right: 0

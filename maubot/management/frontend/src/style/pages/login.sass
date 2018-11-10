@@ -28,6 +28,10 @@
     border-radius: .25rem
     margin-top: 3rem
 
+    @media screen and (max-width: 27rem)
+        margin: 3rem 1rem 0
+        width: calc(100% - 2rem)
+
     h1
         color: $primary
         margin: 3rem 0
@@ -35,13 +39,14 @@
     input, button
         margin: .5rem 2.5rem
         height: 3rem
-        width: 20rem
+        width: calc(100% - 5rem)
+        box-sizing: border-box
 
     input
         +input
 
     button
-        +button($width: 20rem, $height: 3rem, $padding: 0)
+        +button($width: calc(100% - 5rem), $height: 3rem, $padding: 0)
         +main-color-button
 
         .spinner

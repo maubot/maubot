@@ -60,10 +60,18 @@
             border-radius: .25rem
 
     @import sidebar
+    @import topbar
+
+    @media screen and (max-width: 35rem)
+        &:not(.sidebar-open)
+            > nav.sidebar, > a.title, > div.user
+                display: none !important
 
     > main.view
         grid-area: main
         border-left: 1px solid $border-color
+
+        overflow-y: scroll
 
         @import client/index
         @import instance
@@ -73,6 +81,12 @@
             text-align: center
             margin-top: 5rem
             font-size: 1.5rem
+
+        > div:not(.not-found)
+            margin: 2rem 4rem
+
+            @media screen and (max-width: 50rem)
+                margin: 2rem 1rem
 
         div.buttons
             +button-group

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { Route, Switch, Link } from "react-router-dom"
+import { Route, Switch, Link, withRouter } from "react-router-dom"
 import api from "../../api"
 import { ReactComponent as Plus } from "../../res/plus.svg"
 import Instance from "./Instance"
@@ -28,8 +28,15 @@ class Dashboard extends Component {
             instances: {},
             clients: {},
             plugins: {},
+            sidebarOpen: false,
         }
         window.maubot = this
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.location !== prevProps.location) {
+            this.setState({ sidebarOpen: false })
+        }
     }
 
     async componentWillMount() {
@@ -90,15 +97,15 @@ class Dashboard extends Component {
     )
 
     render() {
-        return <div className="dashboard">
+        return <div className={`dashboard ${this.state.sidebarOpen ? "sidebar-open" : ""}`}>
             <Link to="/" className="title">
                 <img src="/favicon.png" alt=""/>
                 Maubot Manager
             </Link>
-
             <div className="user">
                 <span>{localStorage.username}</span>
             </div>
+
             <nav className="sidebar">
                 <div className="instances list">
                     <div className="title">
@@ -122,6 +129,14 @@ class Dashboard extends Component {
                     {this.renderList("plugins", Plugin.ListEntry)}
                 </div>
             </nav>
+
+            <div className="topbar">
+                <div className={`hamburger ${this.state.sidebarOpen ? "active" : ""}`}
+                     onClick={evt => this.setState({ sidebarOpen: !this.state.sidebarOpen })}>
+                    <span/><span/><span/>
+                </div>
+            </div>
+
             <main className="view">
                 <Switch>
                     <Route path="/" exact render={() => "Hello, World!"}/>
@@ -145,4 +160,4 @@ class Dashboard extends Component {
     }
 }
 
-export default Dashboard
+export default withRouter(Dashboard)
