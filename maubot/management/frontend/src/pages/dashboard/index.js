@@ -87,6 +87,16 @@ class Dashboard extends Component {
         this.setState({ [stateField]: data })
     }
 
+    getLog(field, id) {
+        if (field === "clients") {
+            return this.logMap[`maubot.client.${id}`]
+        } else if (field === "instances") {
+            return this.logMap[`maubot.plugin.${id}`]
+        } else if (field === "plugins") {
+            return this.logMap["maubot.loader.zip"]
+        }
+    }
+
     renderView(field, type, id) {
         const entry = this.state[field][id]
         if (!entry) {
@@ -98,7 +108,7 @@ class Dashboard extends Component {
             onDelete: () => this.delete(field, id),
             onChange: newEntry => this.add(field, newEntry, id),
             ctx: this.state,
-            log: this.logMap[`maubot.${field.slice(0, -1)}.${id}`] || [],
+            log: this.getLog(field, id) || [],
         })
     }
 
