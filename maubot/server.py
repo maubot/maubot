@@ -61,7 +61,7 @@ class MaubotServer:
             index_html = file.read()
 
         @web.middleware
-        async def frontend_404_middleware(request, handler):
+        async def frontend_404_middleware(request: web.Request, handler) -> web.Response:
             if hasattr(handler, "__self__") and isinstance(handler.__self__, web.StaticResource):
                 try:
                     return await handler(request)
@@ -69,10 +69,13 @@ class MaubotServer:
                     return web.Response(body=index_html, content_type="text/html")
             return await handler(request)
 
+        async def ui_base_redirect(_: web.Request) -> web.Response:
+            raise web.HTTPFound(f"{ui_base}/")
+
         self.app.middlewares.append(frontend_404_middleware)
         self.app.router.add_get(f"{ui_base}/", lambda _: web.Response(body=index_html,
                                                                       content_type="text/html"))
-        self.app.router.add_get(ui_base, lambda _: web.HTTPFound(f"{ui_base}/"))
+        self.app.router.add_get(ui_base, ui_base_redirect)
 
     def setup_static_root_files(self, directory: str, ui_base: str) -> None:
         files = {

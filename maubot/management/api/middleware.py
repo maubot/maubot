@@ -39,7 +39,6 @@ async def error(request: web.Request, handler: Handler) -> web.Response:
     try:
         return await handler(request)
     except web.HTTPException as ex:
-        print(ex)
         if ex.status_code == 404:
             return resp.path_not_found
         elif ex.status_code == 405:
