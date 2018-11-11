@@ -99,6 +99,7 @@ class MaubotServer:
         self.log.info(f"Listening on {site.name}")
 
     async def stop(self) -> None:
+        await self.runner.shutdown()
         await self.runner.cleanup()
 
     @staticmethod

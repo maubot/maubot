@@ -72,7 +72,7 @@ sockets = []
 async def stop_all() -> None:
     for socket in sockets:
         try:
-            await socket.close(1012)
+            await socket.close(code=1012)
         except Exception:
             pass
 
@@ -107,7 +107,10 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
             elif not authenticated:
                 await ws.send_json({"auth_success": False})
     except Exception:
-        pass
+        try:
+            await ws.close()
+        except Exception:
+            pass
     log_root.removeHandler(handler)
     log.debug(f"Connection from {request.remote} closed")
     sockets.remove(ws)

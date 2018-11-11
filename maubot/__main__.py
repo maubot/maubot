@@ -90,7 +90,10 @@ except KeyboardInterrupt:
     log.debug("Closing websockets")
     loop.run_until_complete(stop_management_api())
     log.debug("Stopping server")
-    loop.run_until_complete(server.stop())
+    try:
+        loop.run_until_complete(asyncio.wait_for(server.stop(), 5, loop=loop))
+    except asyncio.TimeoutError:
+        log.warning("Stopping server timed out")
     log.debug("Closing event loop")
     loop.close()
     log.debug("Everything stopped, shutting down")
