@@ -17,16 +17,22 @@ from aiohttp import web
 from asyncio import AbstractEventLoop
 
 from ...config import Config
-from .base import routes, set_config
+from .base import routes, set_config, set_loop
 from .middleware import auth, error
 from .auth import web as _
 from .plugin import web as _
 from .instance import web as _
 from .client import web as _
+from .log import stop_all as stop_log_sockets
 
 
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
     set_config(cfg)
+    set_loop(loop)
     app = web.Application(loop=loop, middlewares=[auth, error])
     app.add_routes(routes)
     return app
+
+
+async def stop() -> None:
+    await stop_log_sockets()

@@ -55,6 +55,9 @@ class Dashboard extends Component {
             plugins[plugin.id] = plugin
         }
         this.setState({ instances, clients, plugins })
+        const logs = await api.openLogSocket()
+        console.log("WebSocket opened:", logs)
+        window.logs = logs
     }
 
     renderList(field, type) {

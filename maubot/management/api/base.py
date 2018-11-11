@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web
+import asyncio
 
 from ...__meta__ import __version__
 from ...config import Config
 
 routes: web.RouteTableDef = web.RouteTableDef()
 _config: Config = None
+_loop: asyncio.AbstractEventLoop = None
 
 
 def set_config(config: Config) -> None:
@@ -29,6 +31,15 @@ def set_config(config: Config) -> None:
 
 def get_config() -> Config:
     return _config
+
+
+def set_loop(loop: asyncio.AbstractEventLoop) -> None:
+    global _loop
+    _loop = loop
+
+
+def get_loop() -> asyncio.AbstractEventLoop:
+    return _loop
 
 
 @routes.get("/version")

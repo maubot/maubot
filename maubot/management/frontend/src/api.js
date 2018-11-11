@@ -75,6 +75,59 @@ export async function ping() {
     throw json
 }
 
+export async function openLogSocket() {
+    let protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    const url = `${protocol}//${window.location.host}${BASE_PATH}/logs`
+    const wrapper = {
+        socket: null,
+        connected: false,
+        authenticated: false,
+        fails: -1,
+    }
+    const openHandler = () => {
+        wrapper.socket.send(localStorage.accessToken)
+        wrapper.connected = true
+    }
+    const messageHandler = evt => {
+        // TODO use logs
+        const data = JSON.parse(evt.data)
+        if (data.auth_success !== undefined) {
+            if (data.auth_success) {
+                console.info("Websocket connection authentication successful")
+                wrapper.authenticated = true
+                wrapper.fails = -1
+            } else {
+                console.info("Websocket connection authentication failed")
+            }
+        } else {
+            console.log("SERVLOG", data)
+        }
+    }
+    const closeHandler = evt => {
+        if (evt) {
+            if (evt.code === 4000) {
+                console.error("Websocket connection failed: access token invalid or not provided")
+            } else if (evt.code === 1012) {
+                console.info("Websocket connection closed: server is restarting")
+            }
+        }
+        wrapper.connected = false
+        wrapper.socket = null
+        wrapper.fails++
+        const SECOND = 1000
+        setTimeout(() => {
+            wrapper.socket = new WebSocket(url)
+            wrapper.socket.onopen = openHandler
+            wrapper.socket.onmessage = messageHandler
+            wrapper.socket.onclose = closeHandler
+        }, Math.min(wrapper.fails * 5 * SECOND, 30 * SECOND))
+    }
+
+    closeHandler()
+
+    return wrapper
+}
+
 export const getInstances = () => defaultGet("/instances")
 export const getInstance = id => defaultGet(`/instance/${id}`)
 export const putInstance = (instance, id) => defaultPut("instance", instance, id)
@@ -123,7 +176,7 @@ export const deleteClient = id => defaultDelete("client", id)
 
 export default {
     BASE_PATH,
-    login, ping,
+    login, ping, openLogSocket,
     getInstances, getInstance, putInstance, deleteInstance,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,

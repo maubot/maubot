@@ -26,7 +26,7 @@ from .server import MaubotServer
 from .client import Client, init as init_client_class
 from .loader.zip import init as init_zip_loader
 from .instance import init as init_plugin_instance_class
-from .management.api import init as init_management_api
+from .management.api import init as init_management_api, stop as stop_management_api
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -87,6 +87,8 @@ except KeyboardInterrupt:
     loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()],
                                            loop=loop))
     db_session.commit()
+    log.debug("Closing websockets")
+    loop.run_until_complete(stop_management_api())
     log.debug("Stopping server")
     loop.run_until_complete(server.stop())
     log.debug("Closing event loop")
