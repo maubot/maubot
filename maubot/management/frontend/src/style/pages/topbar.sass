@@ -47,7 +47,7 @@
 
         transform-origin: 4px 0
 
-        //transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), background 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), opacity 0.55s ease
+        transition: transform 0.4s cubic-bezier(0.77, 0.2, 0.05, 1.0), background 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), opacity 0.55s ease
 
         &:nth-of-type(1)
             transform-origin: 0 0
@@ -56,6 +56,7 @@
             transform-origin: 0 100%
 
     transform: translateY(2px)
+    transition: transform 0.4s cubic-bezier(0.77, 0.2, 0.05, 1.0)
 
     &.active
         transform: translateX(1px) translateY(4px)

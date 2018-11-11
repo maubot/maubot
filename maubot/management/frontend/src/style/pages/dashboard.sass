@@ -63,9 +63,10 @@
     @import topbar
 
     @media screen and (max-width: 35rem)
-        &:not(.sidebar-open)
-            > nav.sidebar, > a.title, > div.user
-                display: none !important
+        &:not(.sidebar-open) > *
+            transform: translateX(-15rem)
+        > *
+            transition: transform 0.4s
 
     > main.view
         grid-area: main
