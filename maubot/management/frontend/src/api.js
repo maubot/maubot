@@ -82,6 +82,7 @@ export async function openLogSocket() {
         socket: null,
         connected: false,
         authenticated: false,
+        onLog: data => {},
         fails: -1,
     }
     const openHandler = () => {
@@ -100,7 +101,9 @@ export async function openLogSocket() {
                 console.info("Websocket connection authentication failed")
             }
         } else {
+            data.time = new Date(data.time)
             console.log("SERVLOG", data)
+            wrapper.onLog(data)
         }
     }
     const closeHandler = evt => {

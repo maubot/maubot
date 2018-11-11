@@ -20,6 +20,7 @@ import { ReactComponent as Plus } from "../../res/plus.svg"
 import Instance from "./Instance"
 import Client from "./Client"
 import Plugin from "./Plugin"
+import Home from "./Home"
 
 class Dashboard extends Component {
     constructor(props) {
@@ -30,6 +31,8 @@ class Dashboard extends Component {
             plugins: {},
             sidebarOpen: false,
         }
+        this.logLines = []
+        this.logMap = {}
         window.maubot = this
     }
 
@@ -55,9 +58,13 @@ class Dashboard extends Component {
             plugins[plugin.id] = plugin
         }
         this.setState({ instances, clients, plugins })
+
         const logs = await api.openLogSocket()
-        console.log("WebSocket opened:", logs)
-        window.logs = logs
+        logs.onLog = data => {
+            this.logLines.push(data)
+            ;(this.logMap[data.name] || (this.logMap[data.name] = [])).push(data)
+            this.setState({})
+        }
     }
 
     renderList(field, type) {
@@ -85,11 +92,13 @@ class Dashboard extends Component {
         if (!entry) {
             return this.renderNotFound(field.slice(0, -1))
         }
+        console.log(`maubot.${field.slice(0, -1)}.${id}`)
         return React.createElement(type, {
             entry,
             onDelete: () => this.delete(field, id),
             onChange: newEntry => this.add(field, newEntry, id),
             ctx: this.state,
+            log: this.logMap[`maubot.${field.slice(0, -1)}.${id}`] || [],
         })
     }
 
@@ -142,7 +151,7 @@ class Dashboard extends Component {
 
             <main className="view">
                 <Switch>
-                    <Route path="/" exact render={() => "Hello, World!"}/>
+                    <Route path="/" exact render={() => <Home log={this.logLines}/>}/>
                     <Route path="/new/instance" render={() =>
                         <Instance onChange={newEntry => this.add("instances", newEntry)}
                                   ctx={this.state}/>}/>

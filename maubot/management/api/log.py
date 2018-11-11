@@ -38,6 +38,12 @@ class WebSocketHandler(logging.Handler):
         self.formatter = logging.Formatter()
 
     def emit(self, record: logging.LogRecord) -> None:
+        try:
+            self._emit(record)
+        except Exception as e:
+            print("Logging error:", e)
+
+    def _emit(self, record: logging.LogRecord) -> None:
         # JSON conversion based on Marsel Mavletkulov's json-log-formatter (MIT license)
         # https://github.com/marselester/json-log-formatter
         content = {
@@ -45,6 +51,7 @@ class WebSocketHandler(logging.Handler):
             for name, value in record.__dict__.items()
             if name not in EXCLUDE_ATTRS
         }
+        content["id"] = record.relativeCreated
         content["msg"] = record.getMessage()
         content["time"] = datetime.utcnow()
 
@@ -61,7 +68,7 @@ class WebSocketHandler(logging.Handler):
         try:
             await self.ws.send_json(record)
         except Exception as e:
-            pass
+            print("Log sending error:", e)
 
 
 log_root = logging.getLogger("maubot")

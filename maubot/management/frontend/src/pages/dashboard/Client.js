@@ -21,6 +21,7 @@ import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTab
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 import BaseMainView from "./BaseMainView"
+import Log from "./Log"
 
 const ClientListEntry = ({ entry }) => {
     const classes = ["client", "entry"]
@@ -200,14 +201,17 @@ class Client extends BaseMainView {
     </>
 
     render() {
-        return <div className="client">
-            {this.renderSidebar()}
-            <div className="info">
-                {this.renderPreferences()}
-                {this.renderPrefButtons()}
-                {this.renderInstances()}
+        return <>
+            <div className="client">
+                {this.renderSidebar()}
+                <div className="info">
+                    {this.renderPreferences()}
+                    {this.renderPrefButtons()}
+                    {this.renderInstances()}
+                </div>
             </div>
-        </div>
+            <Log showName={false} lines={this.props.log}/>
+        </>
     }
 }
 

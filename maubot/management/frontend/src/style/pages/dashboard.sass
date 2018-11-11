@@ -78,16 +78,37 @@
         @import instance
         @import plugin
 
-        > .not-found
-            text-align: center
-            margin-top: 5rem
-            font-size: 1.5rem
-
-        > div:not(.not-found)
+        > div
             margin: 2rem 4rem
 
             @media screen and (max-width: 50rem)
                 margin: 2rem 1rem
+
+            div.log > div.row
+                span.level, span.logger
+                    display: none
+
+        > div.not-found, > div.home
+            text-align: center
+            margin-top: 5rem
+            font-size: 1.5rem
+
+        div.log
+            text-align: left
+            font-size: 12px
+            max-height: 20rem
+            font-family: "Fira Code", monospace
+            overflow: auto
+
+            > div.row
+                white-space: nowrap
+
+                > span.level:before
+                    content: " ["
+                > span.logger:before
+                    content: "@"
+                > span.text:before
+                    content: "] "
 
         div.buttons
             +button-group

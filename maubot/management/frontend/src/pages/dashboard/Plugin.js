@@ -21,6 +21,7 @@ import PrefTable, { PrefInput } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 import BaseMainView from "./BaseMainView"
+import Log from "./Log"
 
 const PluginListEntry = ({ entry }) => (
     <NavLink className="plugin entry" to={`/plugin/${entry.id}`}>
@@ -90,6 +91,7 @@ class Plugin extends BaseMainView {
             </div>}
             <div className="error">{this.state.error}</div>
             {!this.isNew && this.renderInstances()}
+            <Log showName={false} lines={this.props.log}/>
         </div>
     }
 }
