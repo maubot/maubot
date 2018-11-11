@@ -145,7 +145,7 @@ class Instance extends BaseMainView {
                 <PrefSelect rowName="Primary user" options={this.clientOptions}
                             isSearchable={false} value={this.selectedClientEntry}
                             onChange={({ id }) => this.setState({ primary_user: id })}/>
-                <PrefSelect rowName="Type" options={this.typeOptions}
+                <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
                             value={this.selectedPluginEntry}
                             onChange={({ id }) => this.setState({ type: id })}/>
             </PrefTable>
