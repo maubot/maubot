@@ -21,7 +21,6 @@ import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTab
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 import BaseMainView from "./BaseMainView"
-import Log from "./Log"
 
 const ClientListEntry = ({ entry }) => {
     const classes = ["client", "entry"]
@@ -158,7 +157,7 @@ class Client extends BaseMainView {
     renderPreferences = () => (
         <PrefTable>
             <PrefInput rowName="User ID" type="text" disabled={!this.isNew} fullWidth={true}
-                       name={!this.isNew ? "id" : ""} value={this.state.id} className="id"
+                       name={this.isNew ? "id" : ""} value={this.state.id} className="id"
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
             <PrefInput rowName="Homeserver" type="text" name="homeserver"
                        value={this.state.homeserver} placeholder="https://example.com"
@@ -210,7 +209,7 @@ class Client extends BaseMainView {
                     {this.renderInstances()}
                 </div>
             </div>
-            <Log showName={false} lines={this.props.log}/>
+            {this.renderLog()}
         </>
     }
 }

@@ -23,7 +23,6 @@ import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/P
 import api from "../../api"
 import Spinner from "../../components/Spinner"
 import BaseMainView from "./BaseMainView"
-import Log from "./Log"
 
 const InstanceListEntry = ({ entry }) => (
     <NavLink className="instance entry" to={`/instance/${entry.id}`}>
@@ -168,7 +167,7 @@ class Instance extends BaseMainView {
                 </button>
             </div>
             <div className="error">{this.state.error}</div>
-            <Log showName={false} lines={this.props.log}/>
+            {this.renderLog()}
         </div>
     }
 }

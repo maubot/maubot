@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
 import PrefTable, { PrefInput } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 import BaseMainView from "./BaseMainView"
-import Log from "./Log"
 
 const PluginListEntry = ({ entry }) => (
     <NavLink className="plugin entry" to={`/plugin/${entry.id}`}>
@@ -33,6 +32,11 @@ const PluginListEntry = ({ entry }) => (
 
 class Plugin extends BaseMainView {
     static ListEntry = PluginListEntry
+
+    constructor(props) {
+        super(props)
+        this.deleteFunc = api.deletePlugin
+    }
 
     get initialState() {
         return {
@@ -90,10 +94,10 @@ class Plugin extends BaseMainView {
                 </button>
             </div>}
             <div className="error">{this.state.error}</div>
-            {!this.isNew && this.renderInstances()}
-            <Log showName={false} lines={this.props.log}/>
+            {this.renderInstances()}
+            {this.renderLog()}
         </div>
     }
 }
 
-export default Plugin
+export default withRouter(Plugin)

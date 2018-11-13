@@ -1,5 +1,6 @@
 import React, { Component } from "react"
 import { Link } from "react-router-dom"
+import Log from "./Log"
 
 class BaseMainView extends Component {
     constructor(props) {
@@ -63,6 +64,8 @@ class BaseMainView extends Component {
             ))}
         </div>
     )
+
+    renderLog = () => !this.isNew && <Log showName={false} lines={this.props.log}/>
 }
 
 export default BaseMainView
