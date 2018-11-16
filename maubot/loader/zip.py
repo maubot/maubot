@@ -65,6 +65,7 @@ class ZippedPluginLoader(PluginLoader):
         self.id = None
         self._loaded = None
         self._importer = None
+        self._file = None
         self._load_meta()
         self._run_preload_checks(self._get_importer())
         try:
@@ -185,6 +186,7 @@ class ZippedPluginLoader(PluginLoader):
     def _load(self, reset_cache: bool = False) -> Type[PluginClass]:
         if self._loaded is not None and not reset_cache:
             return self._loaded
+        self._load_meta()
         importer = self._get_importer(reset_cache=reset_cache)
         self._run_preload_checks(importer)
         if reset_cache:
