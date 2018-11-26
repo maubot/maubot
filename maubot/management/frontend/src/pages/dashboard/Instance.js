@@ -149,12 +149,13 @@ class Instance extends BaseMainView {
                             value={this.selectedPluginEntry}
                             onChange={({ id }) => this.setState({ type: id })}/>
             </PrefTable>
+            {!this.isNew &&
             <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
                        name="config" value={this.state.config}
                        editorProps={{
                            fontSize: "10pt",
                            $blockScrolling: true,
-                       }}/>
+                       }}/>}
             <div className="buttons">
                 {!this.isNew && (
                     <button className="delete" onClick={this.delete} disabled={this.loading}>

@@ -16,14 +16,17 @@
 import React from "react"
 
 const Log = ({ lines, showName = true }) => <div className="log">
-    {lines.map(data =>
+    {lines.map(data => <>
         <div className="row" key={data.id}>
             <span className="time">{data.time.toLocaleTimeString()}</span>
             <span className="level">{data.levelname}</span>
             {showName && <span className="logger">{data.name}</span>}
             <span className="text">{data.msg}</span>
-        </div>,
-    )}
+        </div>
+        {data.exc_info && <div className="row exception" key={data.id + "-exc"}>
+            {data.exc_info.replace(/\\n/g, "\n")}
+        </div>}
+    </>)}
 </div>
 
 export default Log
