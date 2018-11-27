@@ -16,9 +16,9 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [karma](https://github.com/maubot/karma) - A user karma tracker bot.
 * [xkcd](https://github.com/maubot/xkcd) - A bot to view xkcd comics.
 * [echo](https://github.com/maubot/echo) - A bot that echoes pings and other stuff.
+* [rss](https://github.com/maubot/rss) - A bot that posts RSS feed updates to Matrix.
 
 ### Upcoming
-* rss - A bot that posts new RSS entries to rooms.
 * dictionary - A bot to get the dictionary definitions of words.
 * poll - A simple poll bot.
 * reminder - A bot to ping you about something after a certain amount of time.
