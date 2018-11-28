@@ -13,16 +13,32 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Union, Callable, Awaitable, Optional
+from typing import Dict, List, Union, Callable, Awaitable, Optional, Tuple
+from markdown.extensions import Extension
+import markdown as md
 import attr
-import commonmark
 
 from mautrix import Client as MatrixClient
+from mautrix.util.formatter import parse_html
 from mautrix.client import EventHandler
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
 
 from .command_spec import ParsedCommand, CommandSpec
+
+
+class EscapeHTML(Extension):
+    def extendMarkdown(self, md):
+        md.preprocessors.deregister("html_block")
+        md.inlinePatterns.deregister("html")
+
+
+escape_html = EscapeHTML()
+
+
+def parse_markdown(markdown: str, allow_html: bool = False) -> Tuple[str, str]:
+    html = md.markdown(markdown, extensions=[escape_html] if not allow_html else [])
+    return parse_html(html), html
 
 
 class MaubotMessageEvent(MessageEvent):
@@ -40,7 +56,7 @@ class MaubotMessageEvent(MessageEvent):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
             if markdown:
                 content.format = Format.HTML
-                content.formatted_body = commonmark.commonmark(content.body)
+                content.body, content.formatted_body = parse_markdown(content.body)
         if reply:
             content.set_reply(self)
         return self._client.send_message_event(self.room_id, event_type, content)
@@ -65,8 +81,8 @@ class MaubotMatrixClient(MatrixClient):
 
     def send_markdown(self, room_id: RoomID, markdown: str, msgtype: MessageType = MessageType.TEXT,
                       relates_to: Optional[RelatesTo] = None, **kwargs) -> Awaitable[EventID]:
-        content = TextMessageEventContent(msgtype=msgtype, body=markdown, format=Format.HTML,
-                                          formatted_body=commonmark.commonmark(markdown))
+        content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
+        content.body, content.formatted_body = parse_markdown(markdown)
         if relates_to:
             content.relates_to = relates_to
         return self.send_message(room_id, content, **kwargs)

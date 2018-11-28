@@ -25,7 +25,7 @@ setuptools.setup(
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
         "alembic>=1.0.0,<2",
-        "commonmark>=0.8.1,<1",
+        "Markdown>=3.0.0,<4",
         "ruamel.yaml>=0.15.35,<0.16",
         "attrs>=18.1.0,<19",
         "bcrypt>=3.1.4,<4",
