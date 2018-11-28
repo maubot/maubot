@@ -82,7 +82,8 @@ export async function openLogSocket() {
         socket: null,
         connected: false,
         authenticated: false,
-        onLog: data => {},
+        onLog: data => undefined,
+        onHistory: history => undefined,
         fails: -1,
     }
     const openHandler = () => {
@@ -100,9 +101,9 @@ export async function openLogSocket() {
             } else {
                 console.info("Websocket connection authentication failed")
             }
+        } else if (data.history) {
+            wrapper.onHistory(data.history)
         } else {
-            data.time = new Date(data.time)
-            console.log("SERVLOG", data)
             wrapper.onLog(data)
         }
     }
@@ -129,6 +130,21 @@ export async function openLogSocket() {
     closeHandler()
 
     return wrapper
+}
+
+let _debugOpenFileEnabled = undefined
+export const debugOpenFileEnabled = () => _debugOpenFileEnabled
+export const updateDebugOpenFileEnabled = async () => {
+    const resp = await defaultGet("/debug/open")
+    _debugOpenFileEnabled = resp["enabled"] || false
+}
+export async function debugOpenFile(path, line) {
+    const resp = await fetch(`${BASE_PATH}/debug/open`, {
+        headers: getHeaders(),
+        body: JSON.stringify({ path, line }),
+        method: "POST",
+    })
+    return await resp.json()
 }
 
 export const getInstances = () => defaultGet("/instances")
@@ -179,7 +195,7 @@ export const deleteClient = id => defaultDelete("client", id)
 
 export default {
     BASE_PATH,
-    login, ping, openLogSocket,
+    login, ping, openLogSocket, debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
     getInstances, getInstance, putInstance, deleteInstance,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,

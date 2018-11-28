@@ -93,9 +93,9 @@ class Plugin extends BaseMainView {
                     {this.state.deleting ? <Spinner/> : "Delete"}
                 </button>
             </div>}
+            {this.renderLogButton("loader.zip")}
             <div className="error">{this.state.error}</div>
             {this.renderInstances()}
-            {this.renderLog()}
         </div>
     }
 }

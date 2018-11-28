@@ -13,13 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Deque, List
 from datetime import datetime
+from collections import deque
 import logging
 import asyncio
 
 from aiohttp import web
 
-from .base import routes, get_loop
+from .base import routes, get_loop, get_config
 from .auth import is_valid_token
 
 BUILTIN_ATTRS = {"args", "asctime", "created", "exc_info", "exc_text", "filename", "funcName",
@@ -29,13 +31,19 @@ BUILTIN_ATTRS = {"args", "asctime", "created", "exc_info", "exc_text", "filename
 INCLUDE_ATTRS = {"filename", "funcName", "levelname", "levelno", "lineno", "module", "name",
                  "pathname"}
 EXCLUDE_ATTRS = BUILTIN_ATTRS - INCLUDE_ATTRS
+MAX_LINES = 2048
 
 
-class WebSocketHandler(logging.Handler):
-    def __init__(self, ws, level=logging.NOTSET) -> None:
+class LogCollector(logging.Handler):
+    lines: Deque[dict]
+    formatter: logging.Formatter
+    listeners: List[web.WebSocketResponse]
+
+    def __init__(self, level=logging.NOTSET) -> None:
         super().__init__(level)
-        self.ws = ws
+        self.lines = deque(maxlen=MAX_LINES)
         self.formatter = logging.Formatter()
+        self.listeners = []
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -51,9 +59,9 @@ class WebSocketHandler(logging.Handler):
             for name, value in record.__dict__.items()
             if name not in EXCLUDE_ATTRS
         }
-        content["id"] = record.relativeCreated
+        content["id"] = str(record.relativeCreated)
         content["msg"] = record.getMessage()
-        content["time"] = datetime.utcnow()
+        content["time"] = datetime.fromtimestamp(record.created)
 
         if record.exc_info:
             content["exc_info"] = self.formatter.formatException(record.exc_info)
@@ -61,22 +69,29 @@ class WebSocketHandler(logging.Handler):
         for name, value in content.items():
             if isinstance(value, datetime):
                 content[name] = value.astimezone().isoformat()
-
-        asyncio.ensure_future(self.send(content), loop=get_loop())
+        asyncio.ensure_future(self.send(content))
+        self.lines.append(content)
 
     async def send(self, record: dict) -> None:
-        try:
-            await self.ws.send_json(record)
-        except Exception as e:
-            print("Log sending error:", e)
+        for ws in self.listeners:
+            try:
+                await ws.send_json(record)
+            except Exception as e:
+                print("Log sending error:", e)
 
 
+handler = LogCollector()
 log_root = logging.getLogger("maubot")
 log = logging.getLogger("maubot.server.websocket")
 sockets = []
 
 
+def init() -> None:
+    log_root.addHandler(handler)
+
+
 async def stop_all() -> None:
+    log_root.removeHandler(handler)
     for socket in sockets:
         try:
             await socket.close(code=1012)
@@ -90,7 +105,6 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
     await ws.prepare(request)
     sockets.append(ws)
     log.debug(f"Connection from {request.remote} opened")
-    handler = WebSocketHandler(ws)
     authenticated = False
 
     async def close_if_not_authenticated():
@@ -106,11 +120,12 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
             if msg.type != web.WSMsgType.TEXT:
                 continue
             if is_valid_token(msg.data):
+                await ws.send_json({"auth_success": True})
+                await ws.send_json({"history": list(handler.lines)})
                 if not authenticated:
                     log.debug(f"Connection from {request.remote} authenticated")
-                    log_root.addHandler(handler)
+                    handler.listeners.append(ws)
                     authenticated = True
-                await ws.send_json({"auth_success": True})
             elif not authenticated:
                 await ws.send_json({"auth_success": False})
     except Exception:
@@ -118,7 +133,7 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
             await ws.close()
         except Exception:
             pass
-    log_root.removeHandler(handler)
+    handler.listeners.remove(ws)
     log.debug(f"Connection from {request.remote} closed")
     sockets.remove(ws)
     return ws

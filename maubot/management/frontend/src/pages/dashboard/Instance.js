@@ -167,8 +167,8 @@ class Instance extends BaseMainView {
                     {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
                 </button>
             </div>
+            {this.renderLogButton(`instance.${this.state.id}`)}
             <div className="error">{this.state.error}</div>
-            {this.renderLog()}
         </div>
     }
 }

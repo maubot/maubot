@@ -1,6 +1,5 @@
 import React, { Component } from "react"
 import { Link } from "react-router-dom"
-import Log from "./Log"
 
 class BaseMainView extends Component {
     constructor(props) {
@@ -65,7 +64,9 @@ class BaseMainView extends Component {
         </div>
     )
 
-    renderLog = () => !this.isNew && <Log showName={false} lines={this.props.log}/>
+    renderLogButton = (filter) => !this.isNew && <div className="buttons">
+        <button className="open-log" onClick={() => this.props.openLog(filter)}>View logs</button>
+    </div>
 }
 
 export default BaseMainView

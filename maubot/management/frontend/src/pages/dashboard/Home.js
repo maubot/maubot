@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import Log from "./Log"
 
 class Home extends Component {
     render() {
@@ -22,7 +21,9 @@ class Home extends Component {
             <div className="home">
                 See sidebar to get started
             </div>
-            <Log lines={this.props.log}/>
+            <div className="buttons">
+                <button className="open-log" onClick={this.props.openLog}>View logs</button>
+            </div>
         </>
     }
 }

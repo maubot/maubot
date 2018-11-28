@@ -21,6 +21,8 @@ import Instance from "./Instance"
 import Client from "./Client"
 import Plugin from "./Plugin"
 import Home from "./Home"
+import Log from "./Log"
+import Modal from "./Modal"
 
 class Dashboard extends Component {
     constructor(props) {
@@ -30,9 +32,14 @@ class Dashboard extends Component {
             clients: {},
             plugins: {},
             sidebarOpen: false,
+            modalOpen: false,
+            logFocus: "",
         }
         this.logLines = []
         this.logMap = {}
+        this.logModal = {
+            open: () => undefined,
+        }
         window.maubot = this
     }
 
@@ -44,7 +51,8 @@ class Dashboard extends Component {
 
     async componentWillMount() {
         const [instanceList, clientList, pluginList] = await Promise.all([
-            api.getInstances(), api.getClients(), api.getPlugins()])
+            api.getInstances(), api.getClients(), api.getPlugins(),
+            api.updateDebugOpenFileEnabled()])
         const instances = {}
         for (const instance of instanceList) {
             instances[instance.id] = instance
@@ -60,10 +68,32 @@ class Dashboard extends Component {
         this.setState({ instances, clients, plugins })
 
         const logs = await api.openLogSocket()
+
+        const processEntry = (entry) => {
+            entry.time = new Date(entry.time)
+            if (entry.name.startsWith("maubot.")) {
+                entry.name = entry.name.substr("maubot.".length)
+            }
+            if (entry.name.startsWith("client.")) {
+                entry.name = entry.name.substr("client.".length)
+                entry.nameLink = `/client/${entry.name}`
+            } else if (entry.name.startsWith("instance.")) {
+                entry.nameLink = `/instance/${entry.name.substr("instance.".length)}`
+            }
+            (this.logMap[entry.name] || (this.logMap[entry.name] = [])).push(entry)
+        }
+
+        logs.onHistory = history => {
+            for (const data of history) {
+                processEntry(data)
+            }
+            this.logLines = history
+            this.setState({ logFocus: this.state.logFocus })
+        }
         logs.onLog = data => {
+            processEntry(data)
             this.logLines.push(data)
-            ;(this.logMap[data.name] || (this.logMap[data.name] = [])).push(data)
-            this.setState({})
+            this.setState({ logFocus: this.state.logFocus })
         }
     }
 
@@ -87,28 +117,22 @@ class Dashboard extends Component {
         this.setState({ [stateField]: data })
     }
 
-    getLog(field, id) {
-        if (field === "clients") {
-            return this.logMap[`maubot.client.${id}`]
-        } else if (field === "instances") {
-            return this.logMap[`maubot.plugin.${id}`]
-        } else if (field === "plugins") {
-            return this.logMap["maubot.loader.zip"]
-        }
-    }
-
     renderView(field, type, id) {
         const entry = this.state[field][id]
         if (!entry) {
             return this.renderNotFound(field.slice(0, -1))
         }
-        console.log(`maubot.${field.slice(0, -1)}.${id}`)
         return React.createElement(type, {
             entry,
             onDelete: () => this.delete(field, id),
             onChange: newEntry => this.add(field, newEntry, id),
+            openLog: filter => {
+                this.setState({
+                    logFocus: filter,
+                })
+                this.logModal.open()
+            },
             ctx: this.state,
-            log: this.getLog(field, id) || [],
         })
     }
 
@@ -118,7 +142,7 @@ class Dashboard extends Component {
         </div>
     )
 
-    render() {
+    renderMain() {
         return <div className={`dashboard ${this.state.sidebarOpen ? "sidebar-open" : ""}`}>
             <Link to="/" className="title">
                 <img src="/favicon.png" alt=""/>
@@ -161,7 +185,7 @@ class Dashboard extends Component {
 
             <main className="view">
                 <Switch>
-                    <Route path="/" exact render={() => <Home log={this.logLines}/>}/>
+                    <Route path="/" exact render={() => <Home openLog={this.logModal.open}/>}/>
                     <Route path="/new/instance" render={() =>
                         <Instance onChange={newEntry => this.add("instances", newEntry)}
                                   ctx={this.state}/>}/>
@@ -179,6 +203,19 @@ class Dashboard extends Component {
                 </Switch>
             </main>
         </div>
+    }
+
+    renderModal() {
+        return <Modal ref={ref => this.logModal = ref}>
+            <Log lines={this.logLines} focus={this.state.logFocus}/>
+        </Modal>
+    }
+
+    render() {
+        return <>
+            {this.renderMain()}
+            {this.renderModal()}
+        </>
     }
 }
 

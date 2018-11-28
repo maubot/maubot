@@ -31,7 +31,7 @@ from .client import Client
 from .loader import PluginLoader
 from .plugin_base import Plugin
 
-log = logging.getLogger("maubot.plugin")
+log = logging.getLogger("maubot.instance")
 
 yaml = YAML()
 yaml.indent(4)
@@ -54,7 +54,7 @@ class PluginInstance:
 
     def __init__(self, db_instance: DBPlugin):
         self.db_instance = db_instance
-        self.log = logging.getLogger(f"maubot.plugin.{self.id}")
+        self.log = log.getChild(self.id)
         self.config = None
         self.started = False
         self.loader = None

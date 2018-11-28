@@ -89,28 +89,15 @@
             margin-top: 5rem
             font-size: 1.5rem
 
-        div.log
-            text-align: left
-            font-size: 12px
-            max-height: 20rem
-            font-family: "Fira Code", monospace
-            overflow: auto
-
-            > div.row
-                white-space: pre
-
-                > span.level:before
-                    content: " ["
-                > span.logger:before
-                    content: "@"
-                > span.text:before
-                    content: "] "
-
         div.buttons
             +button-group
             display: flex
             margin: 1rem .5rem
             width: calc(100% - 1rem)
+
+            button.open-log
+                +button
+                +main-color-button
 
         div.error
             +notification($error)

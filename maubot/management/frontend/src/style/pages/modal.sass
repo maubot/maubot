@@ -1,0 +1,71 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+div.modal-wrapper-wrapper
+    z-index: 9001
+    position: fixed
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+    background-color: rgba(0, 0, 0, 0.5)
+
+    --modal-margin: 2.5rem
+    --button-height: 0rem
+
+    @media screen and (max-width: 45rem)
+        --modal-margin: 1rem
+        --button-height: 2.5rem
+
+    @media screen and (max-width: 35rem)
+        --modal-margin: 0rem
+        --button-height: 3rem
+
+    button.close
+        +button
+
+        display: none
+
+        width: 100%
+        height: var(--button-height)
+        border-radius: .25rem .25rem 0 0
+
+        @media screen and (max-width: 45rem)
+            display: block
+        @media screen and (max-width: 35rem)
+            border-radius: 0
+
+    div.modal-wrapper
+        width: calc(100% - 2 * var(--modal-margin))
+        height: calc(100% - 2 * var(--modal-margin) - var(--button-height))
+        margin: var(--modal-margin)
+        border-radius: .25rem
+
+        @media screen and (max-width: 35rem)
+            border-radius: 0
+
+        div.modal
+            padding: 1rem
+            height: 100%
+            width: 100%
+            background-color: $background
+            box-sizing: border-box
+            border-radius: .25rem
+
+            @media screen and (max-width: 45rem)
+                border-radius: 0 0 .25rem .25rem
+            @media screen and (max-width: 35rem)
+                border-radius: 0
+                padding: .5rem

@@ -26,7 +26,7 @@ from .server import MaubotServer
 from .client import Client, init as init_client_class
 from .loader.zip import init as init_zip_loader
 from .instance import init as init_plugin_instance_class
-from .management.api import init as init_management_api, stop as stop_management_api
+from .management.api import init as init_mgmt_api, stop as stop_mgmt_api, init_log_listener
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -43,6 +43,7 @@ config.load()
 config.update()
 
 logging.config.dictConfig(copy.deepcopy(config["logging"]))
+init_log_listener()
 log = logging.getLogger("maubot.init")
 log.info(f"Initializing maubot {__version__}")
 
@@ -52,7 +53,7 @@ init_zip_loader(config)
 db_session = init_db(config)
 clients = init_client_class(db_session, loop)
 plugins = init_plugin_instance_class(db_session, config, loop)
-management_api = init_management_api(config, loop)
+management_api = init_mgmt_api(config, loop)
 server = MaubotServer(config, loop)
 server.app.add_subapp(config["server.base_path"], management_api)
 
@@ -88,7 +89,7 @@ except KeyboardInterrupt:
                                            loop=loop))
     db_session.commit()
     log.debug("Closing websockets")
-    loop.run_until_complete(stop_management_api())
+    loop.run_until_complete(stop_mgmt_api())
     log.debug("Stopping server")
     try:
         loop.run_until_complete(asyncio.wait_for(server.stop(), 5, loop=loop))

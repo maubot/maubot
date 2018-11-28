@@ -13,20 +13,116 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import React from "react"
+import React, { PureComponent } from "react"
+import { Link } from "react-router-dom"
+import JSONTree from "react-json-tree"
+import api from "../../api"
+import Modal from "./Modal"
 
-const Log = ({ lines, showName = true }) => <div className="log">
-    {lines.map(data => <>
-        <div className="row" key={data.id}>
-            <span className="time">{data.time.toLocaleTimeString()}</span>
-            <span className="level">{data.levelname}</span>
-            {showName && <span className="logger">{data.name}</span>}
-            <span className="text">{data.msg}</span>
-        </div>
-        {data.exc_info && <div className="row exception" key={data.id + "-exc"}>
-            {data.exc_info.replace(/\\n/g, "\n")}
-        </div>}
-    </>)}
-</div>
+class LogEntry extends PureComponent {
+    static contextType = Modal.Context
+
+    renderName() {
+        const line = this.props.line
+        if (line.nameLink) {
+            const modal = this.context
+            return (
+                <Link to={line.nameLink} onClick={modal.close}>
+                    {line.name}
+                </Link>
+            )
+        }
+        return line.name
+    }
+
+    renderContent() {
+        if (this.props.line.matrix_http_request) {
+            const req = this.props.line.matrix_http_request
+
+            return <>
+                {req.method} {req.path}
+                <div className="content">
+                    {Object.entries(req.content).length > 0
+                    && <JSONTree data={{ content: req.content }} hideRoot={true}/>}
+                </div>
+            </>
+        }
+        return this.props.line.msg
+    }
+
+    renderTime() {
+        return this.props.line.time.toLocaleTimeString("en-GB")
+    }
+
+    renderLevelName() {
+        return this.props.line.levelname
+    }
+
+    get unfocused() {
+        return this.props.focus && this.props.line.name !== this.props.focus
+            ? "unfocused"
+            : ""
+    }
+
+    renderRow(content) {
+        return (
+            <div className={`row ${this.props.line.levelname.toLowerCase()} ${this.unfocused}`}>
+                <span className="time">{this.renderTime()}</span>
+                <span className="level">{this.renderLevelName()}</span>
+                <span className="logger">{this.renderName()}</span>
+                <span className="text">{content}</span>
+            </div>
+        )
+    }
+
+    renderExceptionInfo() {
+        if (!api.debugOpenFileEnabled()) {
+            return this.props.line.exc_info
+        }
+        const fileLinks = []
+        let str = this.props.line.exc_info.replace(
+            /File "(.+)", line ([0-9]+), in (.+)/g,
+            (_, file, line, method) => {
+                fileLinks.push(
+                    <a href={"#/debugOpenFile"} onClick={() => {
+                        api.debugOpenFile(file, line)
+                        return false
+                    }}>File "{file}", line {line}, in {method}</a>,
+                )
+                return "||EDGE||"
+            })
+        fileLinks.reverse()
+
+        const result = []
+        let key = 0
+        for (const part of str.split("||EDGE||")) {
+            result.push(<React.Fragment key={key++}>
+                {part}
+                {fileLinks.pop()}
+            </React.Fragment>)
+        }
+        return result
+    }
+
+    render() {
+        return <>
+            {this.renderRow(this.renderContent())}
+            {this.props.line.exc_info && this.renderRow(this.renderExceptionInfo())}
+        </>
+    }
+}
+
+class Log extends PureComponent {
+    render() {
+        return (
+            <div className="log">
+                <div className="lines">
+                    {this.props.lines.map(data => <LogEntry key={data.id} line={data}
+                                                            focus={this.props.focus}/>)}
+                </div>
+            </div>
+        )
+    }
+}
 
 export default Log
