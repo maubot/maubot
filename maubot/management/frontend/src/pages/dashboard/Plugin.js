@@ -80,7 +80,7 @@ class Plugin extends BaseMainView {
             </PrefTable>}
             <div className={`upload-box ${this.state.uploading ? "uploading" : ""}`}>
                 <UploadButton className="upload"/>
-                <input className="file-selector" type="file" accept="application/zip"
+                <input className="file-selector" type="file" accept="application/zip+mbp"
                        onChange={this.upload} disabled={this.state.uploading || this.state.deleting}
                        onDragEnter={evt => evt.target.parentElement.classList.add("drag")}
                        onDragLeave={evt => evt.target.parentElement.classList.remove("drag")}/>
