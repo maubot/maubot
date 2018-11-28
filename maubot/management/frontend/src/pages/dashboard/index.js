@@ -33,7 +33,7 @@ class Dashboard extends Component {
             plugins: {},
             sidebarOpen: false,
             modalOpen: false,
-            logFocus: "",
+            logFocus: null,
         }
         this.logLines = []
         this.logMap = {}
@@ -126,14 +126,16 @@ class Dashboard extends Component {
             entry,
             onDelete: () => this.delete(field, id),
             onChange: newEntry => this.add(field, newEntry, id),
-            openLog: filter => {
-                this.setState({
-                    logFocus: filter,
-                })
-                this.logModal.open()
-            },
+            openLog: this.openLog,
             ctx: this.state,
         })
+    }
+
+    openLog = filter => {
+        this.setState({
+            logFocus: typeof filter === "string" ? filter : null,
+        })
+        this.logModal.open()
     }
 
     renderNotFound = (thing = "path") => (
@@ -185,7 +187,7 @@ class Dashboard extends Component {
 
             <main className="view">
                 <Switch>
-                    <Route path="/" exact render={() => <Home openLog={this.logModal.open}/>}/>
+                    <Route path="/" exact render={() => <Home openLog={this.openLog}/>}/>
                     <Route path="/new/instance" render={() =>
                         <Instance onChange={newEntry => this.add("instances", newEntry)}
                                   ctx={this.state}/>}/>
