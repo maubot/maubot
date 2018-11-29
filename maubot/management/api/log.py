@@ -133,7 +133,8 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
             await ws.close()
         except Exception:
             pass
-    handler.listeners.remove(ws)
+    if authenticated:
+        handler.listeners.remove(ws)
     log.debug(f"Connection from {request.remote} closed")
     sockets.remove(ws)
     return ws
