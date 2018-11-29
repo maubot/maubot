@@ -113,13 +113,57 @@ class LogEntry extends PureComponent {
 }
 
 class Log extends PureComponent {
+    constructor(props) {
+        super(props)
+
+        this.linesRef = React.createRef()
+        this.linesBottomRef = React.createRef()
+    }
+
+    getSnapshotBeforeUpdate() {
+        if (this.linesRef.current && this.linesBottomRef.current) {
+            return Log.isVisible(this.linesRef.current, this.linesBottomRef.current)
+        }
+        return false
+    }
+
+
+    componentDidUpdate(_1, _2, wasVisible) {
+        if (wasVisible) {
+            Log.scrollParentToChild(this.linesRef.current, this.linesBottomRef.current)
+        }
+    }
+
+    componentDidMount() {
+        if (this.linesRef.current && this.linesBottomRef.current) {
+            Log.scrollParentToChild(this.linesRef.current, this.linesBottomRef.current)
+        }
+    }
+
+    static scrollParentToChild(parent, child) {
+        const parentRect = parent.getBoundingClientRect()
+        const childRect = child.getBoundingClientRect()
+
+        if (!Log.isVisible(parent, child)) {
+            parent.scrollBy({ top: (childRect.top + parent.scrollTop) - parentRect.top })
+        }
+    }
+
+    static isVisible(parent, child) {
+        const parentRect = parent.getBoundingClientRect()
+        const childRect = child.getBoundingClientRect()
+        return (childRect.top >= parentRect.top)
+            && (childRect.top <= parentRect.top + parent.clientHeight)
+    }
+
     render() {
         return (
-            <div className="log">
+            <div className="log" ref={this.linesRef}>
                 <div className="lines">
                     {this.props.lines.map(data => <LogEntry key={data.id} line={data}
                                                             focus={this.props.focus}/>)}
                 </div>
+                <div ref={this.linesBottomRef}/>
             </div>
         )
     }

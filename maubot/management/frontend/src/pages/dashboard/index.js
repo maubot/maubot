@@ -34,11 +34,11 @@ class Dashboard extends Component {
             sidebarOpen: false,
             modalOpen: false,
             logFocus: null,
+            logLines: [],
         }
-        this.logLines = []
-        this.logMap = {}
         this.logModal = {
             open: () => undefined,
+            isOpen: () => false,
         }
         window.maubot = this
     }
@@ -80,20 +80,21 @@ class Dashboard extends Component {
             } else if (entry.name.startsWith("instance.")) {
                 entry.nameLink = `/instance/${entry.name.substr("instance.".length)}`
             }
-            (this.logMap[entry.name] || (this.logMap[entry.name] = [])).push(entry)
         }
 
         logs.onHistory = history => {
             for (const data of history) {
                 processEntry(data)
             }
-            this.logLines = history
-            this.setState({ logFocus: this.state.logFocus })
+            this.setState({
+                logLines: history,
+            })
         }
         logs.onLog = data => {
             processEntry(data)
-            this.logLines.push(data)
-            this.setState({ logFocus: this.state.logFocus })
+            this.setState({
+                logLines: this.state.logLines.concat(data),
+            })
         }
     }
 
@@ -209,7 +210,7 @@ class Dashboard extends Component {
 
     renderModal() {
         return <Modal ref={ref => this.logModal = ref}>
-            <Log lines={this.logLines} focus={this.state.logFocus}/>
+            <Log lines={this.state.logLines} focus={this.state.logFocus}/>
         </Modal>
     }
 

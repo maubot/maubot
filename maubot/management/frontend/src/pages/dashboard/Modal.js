@@ -30,6 +30,7 @@ class Modal extends Component {
 
     open = () => this.setState({ open: true })
     close = () => this.setState({ open: false })
+    isOpen = () => this.state.open
 
     render() {
         return this.state.open && (
