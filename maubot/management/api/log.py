@@ -21,7 +21,7 @@ import asyncio
 
 from aiohttp import web
 
-from .base import routes, get_loop, get_config
+from .base import routes, get_loop
 from .auth import is_valid_token
 
 BUILTIN_ATTRS = {"args", "asctime", "created", "exc_info", "exc_text", "filename", "funcName",
