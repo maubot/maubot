@@ -51,11 +51,15 @@ class LogEntry extends PureComponent {
     }
 
     renderTime() {
-        return this.props.line.time.toLocaleTimeString("en-GB")
+        return <span className="time" title={this.props.line.time.toDateString()}>
+            {this.props.line.time.toLocaleTimeString("en-GB")}
+        </span>
     }
 
     renderLevelName() {
-        return this.props.line.levelname
+        return <span className="level">
+            {this.props.line.levelname}
+        </span>
     }
 
     get unfocused() {
@@ -67,8 +71,8 @@ class LogEntry extends PureComponent {
     renderRow(content) {
         return (
             <div className={`row ${this.props.line.levelname.toLowerCase()} ${this.unfocused}`}>
-                <span className="time">{this.renderTime()}</span>
-                <span className="level">{this.renderLevelName()}</span>
+                {this.renderTime()}
+                {this.renderLevelName()}
                 <span className="logger">{this.renderName()}</span>
                 <span className="text">{content}</span>
             </div>
