@@ -12,7 +12,6 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [jesaribot](https://github.com/maubot/jesaribot) - A simple bot that replies with an image when you say "jesari".
 * [sed](https://github.com/maubot/sed) - A bot to do sed-like replacements.
 * [factorial](https://github.com/maubot/factorial) - A bot to calculate unexpected factorials.
-* [dictionary](https://github.com/maubot/dictionary) - A bot that provides dictionary definitions for words.
 * [media](https://github.com/maubot/media) - A bot that replies with the MXC URI of images you send it.
 * [dice](https://github.com/maubot/dice) - A combined dice rolling and calculator bot.
 * [karma](https://github.com/maubot/karma) - A user karma tracker bot.
