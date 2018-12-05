@@ -1,7 +1,9 @@
 # maubot
 A plugin-based [Matrix](https://matrix.org) bot system written in Python.
 
-Management API spec: [maubot.xyz/spec](https://maubot.xyz/spec)
+### [Wiki](https://github.com/maubot/maubot/wiki)
+
+### [Management API spec](https://github.com/maubot/maubot/blob/master/maubot/management/api/spec.md)
 
 ## Discussion
 Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
