@@ -50,10 +50,25 @@ class LogEntry extends PureComponent {
         return this.props.line.msg
     }
 
+    onClickOpen(path, line) {
+        return () => {
+            if (api.debugOpenFileEnabled()) {
+                api.debugOpenFile(path, line)
+            }
+            return false
+        }
+    }
+
+    renderTimeTitle() {
+        return this.props.line.time.toDateString()
+    }
+
     renderTime() {
-        return <span className="time" title={this.props.line.time.toDateString()}>
+        return <a className="time" title={this.renderTimeTitle()}
+                  href={`file:///${this.props.line.pathname}:${this.props.line.lineno}`}
+                  onClick={this.onClickOpen(this.props.line.pathname, this.props.line.lineno)}>
             {this.props.line.time.toLocaleTimeString("en-GB")}
-        </span>
+        </a>
     }
 
     renderLevelName() {
@@ -88,10 +103,9 @@ class LogEntry extends PureComponent {
             /File "(.+)", line ([0-9]+), in (.+)/g,
             (_, file, line, method) => {
                 fileLinks.push(
-                    <a href={"#/debugOpenFile"} onClick={() => {
-                        api.debugOpenFile(file, line)
-                        return false
-                    }}>File "{file}", line {line}, in {method}</a>,
+                    <a href={`file:///${file}:${line}`} onClick={this.onClickOpen(file, line)}>
+                        File "{file}", line {line}, in {method}
+                    </a>,
                 )
                 return "||EDGE||"
             })
