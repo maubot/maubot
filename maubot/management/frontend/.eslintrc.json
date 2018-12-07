@@ -34,9 +34,6 @@
     "semi": ["error", "never"],
     "comma-dangle": ["error", "always-multiline"],
     "max-len": ["warn", 100],
-    "camelcase": ["error", {
-      "properties": "always"
-    }],
     "space-before-function-paren": ["error", {
       "anonymous": "never",
       "named": "never",

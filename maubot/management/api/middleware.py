@@ -20,15 +20,20 @@ from aiohttp import web
 
 from .responses import resp
 from .auth import check_token
+from .base import get_config
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
 
 
 @web.middleware
 async def auth(request: web.Request, handler: Handler) -> web.Response:
-    if "/auth/" in request.path:
+    subpath = request.path.lstrip(get_config()["server.base_path"])
+    if subpath.startswith("/auth/") or subpath == "/logs" or subpath == "logs":
         return await handler(request)
-    return check_token(request) or await handler(request)
+    err = check_token(request)
+    if err is not None:
+        return err
+    return await handler(request)
 
 
 log = logging.getLogger("maubot.server")

@@ -138,6 +138,7 @@ export const updateDebugOpenFileEnabled = async () => {
     const resp = await defaultGet("/debug/open")
     _debugOpenFileEnabled = resp["enabled"] || false
 }
+
 export async function debugOpenFile(path, line) {
     const resp = await fetch(`${BASE_PATH}/debug/open`, {
         headers: getHeaders(),
@@ -178,7 +179,7 @@ export const getClients = () => defaultGet("/clients")
 export const getClient = id => defaultGet(`/clients/${id}`)
 
 export async function uploadAvatar(id, data, mime) {
-    const resp = await fetch(`${BASE_PATH}/client/${id}/avatar`, {
+    const resp = await fetch(`${BASE_PATH}/proxy/${id}/_matrix/media/r0/upload`, {
         headers: getHeaders(mime),
         body: data,
         method: "POST",
@@ -186,8 +187,13 @@ export async function uploadAvatar(id, data, mime) {
     return await resp.json()
 }
 
-export function getAvatarURL(id) {
-    return `${BASE_PATH}/client/${id}/avatar?access_token=${localStorage.accessToken}`
+export function getAvatarURL({ id, avatar_url }) {
+    avatar_url = avatar_url || ""
+    if (avatar_url.startsWith("mxc://")) {
+        avatar_url = avatar_url.substr("mxc://".length)
+    }
+    return `${BASE_PATH}/proxy/${id}/_matrix/media/r0/download/${avatar_url}?access_token=${
+        localStorage.accessToken}`
 }
 
 export const putClient = client => defaultPut("client", client)

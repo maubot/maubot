@@ -31,7 +31,7 @@ const ClientListEntry = ({ entry }) => {
     }
     return (
         <NavLink className={classes.join(" ")} to={`/client/${entry.id}`}>
-            <img className="avatar" src={api.getAvatarURL(entry.id)} alt=""/>
+            <img className="avatar" src={api.getAvatarURL(entry)} alt=""/>
             <span className="displayname">{entry.displayname || entry.id}</span>
             <ChevronRight/>
         </NavLink>
@@ -129,7 +129,7 @@ class Client extends BaseMainView {
         <div className="sidebar">
             <div className={`avatar-container ${this.state.avatar_url ? "" : "no-avatar"}
                         ${this.state.uploadingAvatar ? "uploading" : ""}`}>
-                <img className="avatar" src={api.getAvatarURL(this.state.id)} alt="Avatar"/>
+                <img className="avatar" src={api.getAvatarURL(this.state)} alt="Avatar"/>
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="image/png, image/jpeg"
                        onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}

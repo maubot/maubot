@@ -76,6 +76,13 @@ class _Response:
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property
+    def username_or_password_missing(self) -> web.Response:
+        return web.json_response({
+            "error": "Username or password missing",
+            "errcode": "username_or_password_missing",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @property
     def bad_auth(self) -> web.Response:
         return web.json_response({
             "error": "Invalid username or password",
@@ -139,6 +146,13 @@ class _Response:
         }, status=HTTPStatus.NOT_FOUND)
 
     @property
+    def server_not_found(self) -> web.Response:
+        return web.json_response({
+            "error": "Registration target server not found",
+            "errcode": "server_not_found",
+        }, status=HTTPStatus.NOT_FOUND)
+
+    @property
     def method_not_allowed(self) -> web.Response:
         return web.json_response({
             "error": "Method not allowed",
@@ -194,6 +208,13 @@ class _Response:
         return web.json_response({
             "error": "Internal server error",
             "errcode": "internal_server_error",
+        }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    @property
+    def invalid_server(self) -> web.Response:
+        return web.json_response({
+            "error": "Invalid registration server object in maubot configuration",
+            "errcode": "invalid_server",
         }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     @property

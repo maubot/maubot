@@ -47,6 +47,7 @@ class Config(BaseFileConfig):
             base["server.unshared_secret"] = self._new_token()
         else:
             base["server.unshared_secret"] = shared_secret
+        copy("registration_secrets")
         copy("admins")
         for username, password in base["admins"].items():
             if password and not bcrypt_regex.match(password):

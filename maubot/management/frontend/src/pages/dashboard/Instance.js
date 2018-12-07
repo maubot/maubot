@@ -73,7 +73,7 @@ class Instance extends BaseMainView {
         value: client.id,
         label: (
             <div className="select-client">
-                <img className="avatar" src={api.getAvatarURL(client.id)} alt=""/>
+                <img className="avatar" src={api.getAvatarURL(client)} alt=""/>
                 <span className="displayname">{client.displayname || client.id}</span>
             </div>
         ),

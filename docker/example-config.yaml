@@ -35,6 +35,14 @@ server:
     # Set to "generate" to generate and save a new token at startup.
     unshared_secret: generate
 
+# Shared registration secrets to allow registering new users from the management UI
+registration_secrets:
+    example.com:
+        # Client-server API URL
+        url: https://example.com
+        # registration_shared_secret from synapse config
+        secret: synapse_shared_registration_secret
+
 # List of administrator users. Plaintext passwords will be bcrypted on startup. Set empty password
 # to prevent normal login. Root is a special user that can't have a password and will always exist.
 admins:
