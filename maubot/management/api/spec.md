@@ -3,6 +3,18 @@ Most of the API is simple HTTP+JSON and has OpenAPI documentation (see
 [spec.yaml](spec.yaml), [rendered](https://maubot.xyz/spec/)). However,
 some parts of the API aren't documented in the OpenAPI document.
 
+## Matrix API proxy
+The full Matrix API can be accessed for each client with a request to
+`/_matrix/maubot/v1/proxy/<user>/<path>`. `<user>` is the Matrix user
+ID of the user to access the API as and `<path>` is the whole API
+path to access (e.g. `/_matrix/client/r0/whoami`).
+
+The body, headers, query parameters, etc are sent to the Matrix server
+as-is, with a few exceptions:
+* The `Authorization` header will be replaced with the access token
+  for the Matrix user from the maubot database.
+* The `access_token` query parameter will be removed.
+
 ## Log viewing
 1. Open websocket to `/_matrix/maubot/v1/logs`.
 2. Send authentication token as a plain string.
@@ -22,7 +34,7 @@ Log entries will always have:
 Log entries should also always have:
 * `levelname` - The log level (e.g. `DEBUG` or `ERROR`).
 * `levelno`   - The integer log level.
-* `name`      - The name of the logger. Possible values:
+* `name`      - The name of the logger. Common values:
   * `maubot.client.<mxid>` - Client loggers (Matrix HTTP requests)
   * `maubot.instance.<id>` - Plugin instance loggers
   * `maubot.loader.zip`    - The zip plugin loader (plugins don't

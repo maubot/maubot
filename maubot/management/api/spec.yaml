@@ -399,45 +399,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/client/{id}/avatar':
-    parameters:
-    - name: id
-      in: path
-      description: The Matrix user ID of the client to get
-      required: true
-      schema:
-        type: string
-    post:
-      operationId: upload_avatar
-      summary: Upload a profile picture for a bot
-      tags: [Clients]
-      requestBody:
-        content:
-          image/png:
-            schema:
-              type: string
-              format: binary
-              example: The avatar to upload
-          image/jpeg:
-            schema:
-              type: string
-              format: binary
-              example: The avatar to upload
-      responses:
-        200:
-          description: The avatar was uploaded successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  content_uri:
-                    type: string
-                    description: The MXC URI of the uploaded avatar
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
 
 components:
   responses:
