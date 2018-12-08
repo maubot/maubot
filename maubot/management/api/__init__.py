@@ -32,7 +32,7 @@ from .log import stop_all as stop_log_sockets, init as init_log_listener
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
     set_config(cfg)
     set_loop(loop)
-    app = web.Application(loop=loop, middlewares=[auth, error])
+    app = web.Application(loop=loop, middlewares=[auth, error], client_max_size=100*1024*1024)
     app.add_routes(routes)
     return app
 

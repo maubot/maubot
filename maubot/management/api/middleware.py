@@ -23,6 +23,7 @@ from .auth import check_token
 from .base import get_config
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
+log = logging.getLogger("maubot.server")
 
 
 @web.middleware
@@ -34,9 +35,6 @@ async def auth(request: web.Request, handler: Handler) -> web.Response:
     if err is not None:
         return err
     return await handler(request)
-
-
-log = logging.getLogger("maubot.server")
 
 
 @web.middleware

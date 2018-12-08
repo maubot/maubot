@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import web, client as http
-
 from ...client import Client
 from .base import routes
 from .responses import resp
@@ -44,15 +43,11 @@ async def proxy(request: web.Request) -> web.StreamResponse:
             headers["X-Forwarded-For"] = f"{host}:{port}"
 
     data = await request.read()
-    chunked = PROXY_CHUNK_SIZE if not data else None
     async with http.request(request.method, f"{client.homeserver}/{path}", headers=headers,
-                            params=query, chunked=chunked, data=data) as proxy_resp:
+                            params=query, data=data) as proxy_resp:
         response = web.StreamResponse(status=proxy_resp.status, headers=proxy_resp.headers)
         await response.prepare(request)
-        content = proxy_resp.content
-        chunk = await content.read(PROXY_CHUNK_SIZE)
-        while chunk:
+        async for chunk in proxy_resp.content.iter_chunked(PROXY_CHUNK_SIZE):
             await response.write(chunk)
-            chunk = await content.read(PROXY_CHUNK_SIZE)
         await response.write_eof()
         return response

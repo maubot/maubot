@@ -38,7 +38,7 @@ class MaubotServer:
 
     def __init__(self, config: Config, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop or asyncio.get_event_loop()
-        self.app = web.Application(loop=self.loop)
+        self.app = web.Application(loop=self.loop, client_max_size=100*1024*1024)
         self.config = config
 
         as_path = PathBuilder(config["server.appservice_base_path"])
