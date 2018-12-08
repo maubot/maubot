@@ -34,28 +34,32 @@ export const PrefTable = ({ children, wrapperClass }) => {
     )
 }
 
-export const PrefRow = ({ name, fullWidth = false, labelFor = undefined, children }) => (
-    <div className={`entry ${fullWidth ? "full-width" : ""}`}>
-        <label htmlFor={labelFor}>{name}</label>
-        <div className="value">{children}</div>
-    </div>
-)
+export const PrefRow =
+    ({ name, fullWidth = false, labelFor = undefined, changed = false, children }) => (
+        <div className={`entry ${fullWidth ? "full-width" : ""} ${changed ? "changed" : ""}`}>
+            <label htmlFor={labelFor}>{name}</label>
+            <div className="value">{children}</div>
+        </div>
+    )
 
-export const PrefInput = ({ rowName, fullWidth = false, ...args }) => (
-    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
-        <input {...args} id={rowName}/>
+export const PrefInput = ({ rowName, value, origValue, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}
+             changed={origValue !== undefined && value !== origValue}>
+        <input {...args} value={value} id={rowName}/>
     </PrefRow>
 )
 
-export const PrefSwitch = ({ rowName, fullWidth = false, ...args }) => (
-    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
-        <Switch {...args} id={rowName}/>
+export const PrefSwitch = ({ rowName, active, origActive, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}
+             changed={origActive !== undefined && active !== origActive}>
+        <Switch {...args} active={active} id={rowName}/>
     </PrefRow>
 )
 
-export const PrefSelect = ({ rowName, fullWidth = false, ...args }) => (
-    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}>
-        <Select className="select" {...args} id={rowName}/>
+export const PrefSelect = ({ rowName, value, origValue, fullWidth = false, ...args }) => (
+    <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}
+             changed={origValue !== undefined && value.id !== origValue}>
+        <Select className="select" {...args} id={rowName} value={value}/>
     </PrefRow>
 )
 

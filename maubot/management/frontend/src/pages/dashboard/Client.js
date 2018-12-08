@@ -157,25 +157,31 @@ class Client extends BaseMainView {
     renderPreferences = () => (
         <PrefTable>
             <PrefInput rowName="User ID" type="text" disabled={!this.isNew} fullWidth={true}
-                       name={this.isNew ? "id" : ""} value={this.state.id} className="id"
+                       name={this.isNew ? "id" : ""} className="id"
+                       value={this.state.id} origValue={this.props.entry.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
             <PrefInput rowName="Homeserver" type="text" name="homeserver"
-                       value={this.state.homeserver} placeholder="https://example.com"
-                       onChange={this.inputChange}/>
+                       value={this.state.homeserver} origValue={this.props.entry.homeserver}
+                       placeholder="https://example.com" onChange={this.inputChange}/>
             <PrefInput rowName="Access token" type="text" name="access_token"
-                       value={this.state.access_token} onChange={this.inputChange}
-                       placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"/>
-            <PrefInput rowName="Display name" type="text" name="displayname"
-                       value={this.state.displayname} placeholder="My fancy bot"
+                       value={this.state.access_token} origValue={this.props.entry.access_token}
+                       placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"
                        onChange={this.inputChange}/>
+            <PrefInput rowName="Display name" type="text" name="displayname"
+                       value={this.state.displayname} origValue={this.props.entry.displayname}
+                       placeholder="My fancy bot" onChange={this.inputChange}/>
             <PrefInput rowName="Avatar URL" type="text" name="avatar_url"
-                       value={this.state.avatar_url} onChange={this.inputChange}
-                       placeholder="mxc://example.com/mbmwyoTvPhEQPiCskcUsppko"/>
-            <PrefSwitch rowName="Sync" active={this.state.sync}
+                       value={this.state.avatar_url} origValue={this.props.entry.avatar_url}
+                       placeholder="mxc://example.com/mbmwyoTvPhEQPiCskcUsppko"
+                       onChange={this.inputChange}/>
+            <PrefSwitch rowName="Sync"
+                        active={this.state.sync} origActive={this.props.entry.sync}
                         onToggle={sync => this.setState({ sync })}/>
-            <PrefSwitch rowName="Autojoin" active={this.state.autojoin}
+            <PrefSwitch rowName="Autojoin"
+                        active={this.state.autojoin} origActive={this.props.entry.autojoin}
                         onToggle={autojoin => this.setState({ autojoin })}/>
-            <PrefSwitch rowName="Enabled" active={this.state.enabled}
+            <PrefSwitch rowName="Enabled"
+                        active={this.state.enabled} origActive={this.props.entry.enabled}
                         onToggle={enabled => this.setState({
                             enabled,
                             started: enabled && this.state.started,

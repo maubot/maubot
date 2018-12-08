@@ -34,7 +34,7 @@ class BaseMainView extends Component {
     }
 
     get isNew() {
-        return !this.props.entry
+        return !this.props.entry.id
     }
 
     inputChange = event => {

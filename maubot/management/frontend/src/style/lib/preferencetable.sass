@@ -32,6 +32,11 @@
         &.full-width
             width: 100%
 
+        &.changed > label
+            font-weight: bold
+            &:after
+                content: "*"
+
         > label, > .value
             display: block
             width: 100%

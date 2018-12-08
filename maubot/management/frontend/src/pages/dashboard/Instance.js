@@ -138,15 +138,18 @@ class Instance extends BaseMainView {
                 <PrefInput rowName="ID" type="text" name="id" value={this.state.id}
                            placeholder="fancybotinstance" onChange={this.inputChange}
                            disabled={!this.isNew} fullWidth={true} className="id"/>
-                <PrefSwitch rowName="Enabled" active={this.state.enabled}
+                <PrefSwitch rowName="Enabled"
+                            active={this.state.enabled} origActive={this.props.entry.enabled}
                             onToggle={enabled => this.setState({ enabled })}/>
-                <PrefSwitch rowName="Running" active={this.state.started}
+                <PrefSwitch rowName="Running"
+                            active={this.state.started} origActive={this.props.entry.started}
                             onToggle={started => this.setState({ started })}/>
                 <PrefSelect rowName="Primary user" options={this.clientOptions}
                             isSearchable={false} value={this.selectedClientEntry}
+                            origValue={this.props.entry.primary_user}
                             onChange={({ id }) => this.setState({ primary_user: id })}/>
                 <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
-                            value={this.selectedPluginEntry}
+                            value={this.selectedPluginEntry} origValue={this.props.entry.type}
                             onChange={({ id }) => this.setState({ type: id })}/>
             </PrefTable>
             {!this.isNew &&
