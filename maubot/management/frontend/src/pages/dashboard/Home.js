@@ -22,7 +22,6 @@ class Home extends Component {
                 See sidebar to get started
             </div>
             <div className="buttons">
-                <button className="open-log" onClick={this.props.openLog}>View logs</button>
             </div>
         </>
     }

@@ -156,6 +156,11 @@ class Dashboard extends Component {
             </div>
 
             <nav className="sidebar">
+                <div className="buttons">
+                    <button className="open-log" onClick={this.openLog}>
+                        <span>View logs</span>
+                    </button>
+                </div>
                 <div className="instances list">
                     <div className="title">
                         <h2>Instances</h2>
