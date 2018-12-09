@@ -40,6 +40,10 @@ class Instance extends BaseMainView {
         this.updateClientOptions()
     }
 
+    get entryKeys() {
+        return ["id", "primary_user", "enabled", "started", "type", "config"]
+    }
+
     get initialState() {
         return {
             id: "",

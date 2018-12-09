@@ -46,6 +46,11 @@ class Client extends BaseMainView {
         this.deleteFunc = api.deleteClient
     }
 
+    get entryKeys() {
+        return ["id", "displayname", "homeserver", "avatar_url", "access_token", "sync",
+                "autojoin", "enabled", "started"]
+    }
+
     get initialState() {
         return {
             id: "",

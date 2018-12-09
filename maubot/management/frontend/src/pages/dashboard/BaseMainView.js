@@ -8,7 +8,13 @@ class BaseMainView extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState(Object.assign(this.initialState, nextProps.entry))
+        const newState = Object.assign(this.initialState, nextProps.entry)
+        for (const key of this.entryKeys) {
+            if (this.props.entry[key] === nextProps.entry[key]) {
+                newState[key] = this.state[key]
+            }
+        }
+        this.setState(newState)
     }
 
     delete = async () => {
@@ -25,8 +31,12 @@ class BaseMainView extends Component {
         }
     }
 
+    get entryKeys() {
+        return []
+    }
+
     get initialState() {
-        throw Error("Not implemented")
+        return {}
     }
 
     get hasInstances() {
