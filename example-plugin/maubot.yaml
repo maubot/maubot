@@ -1,19 +1,37 @@
 # This is an example maubot plugin definition file.
-# All plugins must include a file like this named "maubot.ini" in their root directory.
-[maubot]
-# The unique ID for the plugin. Java package naming style.
-ID = xyz.maubot.plugin
+# All plugins must include a file like this named "maubot.yaml" in their root directory.
+
+# The unique ID for the plugin. Java package naming style. (i.e. use your own domain, not xyz.maubot)
+id: xyz.maubot.example
+
 # A PEP 440 compliant version string.
-Version = 1.0.0
+version: 1.0.0
+
 # The SPDX license identifier for the plugin. https://spdx.org/licenses/
 # Optional, assumes all rights reserved if omitted.
-License = AGPL-3.0-or-later
-# The comma-separated list of modules to load from the plugin archive.
+license: MIT
+
+# The list of modules to load from the plugin archive.
+# Modules can be directories with an __init__.py file or simply python files.
 # Submodules that are imported by modules listed here don't need to be listed separately.
 # However, top-level modules must always be listed even if they're imported by other modules.
-Modules = plugin
+modules:
+- helloworld
+
 # The main class of the plugin. Format: module/Class
 # If `module` is omitted, will default to last module specified in the module list.
 # Even if `module` is not omitted here, it must be included in the modules list.
 # The main class must extend maubot.Plugin
-MainClass = PluginClass
+main_class: HelloWorldBot
+
+#  Extra files that the upcoming build tool should include in the mbp file.
+#extra_files:
+#- base-config.yaml
+#- LICENSE
+
+# List of dependencies
+#dependencies:
+#- foo
+
+#soft_dependencies:
+#- bar>=0.1
