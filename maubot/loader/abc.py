@@ -13,9 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TypeVar, Type, Dict, Set, TYPE_CHECKING
+from typing import TypeVar, Type, Dict, Set, List, TYPE_CHECKING
 from abc import ABC, abstractmethod
 import asyncio
+
+from attr import dataclass
+from packaging.version import Version, InvalidVersion
+from mautrix.client.api.types.util import (SerializableAttrs, SerializerError, serializer,
+                                           deserializer)
 
 from ..plugin_base import Plugin
 
@@ -29,12 +34,36 @@ class IDConflictError(Exception):
     pass
 
 
+@serializer(Version)
+def serialize_version(version: Version) -> str:
+    return str(version)
+
+
+@deserializer(Version)
+def deserialize_version(version: str) -> Version:
+    try:
+        return Version(version)
+    except InvalidVersion as e:
+        raise SerializerError("Invalid version") from e
+
+
+@dataclass
+class PluginMeta(SerializableAttrs['PluginMeta']):
+    id: str
+    version: Version
+    license: str
+    modules: List[str]
+    main_class: str
+    extra_files: List[str] = []
+    dependencies: List[str] = []
+    soft_dependencies: List[str] = []
+
+
 class PluginLoader(ABC):
     id_cache: Dict[str, 'PluginLoader'] = {}
 
+    meta: PluginMeta
     references: Set['PluginInstance']
-    id: str
-    version: str
 
     def __init__(self):
         self.references = set()
@@ -45,8 +74,8 @@ class PluginLoader(ABC):
 
     def to_dict(self) -> dict:
         return {
-            "id": self.id,
-            "version": self.version,
+            "id": self.meta.id,
+            "version": str(self.meta.version),
             "instances": [instance.to_dict() for instance in self.references],
         }
 

@@ -6,3 +6,4 @@ Markdown
 ruamel.yaml
 attrs
 bcrypt
+packaging

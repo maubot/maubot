@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from http import HTTPStatus
 from io import BytesIO
 from time import time
 import traceback
@@ -21,6 +20,7 @@ import os.path
 import re
 
 from aiohttp import web
+from packaging.version import Version
 
 from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
 from .responses import resp
@@ -108,7 +108,7 @@ async def upload_plugin(request: web.Request) -> web.Response:
         return resp.unsupported_plugin_loader
 
 
-async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Response:
+async def upload_new_plugin(content: bytes, pid: str, version: Version) -> web.Response:
     path = os.path.join(get_config()["plugin_directories.upload"], f"{pid}-v{version}.mbp")
     with open(path, "wb") as p:
         p.write(content)
@@ -120,8 +120,8 @@ async def upload_new_plugin(content: bytes, pid: str, version: str) -> web.Respo
     return resp.created(plugin.to_dict())
 
 
-async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes, new_version: str
-                                    ) -> web.Response:
+async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes,
+                                    new_version: Version) -> web.Response:
     dirname = os.path.dirname(plugin.path)
     old_filename = os.path.basename(plugin.path)
     if plugin.version in old_filename:

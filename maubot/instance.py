@@ -135,7 +135,7 @@ class PluginInstance:
             self.db_instance.enabled = False
             return
         self.started = True
-        self.log.info(f"Started instance of {self.loader.id} v{self.loader.version} "
+        self.log.info(f"Started instance of {self.loader.meta.id} v{self.loader.meta.version} "
                       f"with user {self.client.id}")
 
     async def stop(self) -> None:
@@ -199,12 +199,12 @@ class PluginInstance:
         except KeyError:
             return False
         await self.stop()
-        self.db_instance.type = loader.id
+        self.db_instance.type = loader.meta.id
         self.loader.references.remove(self)
         self.loader = loader
         self.loader.references.add(self)
         await self.start()
-        self.log.debug(f"Type switched to {self.loader.id}")
+        self.log.debug(f"Type switched to {self.loader.meta.id}")
         return True
 
     async def update_started(self, started: bool) -> None:

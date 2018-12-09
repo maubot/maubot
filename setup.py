@@ -29,6 +29,7 @@ setuptools.setup(
         "ruamel.yaml>=0.15.35,<0.16",
         "attrs>=18.1.0,<19",
         "bcrypt>=3.1.4,<4",
+        "packaging>=10",
     ],
 
     classifiers=[
