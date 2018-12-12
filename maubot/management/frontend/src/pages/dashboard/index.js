@@ -148,7 +148,7 @@ class Dashboard extends Component {
     renderMain() {
         return <div className={`dashboard ${this.state.sidebarOpen ? "sidebar-open" : ""}`}>
             <Link to="/" className="title">
-                <img src="/favicon.png" alt=""/>
+                <img src="favicon.png" alt=""/>
                 Maubot Manager
             </Link>
             <div className="user">
