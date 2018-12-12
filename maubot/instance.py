@@ -73,21 +73,24 @@ class PluginInstance:
             "config": self.db_instance.config,
         }
 
-    def load(self) -> None:
-        try:
-            self.loader = PluginLoader.find(self.type)
-        except KeyError:
-            self.log.error(f"Failed to find loader for type {self.type}")
-            self.db_instance.enabled = False
-            return
-        self.client = Client.get(self.primary_user)
+    def load(self) -> bool:
+        if not self.loader:
+            try:
+                self.loader = PluginLoader.find(self.type)
+            except KeyError:
+                self.log.error(f"Failed to find loader for type {self.type}")
+                self.db_instance.enabled = False
+                return False
         if not self.client:
-            self.log.error(f"Failed to get client for user {self.primary_user}")
-            self.db_instance.enabled = False
-            return
+            self.client = Client.get(self.primary_user)
+            if not self.client:
+                self.log.error(f"Failed to get client for user {self.primary_user}")
+                self.db_instance.enabled = False
+                return False
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
+        return True
 
     def delete(self) -> None:
         if self.loader is not None:
@@ -117,6 +120,10 @@ class PluginInstance:
         elif not self.enabled:
             self.log.warning("Plugin disabled, not starting.")
             return
+        if not self.client or not self.loader:
+            self.log.warning("Missing plugin instance dependencies, attempting to load...")
+            if not self.load():
+                return
         cls = await self.loader.load()
         config_class = cls.get_config_class()
         if config_class:
@@ -184,7 +191,8 @@ class PluginInstance:
             return False
         await self.stop()
         self.db_instance.primary_user = client.id
-        self.client.references.remove(self)
+        if self.client:
+            self.client.references.remove(self)
         self.client = client
         self.client.references.add(self)
         await self.start()
@@ -200,7 +208,8 @@ class PluginInstance:
             return False
         await self.stop()
         self.db_instance.type = loader.meta.id
-        self.loader.references.remove(self)
+        if self.loader:
+            self.loader.references.remove(self)
         self.loader = loader
         self.loader.references.add(self)
         await self.start()
