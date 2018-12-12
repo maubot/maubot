@@ -15,8 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import random
 import string
+import bcrypt
+import re
 
-from mautrix.util import BaseFileConfig, ConfigUpdateHelper
+from mautrix.util.config import BaseFileConfig, ConfigUpdateHelper
+
+bcrypt_regex = re.compile(r"^\$2[ayb]\$.{56}$")
 
 
 class Config(BaseFileConfig):
@@ -27,16 +31,39 @@ class Config(BaseFileConfig):
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         base, copy, _ = helper
         copy("database")
-        copy("plugin_directories")
-        copy("plugin_db_directory")
+        copy("plugin_directories.upload")
+        copy("plugin_directories.load")
+        copy("plugin_directories.trash")
+        copy("plugin_directories.db")
         copy("server.hostname")
         copy("server.port")
         copy("server.listen")
         copy("server.base_path")
-        shared_secret = self["server.shared_secret"]
+        copy("server.ui_base_path")
+        copy("server.override_resource_path")
+        copy("server.appservice_base_path")
+        shared_secret = self["server.unshared_secret"]
         if shared_secret is None or shared_secret == "generate":
-            base["server.shared_secret"] = self._new_token()
+            base["server.unshared_secret"] = self._new_token()
         else:
-            base["server.shared_secret"] = shared_secret
+            base["server.unshared_secret"] = shared_secret
+        copy("registration_secrets")
         copy("admins")
+        for username, password in base["admins"].items():
+            if password and not bcrypt_regex.match(password):
+                if password == "password":
+                    password = self._new_token()
+                base["admins"][username] = bcrypt.hashpw(password.encode("utf-8"),
+                                                         bcrypt.gensalt()).decode("utf-8")
         copy("logging")
+
+    def is_admin(self, user: str) -> bool:
+        return user == "root" or user in self["admins"]
+
+    def check_password(self, user: str, passwd: str) -> bool:
+        if user == "root":
+            return False
+        passwd_hash = self["admins"].get(user, None)
+        if not passwd_hash:
+            return False
+        return bcrypt.checkpw(passwd.encode("utf-8"), passwd_hash.encode("utf-8"))

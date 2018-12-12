@@ -1,0 +1,67 @@
+{
+  "extends": "react-app",
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "indent": ["error", 4, {
+      "ignoredNodes": [
+        "JSXAttribute",
+        "JSXSpreadAttribute"
+      ],
+      "FunctionDeclaration": {"parameters": "first"},
+      "FunctionExpression": {"parameters": "first"},
+      "CallExpression": {"arguments": "first"},
+      "ArrayExpression": "first",
+      "ObjectExpression": "first",
+      "ImportDeclaration": "first"
+    }],
+    "react/jsx-indent-props": ["error", "first"],
+    "object-curly-newline": ["error", {
+      "consistent": true
+    }],
+    "object-curly-spacing": ["error", "always", {
+      "arraysInObjects": false,
+      "objectsInObjects": false
+    }],
+    "array-bracket-spacing": ["error", "never"],
+    "one-var": ["error", {
+      "initialized": "never",
+      "uninitialized": "always"
+    }],
+    "one-var-declaration-per-line": ["error", "initializations"],
+    "quotes": ["error", "double"],
+    "semi": ["error", "never"],
+    "comma-dangle": ["error", "always-multiline"],
+    "max-len": ["warn", 100],
+    "space-before-function-paren": ["error", {
+      "anonymous": "never",
+      "named": "never",
+      "asyncArrow": "always"
+    }],
+    "func-style": ["warn", "declaration", {"allowArrowFunctions": true}],
+    "id-length": ["warn", {"max": 40, "exceptions": ["i", "j", "x", "y", "_"]}],
+    "arrow-body-style": ["error", "as-needed"],
+    "new-cap": ["warn", {
+      "newIsCap": true,
+      "capIsNew": true
+    }],
+    "no-empty": ["error", {
+      "allowEmptyCatch": true
+    }],
+    "eol-last": ["error", "always"],
+    "no-console": "off",
+    "import/no-nodejs-modules": "error",
+    "import/order": ["warn", {
+      "groups": [
+        "builtin",
+        "external",
+        "internal",
+        "parent",
+        "sibling",
+        "index"
+      ],
+      "newlines-between": "never"
+    }]
+  }
+}

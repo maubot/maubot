@@ -1,0 +1,86 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+div.log
+    height: 100%
+    width: 100%
+    overflow: auto
+
+    > div.lines
+        text-align: left
+        font-size: 12px
+        max-height: 100%
+        min-width: 100%
+        font-family: "Fira Code", monospace
+        display: table
+
+        > div.row
+            display: table-row
+            white-space: pre
+
+            &.debug
+                background-color: $background
+
+                &:nth-child(odd)
+                    background-color: $background-dark
+
+            &.info
+                background-color: #AAFAFA
+
+                &:nth-child(odd)
+                    background-color: #66FAFA
+
+            &.warning, &.warn
+                background-color: #FABB77
+
+                &:nth-child(odd)
+                    background-color: #FAAA55
+
+            &.error
+                background-color: #FAAAAA
+
+                &:nth-child(odd)
+                    background-color: #FA9999
+
+            &.fatal
+                background-color: #CC44CC
+
+                &:nth-child(odd)
+                    background-color: #AA44AA
+
+            &.unfocused
+                opacity: .25
+
+            > span
+                padding: .125rem .25rem
+                display: table-cell
+
+                &:first-child
+                    padding-left: 0
+
+                &:last-child
+                    padding-right: 0
+
+            a
+                color: inherit
+                text-decoration: none
+
+                &:hover
+                    text-decoration: underline
+
+            > span.text
+                > div.content > *
+                    background-color: inherit !important
+                    margin: 0 !important

@@ -1,0 +1,84 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+.preference-table
+    display: flex
+
+    width: 100%
+
+    flex-wrap: wrap
+
+    > .entry
+        display: block
+
+        @media screen and (max-width: 55rem)
+            width: calc(100% - 1rem)
+        width: calc(50% - 1rem)
+        margin: .5rem
+
+        &.full-width
+            width: 100%
+
+        &.changed > label
+            font-weight: bold
+            &:after
+                content: "*"
+
+        > label, > .value
+            display: block
+            width: 100%
+
+        > label
+            font-size: 0.875rem
+            padding-bottom: .25rem
+            font-weight: lighter
+
+        > .value
+            > .switch
+                width: auto
+                height: 2rem
+
+            > .select
+                height: 2.5rem
+                box-sizing: border-box
+
+            > input
+                border: none
+                height: 2rem
+                width: 100%
+                color: $text-color
+
+                box-sizing: border-box
+
+                padding: .375rem 0
+                background-color: $background
+
+                font-size: 1rem
+
+                border-bottom: 1px solid $background
+
+                &.id:disabled
+                    font-family: "Fira Code", monospace
+                    font-weight: bold
+
+                &:not(:disabled)
+                    border-bottom: 1px dotted $primary
+
+                    &:hover
+                        border-bottom: 1px solid $primary
+
+                    &:focus
+                        border-bottom: 2px solid $primary

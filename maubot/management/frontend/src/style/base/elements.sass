@@ -1,0 +1,120 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+=button($width: null, $height: null, $padding: .375rem 1rem)
+    font-family: $font-stack
+    padding: $padding
+    width: $width
+    height: $height
+    background-color: $background
+    border: none
+    border-radius: .25rem
+    color: $text-color
+    box-sizing: border-box
+    font-size: 1rem
+
+    &.disabled-bg
+        background-color: $background-dark
+
+    &:not(:disabled)
+        cursor: pointer
+
+        &:hover
+            background-color: darken($background, 10%)
+
+=link-button()
+    display: inline-block
+    text-align: center
+    text-decoration: none
+
+=main-color-button()
+    background-color: $primary
+    color: $inverted-text-color
+    &:hover:not(:disabled)
+        background-color: $primary-dark
+
+    &:disabled.disabled-bg
+        background-color: $background-dark !important
+        color: $text-color
+
+.button
+    +button
+
+    &.main-color
+        +main-color-button
+
+=button-group()
+    width: 100%
+    display: flex
+    > button, > .button
+        flex: 1
+
+        &:first-of-type
+            margin-right: .5rem
+
+        &:last-of-type
+            margin-left: .5rem
+
+        &:first-of-type:last-of-type
+            margin: 0
+
+=vertical-button-group()
+    display: flex
+    flex-direction: column
+    > button, > .button
+        flex: 1
+        border-radius: 0
+
+        &:first-of-type
+            border-radius: .25rem .25rem 0 0
+
+        &:last-of-type
+            border-radius: 0 0 .25rem .25rem
+
+        &:first-of-type:last-of-type
+            border-radius: .25rem
+
+=input($width: null, $height: null, $vertical-padding: .375rem, $horizontal-padding: 1rem, $font-size: 1rem)
+    font-family: $font-stack
+    border: 1px solid $border-color
+    background-color: $background
+    color: $text-color
+    width: $width
+    height: $height
+    box-sizing: border-box
+    border-radius: .25rem
+    padding: $vertical-padding $horizontal-padding
+    font-size: $font-size
+    resize: vertical
+
+    &:hover, &:focus
+        border-color: $primary
+
+    &:focus
+        border-width: 2px
+        padding: calc(#{$vertical-padding} - 1px) calc(#{$horizontal-padding} - 1px)
+
+.input, .textarea
+    +input
+
+input
+    font-family: $font-stack
+
+=notification($border: $error-dark, $background: transparentize($error-light, 0.5))
+    padding: 1rem
+    border-radius: .25rem
+    border: 2px solid $border
+    background-color: $background

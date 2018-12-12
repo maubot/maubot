@@ -16,6 +16,8 @@
 from typing import Type, Optional, TYPE_CHECKING
 from logging import Logger
 from abc import ABC, abstractmethod
+from asyncio import AbstractEventLoop
+from aiohttp import ClientSession
 import os.path
 
 from sqlalchemy.engine.base import Engine
@@ -24,24 +26,32 @@ import sqlalchemy as sql
 if TYPE_CHECKING:
     from .client import MaubotMatrixClient
     from .command_spec import CommandSpec
-    from mautrix.util import BaseProxyConfig
+    from mautrix.util.config import BaseProxyConfig
+
+DatabaseNotConfigured = ValueError("A database for this maubot instance has not been configured.")
 
 
 class Plugin(ABC):
     client: 'MaubotMatrixClient'
     id: str
     log: Logger
+    loop: AbstractEventLoop
     config: Optional['BaseProxyConfig']
 
-    def __init__(self, client: 'MaubotMatrixClient', plugin_instance_id: str, log: Logger,
-                 config: Optional['BaseProxyConfig'], db_base_path: str) -> None:
+    def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
+                 plugin_instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
+                 db_base_path: str) -> None:
         self.client = client
+        self.loop = loop
+        self.http = http
         self.id = plugin_instance_id
         self.log = log
         self.config = config
         self.__db_base_path = db_base_path
 
-    def request_db_engine(self) -> Engine:
+    def request_db_engine(self) -> Optional[Engine]:
+        if not self.__db_base_path:
+            raise DatabaseNotConfigured
         return sql.create_engine(f"sqlite:///{os.path.join(self.__db_base_path, self.id)}.db")
 
     def set_command_spec(self, spec: 'CommandSpec') -> None:
@@ -58,3 +68,7 @@ class Plugin(ABC):
     @classmethod
     def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
         return None
+
+    def on_external_config_update(self) -> None:
+        if self.config:
+            self.config.load_and_update()
