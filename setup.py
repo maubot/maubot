@@ -30,6 +30,10 @@ setuptools.setup(
         "attrs>=18.1.0,<19",
         "bcrypt>=3.1.4,<4",
         "packaging>=10",
+
+        "click>=7,<8",
+        "colorama>=0.4,<0.5",
+        "jinja2>=2,<3",
     ],
 
     classifiers=[
@@ -45,7 +49,7 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         maubot=maubot.__main__:main
-        mbp=maubot.cli.__main__:main
+        mbc=maubot.cli:app
     """,
     data_files=[
         (".", ["example-config.yaml"]),

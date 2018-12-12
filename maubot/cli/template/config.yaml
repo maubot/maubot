@@ -1,0 +1,6 @@
+example_1: Example value 1
+example_2:
+    list:
+    - foo
+    - bar
+    value: asd

@@ -7,3 +7,7 @@ ruamel.yaml
 attrs
 bcrypt
 packaging
+
+click
+colorama
+jinja2
