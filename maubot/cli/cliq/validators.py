@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Callable
-import pkg_resources
-import json
 import os
 
 from packaging.version import Version, InvalidVersion
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.document import Document
 import click
+
+from ..util import spdx as spdxlib
 
 
 class Required(Validator):
@@ -75,19 +75,8 @@ class VersionValidator(ClickValidator):
     click_type = version
 
 
-spdx_list = None
-
-
-def load_spdx():
-    global spdx_list
-    spdx_data = pkg_resources.resource_stream("maubot.cli", "res/spdx-simple.json")
-    spdx_list = json.load(spdx_data)
-
-
 def spdx(val: str) -> str:
-    if not spdx_list:
-        load_spdx()
-    if val not in spdx_list:
+    if spdxlib.valid(val):
         raise click.BadParameter(f"{val} is not a valid SPDX license identifier")
     return val
 
