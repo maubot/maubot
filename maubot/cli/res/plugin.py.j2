@@ -1,0 +1,28 @@
+from maubot import Plugin
+{% if config %}
+from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
+
+class Config(BaseProxyConfig):
+    def do_update(self, helper: ConfigUpdateHelper) -> None:
+        helper.copy("example_1")
+        helper.copy("example_2.list")
+        helper.copy("example_2.value")
+{% endif %}
+
+class {{ name }}:
+    async def start() -> None:
+{% if config %}
+        self.config.load_and_update()
+        self.log.debug("Loaded %s from config example 2", self.config["example_2.value"])
+{% else %}
+        pass
+{% endif %}
+
+    async def stop() -> None:
+        pass
+
+{% if config %}
+    @classmethod
+    def get_config_class(cls) -> Type[BaseProxyConfig]:
+        return Config
+{% endif %}

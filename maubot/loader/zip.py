@@ -185,7 +185,7 @@ class ZippedPluginLoader(PluginLoader):
         importer = self._get_importer(reset_cache=reset_cache)
         self._run_preload_checks(importer)
         if reset_cache:
-            self.log.debug(f"Re-preloaded plugin {self.meta.id} from {self.meta.path}")
+            self.log.debug(f"Re-preloaded plugin {self.meta.id} from {self.path}")
         for module in self.meta.modules:
             try:
                 importer.load_module(module)

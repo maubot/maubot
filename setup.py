@@ -30,6 +30,11 @@ setuptools.setup(
         "attrs>=18.1.0,<19",
         "bcrypt>=3.1.4,<4",
         "packaging>=10",
+
+        "click>=7,<8",
+        "colorama>=0.4,<0.5",
+        "PyInquirer>=1,<2",
+        "jinja2>=2,<3",
     ],
 
     classifiers=[
@@ -45,6 +50,7 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         maubot=maubot.__main__:main
+        mbc=maubot.cli:app
     """,
     data_files=[
         (".", ["example-config.yaml"]),
@@ -52,5 +58,6 @@ setuptools.setup(
     package_data={
         "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",
                    "management/frontend/build/static/js/*"],
+        "maubot.cli": ["res/*"],
     },
 )
