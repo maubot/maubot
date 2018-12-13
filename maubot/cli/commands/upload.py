@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
-from typing import IO, Tuple
+from typing import IO
 import json
 
 from colorama import Fore

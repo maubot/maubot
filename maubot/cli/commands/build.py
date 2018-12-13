@@ -28,7 +28,7 @@ from ...loader import PluginMeta
 from ..cliq.validators import PathValidator
 from ..base import app
 from ..config import config
-from .upload import upload_file, UploadError
+from .upload import upload_file
 
 yaml = YAML()
 
