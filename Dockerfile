@@ -17,6 +17,8 @@ RUN apk add --no-cache \
       py3-attrs \
       py3-bcrypt \
       py3-cffi \
+      build-base \
+      python3-dev \
       ca-certificates \
       su-exec \
  && pip3 install -r requirements.txt
