@@ -42,5 +42,8 @@ def login(server, username, password) -> None:
             save_config()
             print(Fore.GREEN + "Logged in successfully")
     except HTTPError as e:
-        if e.code == 401:
-            print(Fore.RED + "Invalid username or password" + Fore.RESET)
+        try:
+            err = json.load(e)
+        except json.JSONDecodeError:
+            err = {}
+        print(Fore.RED + err.get("error", str(e)) + Fore.RESET)
