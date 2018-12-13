@@ -38,24 +38,24 @@ parser.add_argument("-b", "--base-config", type=str, default="example-config.yam
                                            "(for automatic config updates)")
 args = parser.parse_args()
 
-base_config = Config(args.config, args.base_config)
-base_config.load()
-base_config.update()
+config = Config(args.config, args.base_config)
+config.load()
+config.update()
 
-logging.config.dictConfig(copy.deepcopy(base_config["logging"]))
+logging.config.dictConfig(copy.deepcopy(config["logging"]))
 init_log_listener()
 log = logging.getLogger("maubot.init")
 log.info(f"Initializing maubot {__version__}")
 
 loop = asyncio.get_event_loop()
 
-init_zip_loader(base_config)
-db_session = init_db(base_config)
+init_zip_loader(config)
+db_session = init_db(config)
 clients = init_client_class(db_session, loop)
-plugins = init_plugin_instance_class(db_session, base_config, loop)
-management_api = init_mgmt_api(base_config, loop)
-server = MaubotServer(base_config, loop)
-server.app.add_subapp(base_config["server.base_path"], management_api)
+plugins = init_plugin_instance_class(db_session, config, loop)
+management_api = init_mgmt_api(config, loop)
+server = MaubotServer(config, loop)
+server.app.add_subapp(config["server.base_path"], management_api)
 
 for plugin in plugins:
     plugin.load()
