@@ -48,7 +48,7 @@ def load_templates():
 @clickquiry.option("-l", "--license", validator=SPDXValidator, default="AGPL-3.0-or-later",
                    help="The license for the project (SPDX identifier)", required=False)
 @clickquiry.option("-c", "--config", message="Should the plugin include a config?",
-                   help="Include a config in the plugin stub", is_flag=True, default="null")
+                   help="Include a config in the plugin stub", default=False, is_flag=True)
 def init(name: str, id: str, version: Version, license: str, config: bool) -> None:
     load_templates()
     main_class = name[0].upper() + name[1:]

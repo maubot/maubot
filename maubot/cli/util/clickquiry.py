@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, Optional
 import functools
 
 from prompt_toolkit.validation import Validator
@@ -21,7 +21,7 @@ from PyInquirer import prompt
 import click
 
 from ..base import app
-from .validators import Required
+from .validators import Required, ClickValidator
 
 
 def command(help: str) -> Callable[[Callable], Callable]:
@@ -46,16 +46,30 @@ def command(help: str) -> Callable[[Callable], Callable]:
     return decorator
 
 
+def yesno(val: str) -> Optional[bool]:
+    if not val:
+        return None
+    elif val.lower() in ("true", "t", "yes", "y"):
+        return True
+    elif val.lower() in ("false", "f", "no", "n"):
+        return False
+
+
+yesno.__name__ = "yes/no"
+
+
 def option(short: str, long: str, message: str = None, help: str = None,
            click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
            validator: Validator = None, required: bool = False, default: str = None,
            is_flag: bool = False) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
+    click_type = validator.click_type if isinstance(validator, ClickValidator) else click_type
+    if is_flag:
+        click_type = yesno
 
     def decorator(func) -> Callable:
-        click.option(short, long, help=help, type=validator.click_type if validator else click_type,
-                     is_flag=is_flag)(func)
+        click.option(short, long, help=help, type=click_type)(func)
         if not hasattr(func, "__inquirer_questions__"):
             func.__inquirer_questions__ = {}
         q = {
