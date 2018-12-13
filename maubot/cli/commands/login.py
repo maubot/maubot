@@ -15,22 +15,19 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from urllib.request import urlopen
 from urllib.error import HTTPError
-import click
 import json
 import os
 
 from colorama import Fore, Style
 
-from maubot.cli.base import app
-from maubot.cli.config import save_config, config
+from ..config import save_config, config
+from ..util import clickquiry
 
 
-@app.command(help="Log in to a Maubot instance")
-@click.argument("server", required=True, default="http://localhost:29316")
-@click.option("-u", "--username", help="The username of your account", prompt=True,
-              default=lambda: os.environ.get('USER', ''), show_default="current user")
-@click.password_option("-p", "--password", help="The password to your account", required=True,
-                       confirmation_prompt=False)
+@clickquiry.command(help="Log in to a Maubot instance")
+@clickquiry.option("-u", "--username", help="The username of your account", default=os.environ.get("USER", None), required=True)
+@clickquiry.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
+@clickquiry.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
 def login(server, username, password) -> None:
     data = {
         "username": username,
@@ -42,7 +39,7 @@ def login(server, username, password) -> None:
             resp = json.load(resp_data)
             config["servers"][server] = resp["token"]
             save_config()
-            print(Fore.GREEN, "Logged in successfully")
+            print(Fore.GREEN + "Logged in successfully")
     except HTTPError as e:
         if e.code == 401:
             print(Fore.RED + "Invalid username or password" + Style.RESET_ALL)

@@ -10,4 +10,5 @@ packaging
 
 click
 colorama
+PyInquirer
 jinja2

@@ -33,6 +33,7 @@ setuptools.setup(
 
         "click>=7,<8",
         "colorama>=0.4,<0.5",
+        "PyInquirer>=1,<2",
         "jinja2>=2,<3",
     ],
 
@@ -57,5 +58,6 @@ setuptools.setup(
     package_data={
         "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",
                    "management/frontend/build/static/js/*"],
+        "maubot.cli": ["res/*"],
     },
 )

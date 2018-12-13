@@ -1,0 +1,42 @@
+# The unique ID for the plugin. Java package naming style. (i.e. use your own domain, not xyz.maubot)
+id: {{ id }}
+
+# A PEP 440 compliant version string.
+version: {{ version }}
+
+# The SPDX license identifier for the plugin. https://spdx.org/licenses/
+# Optional, assumes all rights reserved if omitted.
+{% if license %}
+license: {{ license }}
+{% else %}
+#license: null
+{% endif %}
+
+# The list of modules to load from the plugin archive.
+# Modules can be directories with an __init__.py file or simply python files.
+# Submodules that are imported by modules listed here don't need to be listed separately.
+# However, top-level modules must always be listed even if they're imported by other modules.
+modules:
+- {{ name }}
+
+# The main class of the plugin. Format: module/Class
+# If `module` is omitted, will default to last module specified in the module list.
+# Even if `module` is not omitted here, it must be included in the modules list.
+# The main class must extend maubot.Plugin
+main_class: {{ main_class }}
+
+#  Extra files that the upcoming build tool should include in the mbp file.
+{% if config %}
+extra_files:
+- base-config.yaml
+{% else %}
+#extra_files:
+#- base-config.yaml
+{% endif %}
+
+# List of dependencies
+#dependencies:
+#- foo
+
+#soft_dependencies:
+#- bar>=0.1

@@ -14,17 +14,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import click
-import os
 
 from ..base import app
-from ..util import type_path
+from ..util.validators import PathValidator
 
 
 @app.command(short_help="Build a maubot plugin",
              help="Build a maubot plugin. First parameter is the path to root of the plugin "
                   "to build. You can also use --output to specify output file.")
 @click.argument("path", default=".")
-@click.option("-o", "--output", help="Path to output built plugin to", type=type_path)
+@click.option("-o", "--output", help="Path to output built plugin to",
+              type=PathValidator.click_type)
 @click.option("-u", "--upload", help="Upload plugin to main server after building", is_flag=True,
               default=False)
 def build(path: str, output: str, upload: bool) -> None:

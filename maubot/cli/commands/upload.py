@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import click
-import os
 
-from maubot.cli.base import app
+from ..base import app
 
 
 @app.command(help="Upload a maubot plugin")

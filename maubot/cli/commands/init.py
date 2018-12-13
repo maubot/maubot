@@ -13,22 +13,54 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import click
+from pkg_resources import resource_string
 import os
 
-from ..base import app
-from ..util import type_path
+from packaging.version import Version
+from jinja2 import Template
+
+from ..util.validators import SPDXValidator, VersionValidator
+from ..util import clickquiry
+
+loaded: bool = False
+meta_template: Template
+mod_template: Template
+base_config: str
 
 
-@app.command(help="Initialize a new maubot plugin")
-@click.option("-n", "--name", help="The name of the project", default=os.path.basename(os.getcwd()),
-              prompt=True, show_default="directory name")
-@click.option("-i", "--id", help="The maubot plugin ID (Java package name format)", prompt=True)
-@click.option("-v", "--version", help="Initial version for project", default="0.1.0",
-              show_default=True)
-@click.option("-l", "--license", help="The SPDX license identifier of the license for the project",
-              prompt=True, default="AGPL-3.0-or-later")
-@click.option("-c", "--config", help="Include a config in the plugin stub", is_flag=True,
-              default=False)
-def init(name: str, id: str, version: str, license: str, config: bool) -> None:
-    pass
+def load_templates():
+    global mod_template, meta_template, base_config, loaded
+    if loaded:
+        return
+    meta_template = Template(resource_string("maubot.cli", "res/maubot.yaml.j2").decode("utf-8"))
+    mod_template = Template(resource_string("maubot.cli", "res/plugin.py.j2").decode("utf-8"))
+    base_config = resource_string("maubot.cli", "res/config.yaml").decode("utf-8")
+    loaded = True
+
+
+@clickquiry.command(help="Initialize a new maubot plugin")
+@clickquiry.option("-n", "--name", help="The name of the project", required=True,
+                   default=os.path.basename(os.getcwd()))
+@clickquiry.option("-i", "--id", message="ID", required=True,
+                   help="The maubot plugin ID (Java package name format)")
+@clickquiry.option("-v", "--version", help="Initial version for project (PEP-440 format)",
+                   default="0.1.0", validator=VersionValidator, required=True)
+@clickquiry.option("-l", "--license", validator=SPDXValidator, default="AGPL-3.0-or-later",
+                   help="The license for the project (SPDX identifier)", required=False)
+@clickquiry.option("-c", "--config", message="Should the plugin include a config?",
+                   help="Include a config in the plugin stub", is_flag=True, default="null")
+def init(name: str, id: str, version: Version, license: str, config: bool) -> None:
+    load_templates()
+    main_class = name[0].upper() + name[1:]
+    meta = meta_template.render(id=id, version=str(version), license=license, config=config,
+                                main_class=main_class)
+    with open("maubot.yaml", "w") as file:
+        file.write(meta)
+    if not os.path.isdir(name):
+        os.mkdir(name)
+    mod = mod_template.render(config=config, name=main_class)
+    with open(f"{name}/__init__.py", "w") as file:
+        file.write(mod)
+    if config:
+        with open("base-config.yaml", "w") as file:
+            file.write(base_config)
