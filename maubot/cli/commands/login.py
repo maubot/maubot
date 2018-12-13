@@ -21,13 +21,13 @@ import os
 from colorama import Fore, Style
 
 from ..config import save_config, config
-from ..util import clickquiry
+from ..cliq import cliq
 
 
-@clickquiry.command(help="Log in to a Maubot instance")
-@clickquiry.option("-u", "--username", help="The username of your account", default=os.environ.get("USER", None), required=True)
-@clickquiry.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
-@clickquiry.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
+@cliq.command(help="Log in to a Maubot instance")
+@cliq.option("-u", "--username", help="The username of your account", default=os.environ.get("USER", None), required=True)
+@cliq.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
+@cliq.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
 def login(server, username, password) -> None:
     data = {
         "username": username,

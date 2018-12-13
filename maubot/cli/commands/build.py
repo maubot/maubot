@@ -16,7 +16,7 @@
 import click
 
 from ..base import app
-from ..util.validators import PathValidator
+from ..cliq.validators import PathValidator
 
 
 @app.command(short_help="Build a maubot plugin",

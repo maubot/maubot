@@ -19,8 +19,8 @@ import os
 from packaging.version import Version
 from jinja2 import Template
 
-from ..util.validators import SPDXValidator, VersionValidator
-from ..util import clickquiry
+from .. import cliq
+from ..cliq import SPDXValidator, VersionValidator
 
 loaded: bool = False
 meta_template: Template
@@ -38,17 +38,17 @@ def load_templates():
     loaded = True
 
 
-@clickquiry.command(help="Initialize a new maubot plugin")
-@clickquiry.option("-n", "--name", help="The name of the project", required=True,
-                   default=os.path.basename(os.getcwd()))
-@clickquiry.option("-i", "--id", message="ID", required=True,
-                   help="The maubot plugin ID (Java package name format)")
-@clickquiry.option("-v", "--version", help="Initial version for project (PEP-440 format)",
-                   default="0.1.0", validator=VersionValidator, required=True)
-@clickquiry.option("-l", "--license", validator=SPDXValidator, default="AGPL-3.0-or-later",
-                   help="The license for the project (SPDX identifier)", required=False)
-@clickquiry.option("-c", "--config", message="Should the plugin include a config?",
-                   help="Include a config in the plugin stub", default=False, is_flag=True)
+@cliq.command(help="Initialize a new maubot plugin")
+@cliq.option("-n", "--name", help="The name of the project", required=True,
+             default=os.path.basename(os.getcwd()))
+@cliq.option("-i", "--id", message="ID", required=True,
+             help="The maubot plugin ID (Java package name format)")
+@cliq.option("-v", "--version", help="Initial version for project (PEP-440 format)",
+             default="0.1.0", validator=VersionValidator, required=True)
+@cliq.option("-l", "--license", validator=SPDXValidator, default="AGPL-3.0-or-later",
+             help="The license for the project (SPDX identifier)", required=False)
+@cliq.option("-c", "--config", message="Should the plugin include a config?",
+             help="Include a config in the plugin stub", default=False, is_flag=True)
 def init(name: str, id: str, version: Version, license: str, config: bool) -> None:
     load_templates()
     main_class = name[0].upper() + name[1:]
