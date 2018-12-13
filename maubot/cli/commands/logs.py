@@ -75,6 +75,8 @@ def print_entry(entry: dict) -> None:
                   resetcolor=Fore.RESET,
                   logger=entry.name,
                   message=entry.msg))
+    if entry.exc_info:
+        print(entry.exc_info)
 
 
 def handle_msg(data: dict) -> bool:
