@@ -27,7 +27,7 @@ import click
 from ...loader import PluginMeta
 from ..cliq.validators import PathValidator
 from ..base import app
-from ..config import config
+from ..config import get_default_server
 from .upload import upload_file
 
 yaml = YAML()
@@ -98,11 +98,8 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
 
 
 def upload_plugin(output: Union[str, IO]) -> None:
-    try:
-        server = config["default_server"]
-        token = config["servers"][server]
-    except KeyError:
-        print(Fore.RED + "Default server not configured." + Fore.RESET)
+    server, token = get_default_server()
+    if not token:
         return
     if isinstance(output, str):
         with open(output, "rb") as file:

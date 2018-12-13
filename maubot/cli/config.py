@@ -13,14 +13,36 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Tuple, Optional
 import json
 import os
+
+from colorama import Fore
 
 config = {
     "servers": {},
     "default_server": None,
 }
 configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ.get("HOME"), ".config"))
+
+
+def get_default_server() -> Tuple[Optional[str], Optional[str]]:
+    try:
+        server: str = config["default_server"]
+    except KeyError:
+        server = None
+    if server is None:
+        print(f"{Fore.RED}Default server not configured.{Fore.RESET}")
+        return None, None
+    return server, get_token(server)
+
+
+def get_token(server: str) -> Optional[str]:
+    try:
+        return config["servers"][server]
+    except KeyError:
+        print(f"{Fore.RED}No access token saved for {server}.{Fore.RESET}")
+        return None
 
 
 def save_config() -> None:

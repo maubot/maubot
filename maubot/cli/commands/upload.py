@@ -22,7 +22,7 @@ from colorama import Fore
 import click
 
 from ..base import app
-from ..config import config
+from ..config import get_default_server, get_token
 
 
 class UploadError(Exception):
@@ -34,15 +34,10 @@ class UploadError(Exception):
 @click.option("-s", "--server", help="The maubot instance to upload the plugin to")
 def upload(path: str, server: str) -> None:
     if not server:
-        try:
-            server = config["default_server"]
-        except KeyError:
-            print(Fore.RED + "Default server not configured" + Fore.RESET)
-            return
-    try:
-        token = config["servers"][server]
-    except KeyError:
-        print(Fore.RED + "Server not found" + Fore.RESET)
+        server, token = get_default_server()
+    else:
+        token = get_token(server)
+    if not token:
         return
     with open(path, "rb") as file:
         upload_file(file, server, token)
