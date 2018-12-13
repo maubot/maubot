@@ -17,7 +17,8 @@ import json
 import os
 
 config = {
-    "servers": {}
+    "servers": {},
+    "default_server": None,
 }
 configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ.get("HOME"), ".config"))
 
@@ -32,5 +33,6 @@ def load_config() -> None:
         with open(f"{configdir}/maubot-cli.json") as file:
             loaded = json.load(file)
             config["servers"] = loaded["servers"]
+            config["default_server"] = loaded["default_server"]
     except FileNotFoundError:
         pass

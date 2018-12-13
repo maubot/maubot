@@ -18,7 +18,7 @@ from urllib.error import HTTPError
 import json
 import os
 
-from colorama import Fore, Style
+from colorama import Fore
 
 from ..config import save_config, config
 from ..cliq import cliq
@@ -38,8 +38,9 @@ def login(server, username, password) -> None:
                      data=json.dumps(data).encode("utf-8")) as resp_data:
             resp = json.load(resp_data)
             config["servers"][server] = resp["token"]
+            config["default_server"] = server
             save_config()
             print(Fore.GREEN + "Logged in successfully")
     except HTTPError as e:
         if e.code == 401:
-            print(Fore.RED + "Invalid username or password" + Style.RESET_ALL)
+            print(Fore.RED + "Invalid username or password" + Fore.RESET)

@@ -13,20 +13,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from typing import Optional, Union, IO
 from io import BytesIO
 import zipfile
 import os
 
 from mautrix.client.api.types.util import SerializerError
 from ruamel.yaml import YAML, YAMLError
-from colorama import Fore, Style
+from colorama import Fore
 from PyInquirer import prompt
 import click
 
 from ...loader import PluginMeta
-from ..base import app
 from ..cliq.validators import PathValidator
+from ..base import app
+from ..config import config
+from .upload import upload_file, UploadError
 
 yaml = YAML()
 
@@ -44,16 +46,16 @@ def read_meta(path: str) -> Optional[PluginMeta]:
                 meta_dict = yaml.load(meta_file)
             except YAMLError as e:
                 print(Fore.RED + "Failed to build plugin: Metadata file is not YAML")
-                print(Fore.RED + str(e) + Style.RESET_ALL)
+                print(Fore.RED + str(e) + Fore.RESET)
                 return None
     except FileNotFoundError:
-        print(Fore.RED + "Failed to build plugin: Metadata file not found" + Style.RESET_ALL)
+        print(Fore.RED + "Failed to build plugin: Metadata file not found" + Fore.RESET)
         return None
     try:
         meta = PluginMeta.deserialize(meta_dict)
     except SerializerError as e:
         print(Fore.RED + "Failed to build plugin: Metadata file is not valid")
-        print(Fore.RED + str(e) + Style.RESET_ALL)
+        print(Fore.RED + str(e) + Fore.RESET)
         return None
     return meta
 
@@ -77,7 +79,7 @@ def read_output_path(output: str, meta: PluginMeta) -> Optional[str]:
     return os.path.abspath(output)
 
 
-def write_plugin(meta: PluginMeta, output: str) -> None:
+def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
     with zipfile.ZipFile(output, "w") as zip:
         meta_dump = BytesIO()
         yaml.dump(meta.serialize(), meta_dump)
@@ -89,10 +91,24 @@ def write_plugin(meta: PluginMeta, output: str) -> None:
             elif os.path.isdir(module):
                 zipdir(zip, module)
             else:
-                print(Fore.YELLOW + f"Module {module} not found, skipping")
+                print(Fore.YELLOW + f"Module {module} not found, skipping" + Fore.RESET)
 
         for file in meta.extra_files:
             zip.write(file)
+
+
+def upload_plugin(output: Union[str, IO]) -> None:
+    try:
+        server = config["default_server"]
+        token = config["servers"][server]
+    except KeyError:
+        print(Fore.RED + "Default server not configured." + Fore.RESET)
+        return
+    if isinstance(output, str):
+        with open(output, "rb") as file:
+            upload_file(file, server, token)
+    else:
+        upload_file(output, server, token)
 
 
 @app.command(short_help="Build a maubot plugin",
@@ -105,9 +121,16 @@ def write_plugin(meta: PluginMeta, output: str) -> None:
               default=False)
 def build(path: str, output: str, upload: bool) -> None:
     meta = read_meta(path)
-    output = read_output_path(output, meta)
-    if not output:
-        return
+    if output or not upload:
+        output = read_output_path(output, meta)
+        if not output:
+            return
+    else:
+        output = BytesIO()
     os.chdir(path)
     write_plugin(meta, output)
-    print(Fore.GREEN + "Plugin build complete.")
+    output.seek(0)
+    if isinstance(output, str):
+        print(f"{Fore.GREEN}Plugin built to {Fore.CYAN}{path}{Fore.GREEN}.{Fore.RESET}")
+    if upload:
+        upload_plugin(output)
