@@ -15,12 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, List, Optional
 from asyncio import AbstractEventLoop
+import os.path
 import logging
 import io
 
-from sqlalchemy.orm import Session
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml import YAML
+from sqlalchemy.orm import Session
+import sqlalchemy as sql
 
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
@@ -133,8 +135,12 @@ class PluginInstance:
             except (FileNotFoundError, KeyError):
                 self.base_cfg = None
             self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
-        self.plugin = cls(self.client.client, self.loop, self.client.http_client, self.id,
-                          self.log, self.config, self.mb_config["plugin_directories.db"])
+        db = None
+        if self.loader.meta.database:
+            db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
+            db = sql.create_engine(f"sqlite:///{db_path}.db")
+        self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
+                          instance_id=self.id, log=self.log, config=self.config, database=db)
         try:
             await self.plugin.start()
         except Exception:

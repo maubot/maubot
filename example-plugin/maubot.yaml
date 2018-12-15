@@ -1,6 +1,9 @@
 # This is an example maubot plugin definition file.
 # All plugins must include a file like this named "maubot.yaml" in their root directory.
 
+# Target maubot version
+maubot: 0.1.0
+
 # The unique ID for the plugin. Java package naming style. (i.e. use your own domain, not xyz.maubot)
 id: xyz.maubot.example
 
@@ -23,6 +26,9 @@ modules:
 # Even if `module` is not omitted here, it must be included in the modules list.
 # The main class must extend maubot.Plugin
 main_class: HelloWorldBot
+
+# Whether or not instances need a database
+database: false
 
 #  Extra files that the upcoming build tool should include in the mbp file.
 #extra_files:
