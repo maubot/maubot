@@ -126,8 +126,9 @@ def build(path: str, output: str, upload: bool) -> None:
         output = BytesIO()
     os.chdir(path)
     write_plugin(meta, output)
-    output.seek(0)
     if isinstance(output, str):
         print(f"{Fore.GREEN}Plugin built to {Fore.CYAN}{path}{Fore.GREEN}.{Fore.RESET}")
+    else:
+        output.seek(0)
     if upload:
         upload_plugin(output)
