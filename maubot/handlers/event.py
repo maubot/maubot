@@ -23,20 +23,21 @@ from mautrix.client import EventHandler
 EventHandlerDecorator = NewType("EventHandlerDecorator", Callable[[EventHandler], EventHandler])
 
 
-def handler(var: Union[EventType, EventHandler]) -> Union[EventHandlerDecorator, EventHandler]:
+def on(var: Union[EventType, EventHandler]) -> Union[EventHandlerDecorator, EventHandler]:
     def decorator(func: EventHandler) -> EventHandler:
-        func.__mb_event_handler__ = True
+        @functools.wraps(func)
+        async def wrapper(event: Event) -> None:
+            pass
+
+        wrapper.__mb_event_handler__ = True
         if isinstance(var, EventType):
-            func.__mb_event_type__ = var
+            wrapper.__mb_event_type__ = var
         else:
-            func.__mb_event_type__ = EventType.ALL
+            wrapper.__mb_event_type__ = EventType.ALL
 
-        return func
+        return wrapper
 
-    if isinstance(var, EventType):
-        return decorator
-    else:
-        decorator(var)
+    return decorator if isinstance(var, EventType) else decorator(var)
 
 
 class Field:

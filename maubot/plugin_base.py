@@ -52,18 +52,8 @@ class Plugin(ABC):
         for key in dir(self):
             val = getattr(self, key)
             if hasattr(val, "__mb_event_handler__"):
-                handle_own_events = hasattr(val, "__mb_handle_own_events__")
-
-                @functools.wraps(val)
-                async def handler(event: Event) -> None:
-                    if not handle_own_events and getattr(event, "sender", "") == self.client.mxid:
-                        return
-                    for filter in val.__mb_event_filters__:
-                        if not filter(event):
-                            return
-                    await val(event)
-                self._handlers_at_startup.append((handler, val.__mb_event_type__))
-                self.client.add_event_handler(val.__mb_event_type__, handler)
+                self._handlers_at_startup.append((val, val.__mb_event_type__))
+                self.client.add_event_handler(val.__mb_event_type__, val)
 
     async def stop(self) -> None:
         for func, event_type in self._handlers_at_startup:

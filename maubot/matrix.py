@@ -21,7 +21,7 @@ import attr
 from mautrix import Client as MatrixClient
 from mautrix.util.formatter import parse_html
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
-                           MessageType, TextMessageEventContent, Format, RelatesTo)
+                           MessageType, TextMessageEventContent, Format, RelatesTo, StateEvent)
 
 
 class EscapeHTML(Extension):
@@ -39,12 +39,12 @@ def parse_markdown(markdown: str, allow_html: bool = False) -> Tuple[str, str]:
 
 
 class MaubotMessageEvent(MessageEvent):
-    _client: MatrixClient
+    client: MatrixClient
 
     def __init__(self, base: MessageEvent, client: MatrixClient):
         super().__init__(**{a.name.lstrip("_"): getattr(base, a.name)
                             for a in attr.fields(MessageEvent)})
-        self._client = client
+        self.client = client
 
     def respond(self, content: Union[str, MessageEventContent],
                 event_type: EventType = EventType.ROOM_MESSAGE,
@@ -56,7 +56,7 @@ class MaubotMessageEvent(MessageEvent):
                 content.body, content.formatted_body = parse_markdown(content.body)
         if reply:
             content.set_reply(self)
-        return self._client.send_message_event(self.room_id, event_type, content)
+        return self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(self, content: Union[str, MessageEventContent],
               event_type: EventType = EventType.ROOM_MESSAGE,
@@ -64,7 +64,7 @@ class MaubotMessageEvent(MessageEvent):
         return self.respond(content, event_type, markdown, reply=True)
 
     def mark_read(self) -> Awaitable[None]:
-        return self._client.send_receipt(self.room_id, self.event_id, "m.read")
+        return self.client.send_receipt(self.room_id, self.event_id, "m.read")
 
 
 class MaubotMatrixClient(MatrixClient):
@@ -79,10 +79,14 @@ class MaubotMatrixClient(MatrixClient):
     async def call_handlers(self, event: Event) -> None:
         if isinstance(event, MessageEvent):
             event = MaubotMessageEvent(event, self)
+        else:
+            event.client = self
         return await super().call_handlers(event)
 
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
         event = await super().get_event(room_id, event_id)
         if isinstance(event, MessageEvent):
             return MaubotMessageEvent(event, self)
+        else:
+            event.client = self
         return event
