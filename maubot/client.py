@@ -55,7 +55,7 @@ class Client:
                                          token=self.access_token, client_session=self.http_client,
                                          log=self.log, loop=self.loop, store=self.db_instance)
         if self.autojoin:
-            self.client.add_event_handler(self._handle_invite, EventType.ROOM_MEMBER)
+            self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
 
     async def start(self, try_n: Optional[int] = 0) -> None:
         try:
@@ -260,9 +260,9 @@ class Client:
         if value == self.db_instance.autojoin:
             return
         if value:
-            self.client.add_event_handler(self._handle_invite, EventType.ROOM_MEMBER)
+            self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         else:
-            self.client.remove_event_handler(self._handle_invite, EventType.ROOM_MEMBER)
+            self.client.remove_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         self.db_instance.autojoin = value
 
     @property

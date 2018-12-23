@@ -51,7 +51,7 @@ class Plugin(ABC):
     async def start(self) -> None:
         for key in dir(self):
             val = getattr(self, key)
-            if hasattr(val, "__mb_event_handler__"):
+            if hasattr(val, "__mb_event_handler__") and val.__mb_event_handler__:
                 self._handlers_at_startup.append((val, val.__mb_event_type__))
                 self.client.add_event_handler(val.__mb_event_type__, val)
 

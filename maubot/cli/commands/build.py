@@ -118,6 +118,8 @@ def upload_plugin(output: Union[str, IO]) -> None:
               default=False)
 def build(path: str, output: str, upload: bool) -> None:
     meta = read_meta(path)
+    if not meta:
+        return
     if output or not upload:
         output = read_output_path(output, meta)
         if not output:
