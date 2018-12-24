@@ -27,7 +27,7 @@ import click
 from ...loader import PluginMeta
 from ..cliq.validators import PathValidator
 from ..base import app
-from ..config import get_default_server
+from ..config import get_default_server, get_token
 from .upload import upload_file
 
 yaml = YAML()
@@ -97,8 +97,11 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
             zip.write(file)
 
 
-def upload_plugin(output: Union[str, IO]) -> None:
-    server, token = get_default_server()
+def upload_plugin(output: Union[str, IO], server: str) -> None:
+    if not server:
+        server, token = get_default_server()
+    else:
+        token = get_token(server)
     if not token:
         return
     if isinstance(output, str):
@@ -114,9 +117,10 @@ def upload_plugin(output: Union[str, IO]) -> None:
 @click.argument("path", default=os.getcwd())
 @click.option("-o", "--output", help="Path to output built plugin to",
               type=PathValidator.click_type)
-@click.option("-u", "--upload", help="Upload plugin to main server after building", is_flag=True,
+@click.option("-u", "--upload", help="Upload plugin to  server after building", is_flag=True,
               default=False)
-def build(path: str, output: str, upload: bool) -> None:
+@click.option("-s", "--server", help="Server to upload built plugin to")
+def build(path: str, output: str, upload: bool, server: str) -> None:
     meta = read_meta(path)
     if not meta:
         return
@@ -128,8 +132,9 @@ def build(path: str, output: str, upload: bool) -> None:
         output = BytesIO()
     os.chdir(path)
     write_plugin(meta, output)
-    output.seek(0)
     if isinstance(output, str):
         print(f"{Fore.GREEN}Plugin built to {Fore.CYAN}{path}{Fore.GREEN}.{Fore.RESET}")
+    else:
+        output.seek(0)
     if upload:
-        upload_plugin(output)
+        upload_plugin(output, server)
