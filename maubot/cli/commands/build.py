@@ -122,6 +122,8 @@ def upload_plugin(output: Union[str, IO], server: str) -> None:
 @click.option("-s", "--server", help="Server to upload built plugin to")
 def build(path: str, output: str, upload: bool, server: str) -> None:
     meta = read_meta(path)
+    if not meta:
+        return
     if output or not upload:
         output = read_output_path(output, meta)
         if not output:

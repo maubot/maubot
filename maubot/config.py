@@ -29,7 +29,8 @@ class Config(BaseFileConfig):
         return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(64))
 
     def do_update(self, helper: ConfigUpdateHelper) -> None:
-        base, copy, _ = helper
+        base = helper.base
+        copy = helper.copy
         copy("database")
         copy("plugin_directories.upload")
         copy("plugin_directories.load")

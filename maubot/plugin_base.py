@@ -14,21 +14,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Type, Optional, TYPE_CHECKING
+from abc import ABC
 from logging import Logger
-from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop
-from aiohttp import ClientSession
-import os.path
+import functools
 
 from sqlalchemy.engine.base import Engine
-import sqlalchemy as sql
+from aiohttp import ClientSession
 
 if TYPE_CHECKING:
-    from .client import MaubotMatrixClient
-    from .command_spec import CommandSpec
+    from mautrix.types import Event
     from mautrix.util.config import BaseProxyConfig
-
-DatabaseNotConfigured = ValueError("A database for this maubot instance has not been configured.")
+    from .client import MaubotMatrixClient
 
 
 class Plugin(ABC):
@@ -37,33 +34,30 @@ class Plugin(ABC):
     log: Logger
     loop: AbstractEventLoop
     config: Optional['BaseProxyConfig']
+    database: Optional[Engine]
 
     def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
-                 plugin_instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
-                 db_base_path: str) -> None:
+                 instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
+                 database: Optional[Engine]) -> None:
         self.client = client
         self.loop = loop
         self.http = http
-        self.id = plugin_instance_id
+        self.id = instance_id
         self.log = log
         self.config = config
-        self.__db_base_path = db_base_path
+        self.database = database
+        self._handlers_at_startup = []
 
-    def request_db_engine(self) -> Optional[Engine]:
-        if not self.__db_base_path:
-            raise DatabaseNotConfigured
-        return sql.create_engine(f"sqlite:///{os.path.join(self.__db_base_path, self.id)}.db")
-
-    def set_command_spec(self, spec: 'CommandSpec') -> None:
-        self.client.set_command_spec(self.id, spec)
-
-    @abstractmethod
     async def start(self) -> None:
-        pass
+        for key in dir(self):
+            val = getattr(self, key)
+            if hasattr(val, "__mb_event_handler__") and val.__mb_event_handler__:
+                self._handlers_at_startup.append((val, val.__mb_event_type__))
+                self.client.add_event_handler(val.__mb_event_type__, val)
 
-    @abstractmethod
     async def stop(self) -> None:
-        pass
+        for func, event_type in self._handlers_at_startup:
+            self.client.remove_event_handler(event_type, func)
 
     @classmethod
     def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:

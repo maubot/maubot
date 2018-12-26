@@ -22,6 +22,7 @@ from packaging.version import Version, InvalidVersion
 from mautrix.client.api.types.util import (SerializableAttrs, SerializerError, serializer,
                                            deserializer)
 
+from ..__meta__ import __version__
 from ..plugin_base import Plugin
 
 if TYPE_CHECKING:
@@ -51,9 +52,12 @@ def deserialize_version(version: str) -> Version:
 class PluginMeta(SerializableAttrs['PluginMeta']):
     id: str
     version: Version
-    license: str
     modules: List[str]
     main_class: str
+
+    maubot: Version = Version(__version__)
+    database: bool = False
+    license: str = ""
     extra_files: List[str] = []
     dependencies: List[str] = []
     soft_dependencies: List[str] = []
