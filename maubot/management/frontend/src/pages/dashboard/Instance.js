@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
-import { NavLink, withRouter } from "react-router-dom"
+import { Link, NavLink, Route, Switch, withRouter } from "react-router-dom"
 import AceEditor from "react-ace"
 import "brace/mode/yaml"
 import "brace/theme/github"
@@ -23,6 +23,7 @@ import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/P
 import api from "../../api"
 import Spinner from "../../components/Spinner"
 import BaseMainView from "./BaseMainView"
+import InstanceDatabase from "./InstanceDatabase"
 
 const InstanceListEntry = ({ entry }) => (
     <NavLink className="instance entry" to={`/instance/${entry.id}`}>
@@ -137,47 +138,65 @@ class Instance extends BaseMainView {
     }
 
     render() {
-        return <div className="instance">
-            <PrefTable>
-                <PrefInput rowName="ID" type="text" name="id" value={this.state.id}
-                           placeholder="fancybotinstance" onChange={this.inputChange}
-                           disabled={!this.isNew} fullWidth={true} className="id"/>
-                <PrefSwitch rowName="Enabled"
-                            active={this.state.enabled} origActive={this.props.entry.enabled}
-                            onToggle={enabled => this.setState({ enabled })}/>
-                <PrefSwitch rowName="Running"
-                            active={this.state.started} origActive={this.props.entry.started}
-                            onToggle={started => this.setState({ started })}/>
-                <PrefSelect rowName="Primary user" options={this.clientOptions}
-                            isSearchable={false} value={this.selectedClientEntry}
-                            origValue={this.props.entry.primary_user}
-                            onChange={({ id }) => this.setState({ primary_user: id })}/>
-                <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
-                            value={this.selectedPluginEntry} origValue={this.props.entry.type}
-                            onChange={({ id }) => this.setState({ type: id })}/>
-            </PrefTable>
-            {!this.isNew &&
-            <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
-                       name="config" value={this.state.config}
-                       editorProps={{
-                           fontSize: "10pt",
-                           $blockScrolling: true,
-                       }}/>}
-            <div className="buttons">
-                {!this.isNew && (
-                    <button className="delete" onClick={this.delete} disabled={this.loading}>
-                        {this.state.deleting ? <Spinner/> : "Delete"}
-                    </button>
-                )}
-                <button className={`save ${this.isValid ? "" : "disabled-bg"}`}
-                        onClick={this.save} disabled={this.loading || !this.isValid}>
-                    {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
-                </button>
-            </div>
-            {this.renderLogButton(`instance.${this.state.id}`)}
-            <div className="error">{this.state.error}</div>
-        </div>
+        return <Switch>
+            <Route path="/instance/:id/database" render={this.renderDatabase}/>
+            <Route render={this.renderMain}/>
+        </Switch>
     }
+
+    renderDatabase = () => <InstanceDatabase instanceID={this.props.entry.id}/>
+
+    renderMain = () => <div className="instance">
+        <PrefTable>
+            <PrefInput rowName="ID" type="text" name="id" value={this.state.id}
+                       placeholder="fancybotinstance" onChange={this.inputChange}
+                       disabled={!this.isNew} fullWidth={true} className="id"/>
+            <PrefSwitch rowName="Enabled"
+                        active={this.state.enabled} origActive={this.props.entry.enabled}
+                        onToggle={enabled => this.setState({ enabled })}/>
+            <PrefSwitch rowName="Running"
+                        active={this.state.started} origActive={this.props.entry.started}
+                        onToggle={started => this.setState({ started })}/>
+            <PrefSelect rowName="Primary user" options={this.clientOptions}
+                        isSearchable={false} value={this.selectedClientEntry}
+                        origValue={this.props.entry.primary_user}
+                        onChange={({ id }) => this.setState({ primary_user: id })}/>
+            <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
+                        value={this.selectedPluginEntry} origValue={this.props.entry.type}
+                        onChange={({ id }) => this.setState({ type: id })}/>
+        </PrefTable>
+        {!this.isNew &&
+        <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
+                   name="config" value={this.state.config}
+                   editorProps={{
+                       fontSize: "10pt",
+                       $blockScrolling: true,
+                   }}/>}
+        <div className="buttons">
+            {!this.isNew && (
+                <button className="delete" onClick={this.delete} disabled={this.loading}>
+                    {this.state.deleting ? <Spinner/> : "Delete"}
+                </button>
+            )}
+            <button className={`save ${this.isValid ? "" : "disabled-bg"}`}
+                    onClick={this.save} disabled={this.loading || !this.isValid}>
+                {this.state.saving ? <Spinner/> : (this.isNew ? "Create" : "Save")}
+            </button>
+        </div>
+        {!this.isNew && <div className="buttons">
+            {this.props.entry.database && (
+                <Link className="button open-database"
+                      to={`/instance/${this.state.id}/database`}>
+                    View database
+                </Link>
+            )}
+            <button className="open-log"
+                    onClick={() => this.props.openLog(`instance.${this.state.id}`)}>
+                View logs
+            </button>
+        </div>}
+        <div className="error">{this.state.error}</div>
+    </div>
 }
 
 export default withRouter(Instance)

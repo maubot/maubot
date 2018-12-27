@@ -153,6 +153,13 @@ class _Response:
         }, status=HTTPStatus.NOT_FOUND)
 
     @property
+    def plugin_has_no_database(self) -> web.Response:
+        return web.json_response({
+            "error": "Given plugin does not have a database",
+            "errcode": "plugin_has_no_database",
+        })
+
+    @property
     def method_not_allowed(self) -> web.Response:
         return web.json_response({
             "error": "Method not allowed",

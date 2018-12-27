@@ -184,9 +184,9 @@ class Dashboard extends Component {
                 </div>
             </nav>
 
-            <div className="topbar">
-                <div className={`hamburger ${this.state.sidebarOpen ? "active" : ""}`}
-                     onClick={evt => this.setState({ sidebarOpen: !this.state.sidebarOpen })}>
+            <div className="topbar"
+                 onClick={evt => this.setState({ sidebarOpen: !this.state.sidebarOpen })}>
+                <div className={`hamburger ${this.state.sidebarOpen ? "active" : ""}`}>
                     <span/><span/><span/>
                 </div>
             </div>

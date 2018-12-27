@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-.topbar
+> .topbar
     background-color: $primary
 
     display: flex
@@ -28,7 +28,10 @@
 // Hamburger menu based on "Pure CSS Hamburger fold-out menu" codepen by Erik Terwan (MIT license)
 // https://codepen.io/erikterwan/pen/EVzeRP
 
-.hamburger
+> .topbar
+    user-select: none
+
+> .topbar > .hamburger
     display: block
     user-select: none
     cursor: pointer
@@ -42,6 +45,7 @@
 
         background: white
         border-radius: 3px
+        user-select: none
 
         z-index: 1
 
