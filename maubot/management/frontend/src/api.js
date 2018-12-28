@@ -154,8 +154,14 @@ export const putInstance = (instance, id) => defaultPut("instance", instance, id
 export const deleteInstance = id => defaultDelete("instance", id)
 
 export const getInstanceDatabase = id => defaultGet(`/instance/${id}/database`)
-export const getInstanceDatabaseTable = (id, table, query = []) =>
-    defaultGet(`/instance/${id}/database/${table}?${query.join("&")}`)
+export const queryInstanceDatabase = async (id, query) => {
+    const resp = await fetch(`${BASE_PATH}/instance/${id}/database/query`, {
+        headers: getHeaders(),
+        body: JSON.stringify({ query }),
+        method: "POST",
+    })
+    return await resp.json()
+}
 
 export const getPlugins = () => defaultGet("/plugins")
 export const getPlugin = id => defaultGet(`/plugin/${id}`)
@@ -207,7 +213,7 @@ export default {
     BASE_PATH,
     login, ping, openLogSocket, debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
     getInstances, getInstance, putInstance, deleteInstance,
-    getInstanceDatabase, getInstanceDatabaseTable,
+    getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
 }

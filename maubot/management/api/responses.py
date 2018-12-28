@@ -16,7 +16,7 @@
 from http import HTTPStatus
 
 from aiohttp import web
-
+from sqlalchemy.exc import OperationalError, IntegrityError
 
 class _Response:
     @property
@@ -80,6 +80,33 @@ class _Response:
         return web.json_response({
             "error": "Username or password missing",
             "errcode": "username_or_password_missing",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @property
+    def query_missing(self) -> web.Response:
+        return web.json_response({
+            "error": "Query missing",
+            "errcode": "query_missing",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @staticmethod
+    def sql_operational_error(error: OperationalError, query: str) -> web.Response:
+        return web.json_response({
+            "ok": False,
+            "query": query,
+            "error": str(error.orig),
+            "full_error": str(error),
+            "errcode": "sql_operational_error",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @staticmethod
+    def sql_integrity_error(error: IntegrityError, query: str) -> web.Response:
+        return web.json_response({
+            "ok": False,
+            "query": query,
+            "error": str(error.orig),
+            "full_error": str(error),
+            "errcode": "sql_integrity_error",
         }, status=HTTPStatus.BAD_REQUEST)
 
     @property

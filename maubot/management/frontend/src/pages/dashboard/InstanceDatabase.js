@@ -14,21 +14,38 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { NavLink, Link, Route, withRouter } from "react-router-dom"
+import { NavLink, Link, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronLeft } from "../../res/chevron-left.svg"
 import { ReactComponent as OrderDesc } from "../../res/sort-down.svg"
 import { ReactComponent as OrderAsc } from "../../res/sort-up.svg"
 import api from "../../api"
 import Spinner from "../../components/Spinner"
 
+Map.prototype.map = function(func) {
+    const res = []
+    for (const [key, value] of this) {
+        res.push(func(value, key, this))
+    }
+    return res
+}
+
 class InstanceDatabase extends Component {
     constructor(props) {
         super(props)
         this.state = {
             tables: null,
-            tableContent: null,
+            header: null,
+            content: null,
+            query: "",
+            selectedTable: null,
+
+            error: null,
+
+            prevQuery: null,
+            rowCount: null,
+            insertedPrimaryKey: null,
         }
-        this.sortBy = []
+        this.order = new Map()
     }
 
     async componentWillMount() {
@@ -47,8 +64,8 @@ class InstanceDatabase extends Component {
 
     componentDidUpdate(prevProps) {
         if (this.props.location !== prevProps.location) {
-            this.sortBy = []
-            this.setState({ tableContent: null })
+            this.order = new Map()
+            this.setState({ header: null, content: null })
             this.checkLocationTable()
         }
     }
@@ -57,106 +74,147 @@ class InstanceDatabase extends Component {
         const prefix = `/instance/${this.props.instanceID}/database/`
         if (this.props.location.pathname.startsWith(prefix)) {
             const table = this.props.location.pathname.substr(prefix.length)
-            this.reloadContent(table)
+            this.setState({ selectedTable: table })
+            this.buildSQLQuery(table)
         }
     }
 
-    getSortQuery(table) {
-        const sort = []
-        for (const column of this.sortBy) {
-            sort.push(`order=${column.name}:${column.sort}`)
+    getSortQueryParams(table) {
+        const order = []
+        for (const [column, sort] of Array.from(this.order.entries()).reverse()) {
+            order.push(`order=${column}:${sort}`)
         }
-        return sort
+        return order
     }
 
-    async reloadContent(name) {
-        const table = this.state.tables.get(name)
-        const query = this.getSortQuery(table)
-        query.push("limit=100")
+    buildSQLQuery(table = this.state.selectedTable) {
+        let query = `SELECT * FROM ${table}`
+
+        if (this.order.size > 0) {
+            const order = Array.from(this.order.entries()).reverse()
+                .map(([column, sort]) => `${column} ${sort}`)
+            query += ` ORDER BY ${order.join(", ")}`
+        }
+
+        query += " LIMIT 100"
+        this.setState({ query }, this.reloadContent)
+    }
+
+    reloadContent = async () => {
+        this.setState({ loading: true })
+        const res = await api.queryInstanceDatabase(this.props.instanceID, this.state.query)
         this.setState({
-            tableContent: await api.getInstanceDatabaseTable(
-                this.props.instanceID, table.name, query),
+            loading: false,
+            prevQuery: null,
+            rowCount: null,
+            insertedPrimaryKey: null,
+            error: null,
         })
+        if (!res.ok) {
+            this.setState({
+                error: res.error,
+            })
+            this.buildSQLQuery()
+        } else if (res.rows) {
+            this.setState({
+                header: res.columns,
+                content: res.rows,
+            })
+        } else {
+            this.setState({
+                prevQuery: res.query,
+                rowCount: res.rowcount,
+                insertedPrimaryKey: res.insertedPrimaryKey,
+            })
+            this.buildSQLQuery()
+        }
     }
 
-    toggleSort(tableName, column) {
-        const index = this.sortBy.indexOf(column)
-        if (index >= 0) {
-            this.sortBy.splice(index, 1)
-        }
-        switch (column.sort) {
+    toggleSort(column) {
+        const oldSort = this.order.get(column) || "auto"
+        this.order.delete(column)
+        switch (oldSort) {
+        case "auto":
+            this.order.set(column, "DESC")
+            break
+        case "DESC":
+            this.order.set(column, "ASC")
+            break
+        case "ASC":
         default:
-            column.sort = "desc"
-            this.sortBy.unshift(column)
-            break
-        case "desc":
-            column.sort = "asc"
-            this.sortBy.unshift(column)
-            break
-        case "asc":
-            column.sort = null
             break
         }
-        this.forceUpdate()
-        this.reloadContent(tableName)
+        this.buildSQLQuery()
     }
 
-    renderTableHead = table => <thead>
-        <tr>
-            {Array.from(table.columns.entries()).map(([name, column]) => (
-                <td key={name}>
-                    <span onClick={() => this.toggleSort(table.name, column)}>
-                        {name}
-                        {column.sort === "desc" ?
-                            <OrderDesc/> :
-                            column.sort === "asc"
-                                ? <OrderAsc/>
-                                : null}
-                    </span>
-                </td>
-            ))}
-        </tr>
-    </thead>
+    getSortIcon(column) {
+        switch (this.order.get(column)) {
+        case "DESC":
+            return <OrderDesc/>
+        case "ASC":
+            return <OrderAsc/>
+        default:
+            return null
+        }
+    }
 
-    renderTable = ({ match }) => {
-        const table = this.state.tables.get(match.params.table)
-        return <div className="table">
-            {this.state.tableContent ? (
-                <table>
-                    {this.renderTableHead(table)}
-                    <tbody>
-                        {this.state.tableContent.map(row => (
-                            <tr key={row}>
-                                {row.map((column, index) => (
-                                    <td key={index}>
-                                        {column}
-                                    </td>
-                                ))}
-                            </tr>
+    renderTable = () => <div className="table">
+        {this.state.header ? (
+            <table>
+                <thead>
+                    <tr>
+                        {this.state.header.map(column => (
+                            <td key={column}>
+                                <span onClick={() => this.toggleSort(column)}>
+                                    {column}
+                                    {this.getSortIcon(column)}
+                                </span>
+                            </td>
                         ))}
-                    </tbody>
-                </table>
-            ) : <>
-                <table>
-                    {this.renderTableHead(table)}
-                </table>
-                <Spinner/>
-            </>}
-
-        </div>
-    }
+                    </tr>
+                </thead>
+                <tbody>
+                    {this.state.content.map((row, index) => (
+                        <tr key={index}>
+                            {row.map((column, index) => (
+                                <td key={index}>
+                                    {column}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        ) : this.state.loading ? <Spinner/> : null}
+    </div>
 
     renderContent() {
         return <>
             <div className="tables">
-                {Array.from(this.state.tables.keys()).map(key => (
-                    <NavLink key={key} to={`/instance/${this.props.instanceID}/database/${key}`}>
-                        {key}
+                {this.state.tables.map((_, tbl) => (
+                    <NavLink key={tbl} to={`/instance/${this.props.instanceID}/database/${tbl}`}>
+                        {tbl}
                     </NavLink>
                 ))}
             </div>
-            <Route path={`/instance/${this.props.instanceID}/database/:table`}
-                   render={this.renderTable}/>
+            <div className="query">
+                <input type="text" value={this.state.query} name="query"
+                       onChange={evt => this.setState({ query: evt.target.value })}/>
+                <button type="submit" onClick={this.reloadContent}>Query</button>
+            </div>
+            {this.state.error && <div className="error">
+                {this.state.error}
+            </div>}
+            {this.state.prevQuery && <div className="prev-query">
+                <p>
+                    Executed <span className="query">{this.state.prevQuery}</span> -
+                    affected <strong>{this.state.rowCount} rows</strong>.
+                </p>
+                {this.state.insertedPrimaryKey && <p className="inserted-primary-key">
+                    Inserted primary key: {this.state.insertedPrimaryKey}
+                </p>}
+            </div>}
+            {this.renderTable()}
         </>
     }
 

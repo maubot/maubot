@@ -61,6 +61,25 @@
             &.active
                 background-color: $primary
 
+    > div.query
+        display: flex
+
+        > input
+            +input
+            font-family: "Fira Code", monospace
+            flex: 1
+            margin-right: .5rem
+
+        > button
+            +button
+            +main-color-button
+
+    > div.prev-query
+        +notification($primary, $primary-light)
+
+        span.query
+            font-family: "Fira Code", monospace
+
     > div.table
         overflow-x: auto
         overflow-y: hidden
