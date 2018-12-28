@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import TYPE_CHECKING
+from datetime import datetime
 
 from aiohttp import web
 from sqlalchemy import Table, Column, asc, desc
@@ -50,6 +51,12 @@ async def get_database(request: web.Request) -> web.Response:
     })
 
 
+def check_type(val):
+    if isinstance(val, datetime):
+        return val.isoformat()
+    return val
+
+
 @routes.get("/instance/{id}/database/{table}")
 async def get_table(request: web.Request) -> web.Response:
     instance_id = request.match_info.get("id", "")
@@ -73,5 +80,5 @@ async def get_table(request: web.Request) -> web.Response:
         order = []
     limit = int(request.query.get("limit", 100))
     query = table.select().order_by(*order).limit(limit)
-    data = [[*row] for row in db.execute(query)]
+    data = [[check_type(value) for value in row] for row in db.execute(query)]
     return web.json_response(data)
