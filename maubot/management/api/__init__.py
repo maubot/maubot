@@ -19,7 +19,7 @@ from asyncio import AbstractEventLoop
 from ...config import Config
 from .base import routes, set_config, set_loop
 from .middleware import auth, error
-from . import auth, plugin, instance, database, client, client_proxy, client_auth, dev_open
+from . import auth, plugin, instance, instance_database, client, client_proxy, client_auth, dev_open
 from .log import stop_all as stop_log_sockets, init as init_log_listener
 
 

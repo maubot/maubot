@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
-import { NavLink, Link, Route } from "react-router-dom"
+import { NavLink, Link, Route, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronLeft } from "../../res/chevron-left.svg"
 import { ReactComponent as OrderDesc } from "../../res/sort-down.svg"
 import { ReactComponent as OrderAsc } from "../../res/sort-up.svg"
@@ -26,53 +26,130 @@ class InstanceDatabase extends Component {
         super(props)
         this.state = {
             tables: null,
-            sortBy: null,
+            tableContent: null,
         }
+        this.sortBy = []
     }
 
     async componentWillMount() {
         const tables = new Map(Object.entries(await api.getInstanceDatabase(this.props.instanceID)))
-        for (const table of tables.values()) {
+        for (const [name, table] of tables) {
+            table.name = name
             table.columns = new Map(Object.entries(table.columns))
-            for (const column of table.columns.values()) {
-                column.sort = "desc"
+            for (const [columnName, column] of table.columns) {
+                column.name = columnName
+                column.sort = null
             }
         }
         this.setState({ tables })
+        this.checkLocationTable()
     }
 
-    toggleSort(column) {
-        column.sort = column.sort === "desc" ? "asc" : "desc"
-        this.forceUpdate()
+    componentDidUpdate(prevProps) {
+        if (this.props.location !== prevProps.location) {
+            this.sortBy = []
+            this.setState({ tableContent: null })
+            this.checkLocationTable()
+        }
     }
+
+    checkLocationTable() {
+        const prefix = `/instance/${this.props.instanceID}/database/`
+        if (this.props.location.pathname.startsWith(prefix)) {
+            const table = this.props.location.pathname.substr(prefix.length)
+            this.reloadContent(table)
+        }
+    }
+
+    getSortQuery(table) {
+        const sort = []
+        for (const column of this.sortBy) {
+            sort.push(`order=${column.name}:${column.sort}`)
+        }
+        return sort
+    }
+
+    async reloadContent(name) {
+        const table = this.state.tables.get(name)
+        const query = this.getSortQuery(table)
+        query.push("limit=100")
+        this.setState({
+            tableContent: await api.getInstanceDatabaseTable(
+                this.props.instanceID, table.name, query),
+        })
+    }
+
+    toggleSort(tableName, column) {
+        const index = this.sortBy.indexOf(column)
+        if (index >= 0) {
+            this.sortBy.splice(index, 1)
+        }
+        switch (column.sort) {
+        default:
+            column.sort = "desc"
+            this.sortBy.unshift(column)
+            break
+        case "desc":
+            column.sort = "asc"
+            this.sortBy.unshift(column)
+            break
+        case "asc":
+            column.sort = null
+            break
+        }
+        this.forceUpdate()
+        this.reloadContent(tableName)
+    }
+
+    renderTableHead = table => <thead>
+        <tr>
+            {Array.from(table.columns.entries()).map(([name, column]) => (
+                <td key={name}>
+                    <span onClick={() => this.toggleSort(table.name, column)}>
+                        {name}
+                        {column.sort === "desc" ?
+                            <OrderDesc/> :
+                            column.sort === "asc"
+                                ? <OrderAsc/>
+                                : null}
+                    </span>
+                </td>
+            ))}
+        </tr>
+    </thead>
 
     renderTable = ({ match }) => {
         const table = this.state.tables.get(match.params.table)
-        console.log(table)
         return <div className="table">
-            <table>
-                <thead>
-                    <tr>
-                        {Array.from(table.columns.entries()).map(([name, column]) => (
-                            <td key={name}>
-                                <span onClick={() => this.toggleSort(column)}>
-                                    {name}
-                                    {column.sort === "desc" ? <OrderDesc/> : <OrderAsc/>}
-                                </span>
-                            </td>
+            {this.state.tableContent ? (
+                <table>
+                    {this.renderTableHead(table)}
+                    <tbody>
+                        {this.state.tableContent.map(row => (
+                            <tr key={row}>
+                                {row.map((column, index) => (
+                                    <td key={index}>
+                                        {column}
+                                    </td>
+                                ))}
+                            </tr>
                         ))}
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            ) : <>
+                <table>
+                    {this.renderTableHead(table)}
+                </table>
+                <Spinner/>
+            </>}
+
         </div>
     }
 
     renderContent() {
         return <>
             <div className="tables">
-                {Object.keys(this.state.tables).map(key => (
+                {Array.from(this.state.tables.keys()).map(key => (
                     <NavLink key={key} to={`/instance/${this.props.instanceID}/database/${key}`}>
                         {key}
                     </NavLink>
@@ -98,4 +175,4 @@ class InstanceDatabase extends Component {
     }
 }
 
-export default InstanceDatabase
+export default withRouter(InstanceDatabase)

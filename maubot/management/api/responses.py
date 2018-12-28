@@ -160,6 +160,13 @@ class _Response:
         })
 
     @property
+    def table_not_found(self) -> web.Response:
+        return web.json_response({
+            "error": "Given table not found in plugin database",
+            "errcode": "table_not_found",
+        })
+
+    @property
     def method_not_allowed(self) -> web.Response:
         return web.json_response({
             "error": "Method not allowed",
