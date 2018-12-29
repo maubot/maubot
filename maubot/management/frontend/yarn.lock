@@ -4606,7 +4606,7 @@ gonzales-pe-sl@^4.2.3:
   dependencies:
     minimist "1.1.x"
 
-"gonzales-pe-sl@github:srowhani/gonzales-pe#dev":
+gonzales-pe-sl@srowhani/gonzales-pe#dev:
   version "4.2.3"
   resolved "https://codeload.github.com/srowhani/gonzales-pe/tar.gz/3b052416074edc280f7d04bbe40b2e410693c4a3"
   dependencies:
@@ -8579,7 +8579,7 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-ace@^6.3.2:
+react-ace@^6.2.0:
   version "6.3.2"
   resolved "https://registry.yarnpkg.com/react-ace/-/react-ace-6.3.2.tgz#4fc75edce17d79c3169791dc184744950aca4794"
   integrity sha512-eSk0fWvrBe2oqYIYX0njLddLG5H0hemWv5VVoQi5yDSPTjGlSSnzFwdgPyfuwRe8mSARZuRdprPQa5p61hKirw==
@@ -8610,6 +8610,14 @@ react-base16-styling@^0.5.1:
     lodash.curry "^4.0.1"
     lodash.flow "^3.3.0"
     pure-color "^1.2.0"
+
+react-contextmenu@^2.10.0:
+  version "2.10.0"
+  resolved "https://registry.yarnpkg.com/react-contextmenu/-/react-contextmenu-2.10.0.tgz#3a5338a552964db85c300072f719bc1f6b969838"
+  integrity sha512-neiZGpfxfYFjqbcIExi69qruqhB7l0LKEguHDXeizgyTGbJHTwbq1GplXCHIafUAkbGZH8FfD9PBeUcSRG78+Q==
+  dependencies:
+    classnames "^2.2.5"
+    object-assign "^4.1.0"
 
 react-dev-utils@^6.0.5:
   version "6.1.1"

@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { Component } from "react"
 import { NavLink, Link, withRouter } from "react-router-dom"
+import { ContextMenu, ContextMenuTrigger, MenuItem } from "react-contextmenu"
 import { ReactComponent as ChevronLeft } from "../../res/chevron-left.svg"
 import { ReactComponent as OrderDesc } from "../../res/sort-down.svg"
 import { ReactComponent as OrderAsc } from "../../res/sort-up.svg"
@@ -87,7 +88,7 @@ class InstanceDatabase extends Component {
         return order
     }
 
-    buildSQLQuery(table = this.state.selectedTable) {
+    buildSQLQuery(table = this.state.selectedTable, resetContent = true) {
         let query = `SELECT * FROM ${table}`
 
         if (this.order.size > 0) {
@@ -97,24 +98,25 @@ class InstanceDatabase extends Component {
         }
 
         query += " LIMIT 100"
-        this.setState({ query }, this.reloadContent)
+        this.setState({ query }, () => this.reloadContent(resetContent))
     }
 
-    reloadContent = async () => {
+    reloadContent = async (resetContent = true) => {
         this.setState({ loading: true })
         const res = await api.queryInstanceDatabase(this.props.instanceID, this.state.query)
-        this.setState({
-            loading: false,
-            prevQuery: null,
-            rowCount: null,
-            insertedPrimaryKey: null,
-            error: null,
-        })
+        this.setState({ loading: false })
+        if (resetContent) {
+            this.setState({
+                prevQuery: null,
+                rowCount: null,
+                insertedPrimaryKey: null,
+                error: null,
+            })
+        }
         if (!res.ok) {
             this.setState({
                 error: res.error,
             })
-            this.buildSQLQuery()
         } else if (res.rows) {
             this.setState({
                 header: res.columns,
@@ -126,7 +128,7 @@ class InstanceDatabase extends Component {
                 rowCount: res.rowcount,
                 insertedPrimaryKey: res.insertedPrimaryKey,
             })
-            this.buildSQLQuery()
+            this.buildSQLQuery(this.state.selectedTable, false)
         }
     }
 
@@ -158,15 +160,96 @@ class InstanceDatabase extends Component {
         }
     }
 
+    getColumnInfo(columnName) {
+        const table = this.state.tables.get(this.state.selectedTable)
+        if (!table) {
+            return null
+        }
+        const column = table.columns.get(columnName)
+        if (!column) {
+            return null
+        }
+        if (column.primary) {
+            return <span className="meta">&nbsp;(pk)</span>
+        } else if (column.unique) {
+            return <span className="meta">&nbsp;(u)</span>
+        }
+        return null
+    }
+
+    getColumnType(columnName) {
+        const table = this.state.tables.get(this.state.selectedTable)
+        if (!table) {
+            return null
+        }
+        const column = table.columns.get(columnName)
+        if (!column) {
+            return null
+        }
+        return column.type
+    }
+
+    deleteRow = async (_, data) => {
+        const values = this.state.content[data.row]
+        const keys = this.state.header
+        const condition = []
+        for (const [index, key] of Object.entries(keys)) {
+            const val = values[index]
+            condition.push(`${key}='${this.sqlEscape(val.toString())}'`)
+        }
+        const query = `DELETE FROM ${this.state.selectedTable} WHERE ${condition.join(" AND ")}`
+        const res = await api.queryInstanceDatabase(this.props.instanceID, query)
+        this.setState({
+            prevQuery: `DELETE FROM ${this.state.selectedTable} ...`,
+            rowCount: res.rowcount,
+        })
+        await this.reloadContent(false)
+    }
+
+    editCell = async (evt, data) => {
+        console.log("Edit", data)
+    }
+
+    collectContextMeta = props => ({
+        row: props.row,
+        col: props.col,
+    })
+
+    sqlEscape = str => str.replace(/[\0\x08\x09\x1a\n\r"'\\%]/g, char => {
+        switch (char) {
+        case "\0":
+            return "\\0"
+        case "\x08":
+            return "\\b"
+        case "\x09":
+            return "\\t"
+        case "\x1a":
+            return "\\z"
+        case "\n":
+            return "\\n"
+        case "\r":
+            return "\\r"
+        case "\"":
+        case "'":
+        case "\\":
+        case "%":
+            return "\\" + char
+        default:
+            return char
+        }
+    })
+
     renderTable = () => <div className="table">
-        {this.state.header ? (
+        {this.state.header ? <>
             <table>
                 <thead>
                     <tr>
                         {this.state.header.map(column => (
                             <td key={column}>
-                                <span onClick={() => this.toggleSort(column)}>
-                                    {column}
+                                <span onClick={() => this.toggleSort(column)}
+                                      title={this.getColumnType(column)}>
+                                    <strong>{column}</strong>
+                                    {this.getColumnInfo(column)}
                                     {this.getSortIcon(column)}
                                 </span>
                             </td>
@@ -174,18 +257,24 @@ class InstanceDatabase extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                    {this.state.content.map((row, index) => (
-                        <tr key={index}>
-                            {row.map((column, index) => (
-                                <td key={index}>
-                                    {column}
-                                </td>
+                    {this.state.content.map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                            {row.map((cell, colIndex) => (
+                                <ContextMenuTrigger key={colIndex} id="database_table_menu"
+                                                    renderTag="td" row={rowIndex} col={colIndex}
+                                                    collect={this.collectContextMeta}>
+                                    {cell}
+                                </ContextMenuTrigger>
                             ))}
                         </tr>
                     ))}
                 </tbody>
             </table>
-        ) : this.state.loading ? <Spinner/> : null}
+            <ContextMenu id="database_table_menu">
+                <MenuItem onClick={this.deleteRow}>Delete row</MenuItem>
+                <MenuItem disabled onClick={this.editCell}>Edit cell</MenuItem>
+            </ContextMenu>
+        </> : this.state.loading ? <Spinner/> : null}
     </div>
 
     renderContent() {
