@@ -77,7 +77,8 @@ class PluginInstance:
             "started": self.started,
             "primary_user": self.primary_user,
             "config": self.db_instance.config,
-            "database": self.inst_db is not None,
+            "database": (self.inst_db is not None
+                         and self.mb_config["api_features.instance_database"]),
         }
 
     def get_db_tables(self) -> Dict[str, sql.Table]:

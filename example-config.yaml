@@ -48,6 +48,19 @@ registration_secrets:
 admins:
     root: ""
 
+# API feature switches.
+api_features:
+    login: true
+    plugin: true
+    plugin_upload: true
+    instance: true
+    instance_database: true
+    client: true
+    client_proxy: true
+    client_auth: true
+    dev_open: true
+    log: true
+
 # Python logging configuration.
 #
 # See section 16.7.2 of the Python documentation for more info:

@@ -61,7 +61,12 @@ export async function login(username, password) {
     return await resp.json()
 }
 
+let features = null
+
 export async function ping() {
+    if (!features) {
+        await remoteGetFeatures()
+    }
     const response = await fetch(`${BASE_PATH}/auth/ping`, {
         method: "POST",
         headers: getHeaders(),
@@ -74,6 +79,12 @@ export async function ping() {
     }
     throw json
 }
+
+export const remoteGetFeatures = async () => {
+    features = await defaultGet("/features")
+}
+
+export const getFeatures = () => features
 
 export async function openLogSocket() {
     let protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
@@ -211,7 +222,9 @@ export const deleteClient = id => defaultDelete("client", id)
 
 export default {
     BASE_PATH,
-    login, ping, openLogSocket, debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
+    login, ping, getFeatures, remoteGetFeatures,
+    openLogSocket,
+    debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
     getInstances, getInstance, putInstance, deleteInstance,
     getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,

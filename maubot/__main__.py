@@ -26,7 +26,7 @@ from .server import MaubotServer
 from .client import Client, init as init_client_class
 from .loader.zip import init as init_zip_loader
 from .instance import init as init_plugin_instance_class
-from .management.api import init as init_mgmt_api, stop as stop_mgmt_api, init_log_listener
+from .management.api import init as init_mgmt_api
 from .__meta__ import __version__
 
 parser = argparse.ArgumentParser(description="A plugin-based Matrix bot system.",
@@ -43,7 +43,13 @@ config.load()
 config.update()
 
 logging.config.dictConfig(copy.deepcopy(config["logging"]))
-init_log_listener()
+
+stop_log_listener = None
+if config["api_features.log"]:
+    from .management.api.log import init as init_log_listener, stop_all as stop_log_listener
+
+    init_log_listener()
+
 log = logging.getLogger("maubot.init")
 log.info(f"Initializing maubot {__version__}")
 
@@ -88,8 +94,9 @@ except KeyboardInterrupt:
     loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()],
                                            loop=loop))
     db_session.commit()
-    log.debug("Closing websockets")
-    loop.run_until_complete(stop_mgmt_api())
+    if stop_log_listener is not None:
+        log.debug("Closing websockets")
+        loop.run_until_complete(stop_log_listener())
     log.debug("Stopping server")
     try:
         loop.run_until_complete(asyncio.wait_for(server.stop(), 5, loop=loop))

@@ -78,6 +78,7 @@ class Plugin extends BaseMainView {
                 <PrefInput rowName="Version" type="text" value={this.state.version}
                            disabled={true}/>
             </PrefTable>}
+            {api.getFeatures().plugin_upload &&
             <div className={`upload-box ${this.state.uploading ? "uploading" : ""}`}>
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="application/zip+mbp"
@@ -85,7 +86,7 @@ class Plugin extends BaseMainView {
                        onDragEnter={evt => evt.target.parentElement.classList.add("drag")}
                        onDragLeave={evt => evt.target.parentElement.classList.remove("drag")}/>
                 {this.state.uploading && <Spinner/>}
-            </div>
+            </div>}
             {!this.isNew && <div className="buttons">
                 <button className={`delete ${this.hasInstances ? "disabled-bg" : ""}`}
                         onClick={this.delete} disabled={this.loading || this.hasInstances}

@@ -56,6 +56,16 @@ class Config(BaseFileConfig):
                     password = self._new_token()
                 base["admins"][username] = bcrypt.hashpw(password.encode("utf-8"),
                                                          bcrypt.gensalt()).decode("utf-8")
+        copy("api_features.login")
+        copy("api_features.plugin")
+        copy("api_features.plugin_upload")
+        copy("api_features.instance")
+        copy("api_features.instance_database")
+        copy("api_features.client")
+        copy("api_features.client_proxy")
+        copy("api_features.client_auth")
+        copy("api_features.dev_open")
+        copy("api_features.log")
         copy("logging")
 
     def is_admin(self, user: str) -> bool:

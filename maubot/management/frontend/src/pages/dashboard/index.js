@@ -54,18 +54,32 @@ class Dashboard extends Component {
             api.getInstances(), api.getClients(), api.getPlugins(),
             api.updateDebugOpenFileEnabled()])
         const instances = {}
-        for (const instance of instanceList) {
-            instances[instance.id] = instance
+        if (api.getFeatures().instance) {
+            for (const instance of instanceList) {
+                instances[instance.id] = instance
+            }
         }
         const clients = {}
-        for (const client of clientList) {
-            clients[client.id] = client
+        if (api.getFeatures().client) {
+            for (const client of clientList) {
+                clients[client.id] = client
+            }
         }
         const plugins = {}
-        for (const plugin of pluginList) {
-            plugins[plugin.id] = plugin
+        if (api.getFeatures().plugin) {
+            for (const plugin of pluginList) {
+                plugins[plugin.id] = plugin
+            }
         }
         this.setState({ instances, clients, plugins })
+
+        await this.enableLogs()
+    }
+
+    async enableLogs() {
+        if (api.getFeatures().log) {
+            return
+        }
 
         const logs = await api.openLogSocket()
 
@@ -119,9 +133,13 @@ class Dashboard extends Component {
     }
 
     renderView(field, type, id) {
+        const typeName = field.slice(0, -1)
+        if (!api.getFeatures()[typeName]) {
+            return this.renderDisabled(typeName)
+        }
         const entry = this.state[field][id]
         if (!entry) {
-            return this.renderNotFound(field.slice(0, -1))
+            return this.renderNotFound(typeName)
         }
         return React.createElement(type, {
             entry,
@@ -145,6 +163,12 @@ class Dashboard extends Component {
         </div>
     )
 
+    renderDisabled = (thing = "path") => (
+        <div className="not-found">
+            The {thing} API has been disabled in the maubot config.
+        </div>
+    )
+
     renderMain() {
         return <div className={`dashboard ${this.state.sidebarOpen ? "sidebar-open" : ""}`}>
             <Link to="/" className="title">
@@ -157,31 +181,31 @@ class Dashboard extends Component {
 
             <nav className="sidebar">
                 <div className="buttons">
-                    <button className="open-log" onClick={this.openLog}>
+                    {api.getFeatures().log && <button className="open-log" onClick={this.openLog}>
                         <span>View logs</span>
-                    </button>
+                    </button>}
                 </div>
-                <div className="instances list">
+                {api.getFeatures().instance && <div className="instances list">
                     <div className="title">
                         <h2>Instances</h2>
                         <Link to="/new/instance"><Plus/></Link>
                     </div>
                     {this.renderList("instances", Instance.ListEntry)}
-                </div>
-                <div className="clients list">
+                </div>}
+                {api.getFeatures().client && <div className="clients list">
                     <div className="title">
                         <h2>Clients</h2>
                         <Link to="/new/client"><Plus/></Link>
                     </div>
                     {this.renderList("clients", Client.ListEntry)}
-                </div>
-                <div className="plugins list">
+                </div>}
+                {api.getFeatures().plugin && <div className="plugins list">
                     <div className="title">
                         <h2>Plugins</h2>
-                        <Link to="/new/plugin"><Plus/></Link>
+                        {api.getFeatures().plugin_upload && <Link to="/new/plugin"><Plus/></Link>}
                     </div>
                     {this.renderList("plugins", Plugin.ListEntry)}
-                </div>
+                </div>}
             </nav>
 
             <div className="topbar"

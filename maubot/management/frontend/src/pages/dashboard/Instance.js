@@ -157,13 +157,24 @@ class Instance extends BaseMainView {
             <PrefSwitch rowName="Running"
                         active={this.state.started} origActive={this.props.entry.started}
                         onToggle={started => this.setState({ started })}/>
-            <PrefSelect rowName="Primary user" options={this.clientOptions}
-                        isSearchable={false} value={this.selectedClientEntry}
-                        origValue={this.props.entry.primary_user}
-                        onChange={({ id }) => this.setState({ primary_user: id })}/>
-            <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
-                        value={this.selectedPluginEntry} origValue={this.props.entry.type}
-                        onChange={({ id }) => this.setState({ type: id })}/>
+            {api.getFeatures().client ? (
+                <PrefSelect rowName="Primary user" options={this.clientOptions}
+                            isSearchable={false} value={this.selectedClientEntry}
+                            origValue={this.props.entry.primary_user}
+                            onChange={({ id }) => this.setState({ primary_user: id })}/>
+            ) : (
+                <PrefInput rowName="Primary user" type="text" name="primary_user"
+                           value={this.state.primary_user} placeholder="@user:example.com"
+                           onChange={this.inputChange}/>
+            )}
+            {api.getFeatures().plugin ? (
+                <PrefSelect rowName="Type" options={this.typeOptions} isSearchable={false}
+                            value={this.selectedPluginEntry} origValue={this.props.entry.type}
+                            onChange={({ id }) => this.setState({ type: id })}/>
+            ) : (
+                <PrefInput rowName="Type" type="text" name="type" value={this.state.type}
+                           placeholder="xyz.maubot.example" onChange={this.inputChange}/>
+            )}
         </PrefTable>
         {!this.isNew &&
         <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
@@ -190,10 +201,11 @@ class Instance extends BaseMainView {
                     View database
                 </Link>
             )}
+            {api.getFeatures().log &&
             <button className="open-log"
                     onClick={() => this.props.openLog(`instance.${this.state.id}`)}>
                 View logs
-            </button>
+            </button>}
         </div>}
         <div className="error">{this.state.error}</div>
     </div>

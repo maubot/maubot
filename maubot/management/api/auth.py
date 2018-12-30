@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional
 from time import time
-import json
 
 from aiohttp import web
 
@@ -71,22 +70,3 @@ async def ping(request: web.Request) -> web.Response:
     if not get_config().is_admin(user):
         return resp.invalid_token
     return resp.pong(user)
-
-
-@routes.post("/auth/login")
-async def login(request: web.Request) -> web.Response:
-    try:
-        data = await request.json()
-    except json.JSONDecodeError:
-        return resp.body_not_json
-    secret = data.get("secret")
-    if secret and get_config()["server.unshared_secret"] == secret:
-        user = data.get("user") or "root"
-        return resp.logged_in(create_token(user))
-
-    username = data.get("username")
-    password = data.get("password")
-    if get_config().check_password(username, password):
-        return resp.logged_in(create_token(username))
-
-    return resp.bad_auth
