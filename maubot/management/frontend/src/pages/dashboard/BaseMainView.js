@@ -1,5 +1,6 @@
 import React, { Component } from "react"
 import { Link } from "react-router-dom"
+import api from "../../api"
 
 class BaseMainView extends Component {
     constructor(props) {
@@ -74,7 +75,7 @@ class BaseMainView extends Component {
         </div>
     )
 
-    renderLogButton = (filter) => !this.isNew && <div className="buttons">
+    renderLogButton = (filter) => !this.isNew && api.getFeatures().log && <div className="buttons">
         <button className="open-log" onClick={() => this.props.openLog(filter)}>View logs</button>
     </div>
 }

@@ -61,7 +61,12 @@ export async function login(username, password) {
     return await resp.json()
 }
 
+let features = null
+
 export async function ping() {
+    if (!features) {
+        await remoteGetFeatures()
+    }
     const response = await fetch(`${BASE_PATH}/auth/ping`, {
         method: "POST",
         headers: getHeaders(),
@@ -74,6 +79,12 @@ export async function ping() {
     }
     throw json
 }
+
+export const remoteGetFeatures = async () => {
+    features = await defaultGet("/features")
+}
+
+export const getFeatures = () => features
 
 export async function openLogSocket() {
     let protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
@@ -153,6 +164,16 @@ export const getInstance = id => defaultGet(`/instance/${id}`)
 export const putInstance = (instance, id) => defaultPut("instance", instance, id)
 export const deleteInstance = id => defaultDelete("instance", id)
 
+export const getInstanceDatabase = id => defaultGet(`/instance/${id}/database`)
+export const queryInstanceDatabase = async (id, query) => {
+    const resp = await fetch(`${BASE_PATH}/instance/${id}/database/query`, {
+        headers: getHeaders(),
+        body: JSON.stringify({ query }),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
 export const getPlugins = () => defaultGet("/plugins")
 export const getPlugin = id => defaultGet(`/plugin/${id}`)
 export const deletePlugin = id => defaultDelete("plugin", id)
@@ -201,8 +222,11 @@ export const deleteClient = id => defaultDelete("client", id)
 
 export default {
     BASE_PATH,
-    login, ping, openLogSocket, debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
+    login, ping, getFeatures, remoteGetFeatures,
+    openLogSocket,
+    debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
     getInstances, getInstance, putInstance, deleteInstance,
+    getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
 }

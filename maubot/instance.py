@@ -30,7 +30,7 @@ from mautrix.types import UserID
 from .db import DBPlugin
 from .config import Config
 from .client import Client
-from .loader import PluginLoader
+from .loader import PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
 
 log = logging.getLogger("maubot.instance")
@@ -52,6 +52,8 @@ class PluginInstance:
     plugin: Plugin
     config: BaseProxyConfig
     base_cfg: RecursiveDict[CommentedMap]
+    inst_db: sql.engine.Engine
+    inst_db_tables: Dict[str, sql.Table]
     started: bool
 
     def __init__(self, db_instance: DBPlugin):
@@ -62,6 +64,8 @@ class PluginInstance:
         self.loader = None
         self.client = None
         self.plugin = None
+        self.inst_db = None
+        self.inst_db_tables = None
         self.base_cfg = None
         self.cache[self.id] = self
 
@@ -73,7 +77,16 @@ class PluginInstance:
             "started": self.started,
             "primary_user": self.primary_user,
             "config": self.db_instance.config,
+            "database": (self.inst_db is not None
+                         and self.mb_config["api_features.instance_database"]),
         }
+
+    def get_db_tables(self) -> Dict[str, sql.Table]:
+        if not self.inst_db_tables:
+            metadata = sql.MetaData()
+            metadata.reflect(self.inst_db)
+            self.inst_db_tables = metadata.tables
+        return self.inst_db_tables
 
     def load(self) -> bool:
         if not self.loader:
@@ -89,6 +102,9 @@ class PluginInstance:
                 self.log.error(f"Failed to get client for user {self.primary_user}")
                 self.db_instance.enabled = False
                 return False
+        if self.loader.meta.database:
+            db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
+            self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
@@ -105,7 +121,11 @@ class PluginInstance:
             pass
         self.db.delete(self.db_instance)
         self.db.commit()
-        # TODO delete plugin db
+        if self.inst_db:
+            self.inst_db.dispose()
+            ZippedPluginLoader.trash(
+                os.path.join(self.mb_config["plugin_directories.db"], f"{self.id}.db"),
+                reason="deleted")
 
     def load_config(self) -> CommentedMap:
         return yaml.load(self.db_instance.config)
@@ -135,12 +155,9 @@ class PluginInstance:
             except (FileNotFoundError, KeyError):
                 self.base_cfg = None
             self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
-        db = None
-        if self.loader.meta.database:
-            db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
-            db = sql.create_engine(f"sqlite:///{db_path}.db")
         self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
-                          instance_id=self.id, log=self.log, config=self.config, database=db)
+                          instance_id=self.id, log=self.log, config=self.config,
+                          database=self.inst_db)
         try:
             await self.plugin.start()
         except Exception:
@@ -148,6 +165,7 @@ class PluginInstance:
             self.db_instance.enabled = False
             return
         self.started = True
+        self.inst_db_tables = None
         self.log.info(f"Started instance of {self.loader.meta.id} v{self.loader.meta.version} "
                       f"with user {self.client.id}")
 
@@ -162,6 +180,7 @@ class PluginInstance:
         except Exception:
             self.log.exception("Failed to stop instance")
         self.plugin = None
+        self.inst_db_tables = None
 
     @classmethod
     def get(cls, instance_id: str, db_instance: Optional[DBPlugin] = None

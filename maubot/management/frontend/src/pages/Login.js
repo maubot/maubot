@@ -44,6 +44,14 @@ class Login extends Component {
     }
 
     render() {
+        if (!api.getFeatures().login) {
+            return <div className="login-wrapper">
+                <div className="login errored">
+                    <h1>Maubot Manager</h1>
+                    <div className="error">Login has been disabled in the maubot config.</div>
+                </div>
+            </div>
+        }
         return <div className="login-wrapper">
             <div className={`login ${this.state.error && "errored"}`}>
                 <h1>Maubot Manager</h1>

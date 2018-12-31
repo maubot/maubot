@@ -76,13 +76,14 @@
 
         @import client/index
         @import instance
+        @import instance-database
         @import plugin
 
         > div
             margin: 2rem 4rem
 
             @media screen and (max-width: 50rem)
-                margin: 2rem 1rem
+                margin: 1rem
 
         > div.not-found, > div.home
             text-align: center
@@ -95,9 +96,12 @@
             margin: 1rem .5rem
             width: calc(100% - 1rem)
 
-            button.open-log
+            button.open-log, a.open-database
                 +button
                 +main-color-button
+
+            a.open-database
+                +link-button
 
         div.error
             +notification($error)

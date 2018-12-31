@@ -1,0 +1,101 @@
+// maubot - A plugin-based Matrix bot system.
+// Copyright (C) 2018 Tulir Asokan
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+> div.instance-database
+    margin: 0
+
+    > div.topbar
+        background-color: $primary-light
+
+        display: flex
+        justify-items: center
+        align-items: center
+
+        > a
+            display: flex
+            justify-items: center
+            align-items: center
+            text-decoration: none
+            user-select: none
+
+            height: 2.5rem
+            width: 100%
+
+    > *:not(.topbar)
+        margin: 2rem 4rem
+
+        @media screen and (max-width: 50rem)
+            margin: 1rem
+
+    > div.tables
+        display: flex
+        flex-wrap: wrap
+
+        > a
+            +link-button
+            color: black
+            flex: 1
+
+            border-bottom: 2px solid $primary
+
+            padding: .25rem
+            margin: .25rem
+
+            &:hover
+                background-color: $primary-light
+                border-bottom: 2px solid $primary-dark
+
+            &.active
+                background-color: $primary
+
+    > div.query
+        display: flex
+
+        > input
+            +input
+            font-family: "Fira Code", monospace
+            flex: 1
+            margin-right: .5rem
+
+        > button
+            +button
+            +main-color-button
+
+    > div.prev-query
+        +notification($primary, $primary-light)
+
+        span.query
+            font-family: "Fira Code", monospace
+
+        p
+            margin: 0
+
+    > div.table
+        overflow-x: auto
+        overflow-y: hidden
+
+        table
+            font-family: "Fira Code", monospace
+            width: 100%
+            box-sizing: border-box
+
+            > thead
+                > tr > td > span
+                    align-items: center
+                    justify-items: center
+                    display: flex
+                    cursor: pointer
+                    user-select: none

@@ -33,6 +33,8 @@ class Main extends Component {
     async componentWillMount() {
         if (localStorage.accessToken) {
             await this.ping()
+        } else {
+            await api.remoteGetFeatures()
         }
         this.setState({ pinged: true })
     }

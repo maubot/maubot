@@ -13,26 +13,28 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import json
+
 from aiohttp import web
-from asyncio import AbstractEventLoop
-import importlib
 
-from ...config import Config
-from .base import routes, get_config, set_config, set_loop
-from .middleware import auth, error
+from .base import routes, get_config
+from .responses import resp
+from .auth import create_token
 
+@routes.post("/auth/login")
+async def login(request: web.Request) -> web.Response:
+    try:
+        data = await request.json()
+    except json.JSONDecodeError:
+        return resp.body_not_json
+    secret = data.get("secret")
+    if secret and get_config()["server.unshared_secret"] == secret:
+        user = data.get("user") or "root"
+        return resp.logged_in(create_token(user))
 
-@routes.get("/features")
-def features(_: web.Request) -> web.Response:
-    return web.json_response(get_config()["api_features"])
+    username = data.get("username")
+    password = data.get("password")
+    if get_config().check_password(username, password):
+        return resp.logged_in(create_token(username))
 
-
-def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
-    set_config(cfg)
-    set_loop(loop)
-    for pkg, enabled in cfg["api_features"].items():
-        if enabled:
-            importlib.import_module(f"maubot.management.api.{pkg}")
-    app = web.Application(loop=loop, middlewares=[auth, error], client_max_size=100 * 1024 * 1024)
-    app.add_routes(routes)
-    return app
+    return resp.bad_auth
