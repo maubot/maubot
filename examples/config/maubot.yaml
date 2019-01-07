@@ -1,0 +1,12 @@
+maubot: 0.1.0
+id: xyz.maubot.databasebot
+version: 1.0.0
+license: MIT
+modules:
+- configurablebot
+main_class: ConfigurableBot
+database: false
+
+# Instruct the build tool to include the base config.
+extra_files:
+- base-config.yaml

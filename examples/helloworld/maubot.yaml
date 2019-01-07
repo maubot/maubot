@@ -5,7 +5,7 @@
 maubot: 0.1.0
 
 # The unique ID for the plugin. Java package naming style. (i.e. use your own domain, not xyz.maubot)
-id: xyz.maubot.example
+id: xyz.maubot.helloworld
 
 # A PEP 440 compliant version string.
 version: 1.0.0
