@@ -64,15 +64,13 @@ export async function login(username, password) {
 let features = null
 
 export async function ping() {
-    if (!features) {
-        await remoteGetFeatures()
-    }
     const response = await fetch(`${BASE_PATH}/auth/ping`, {
         method: "POST",
         headers: getHeaders(),
     })
     const json = await response.json()
     if (json.username) {
+        features = json.features
         return json.username
     } else if (json.errcode === "auth_token_missing" || json.errcode === "auth_token_invalid") {
         return null

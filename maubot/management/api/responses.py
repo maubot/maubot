@@ -294,9 +294,10 @@ class _Response:
             "token": token,
         })
 
-    def pong(self, user: str) -> web.Response:
+    def pong(self, user: str, features: dict) -> web.Response:
         return self.found({
             "username": user,
+            "features": features,
         })
 
     @staticmethod

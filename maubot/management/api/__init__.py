@@ -19,12 +19,20 @@ import importlib
 
 from ...config import Config
 from .base import routes, get_config, set_config, set_loop
+from .auth import check_token
 from .middleware import auth, error
 
 
 @routes.get("/features")
-def features(_: web.Request) -> web.Response:
-    return web.json_response(get_config()["api_features"])
+def features(request: web.Request) -> web.Response:
+    data = get_config()["api_features"]
+    err = check_token(request)
+    if err is None:
+        return web.json_response(data)
+    else:
+        return web.json_response({
+            "login": data["login"],
+        })
 
 
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:

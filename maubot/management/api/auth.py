@@ -69,4 +69,4 @@ async def ping(request: web.Request) -> web.Response:
     user = data.get("user_id", None)
     if not get_config().is_admin(user):
         return resp.invalid_token
-    return resp.pong(user)
+    return resp.pong(user, get_config()["api_features"])
