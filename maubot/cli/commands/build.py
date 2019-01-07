@@ -117,7 +117,7 @@ def upload_plugin(output: Union[str, IO], server: str) -> None:
 @click.argument("path", default=os.getcwd())
 @click.option("-o", "--output", help="Path to output built plugin to",
               type=PathValidator.click_type)
-@click.option("-u", "--upload", help="Upload plugin to  server after building", is_flag=True,
+@click.option("-u", "--upload", help="Upload plugin to server after building", is_flag=True,
               default=False)
 @click.option("-s", "--server", help="Server to upload built plugin to")
 def build(path: str, output: str, upload: bool, server: str) -> None:
@@ -133,7 +133,7 @@ def build(path: str, output: str, upload: bool, server: str) -> None:
     os.chdir(path)
     write_plugin(meta, output)
     if isinstance(output, str):
-        print(f"{Fore.GREEN}Plugin built to {Fore.CYAN}{path}{Fore.GREEN}.{Fore.RESET}")
+        print(f"{Fore.GREEN}Plugin built to {Fore.CYAN}{output}{Fore.GREEN}.{Fore.RESET}")
     else:
         output.seek(0)
     if upload:
