@@ -73,6 +73,9 @@ export async function ping() {
         features = json.features
         return json.username
     } else if (json.errcode === "auth_token_missing" || json.errcode === "auth_token_invalid") {
+        if (!features) {
+            await remoteGetFeatures()
+        }
         return null
     }
     throw json
