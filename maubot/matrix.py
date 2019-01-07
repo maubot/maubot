@@ -47,21 +47,23 @@ class MaubotMessageEvent(MessageEvent):
         self.client = client
 
     def respond(self, content: Union[str, MessageEventContent],
-                event_type: EventType = EventType.ROOM_MESSAGE,
-                markdown: bool = True, reply: bool = False) -> Awaitable[EventID]:
+                event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
+                html_in_markdown: bool = False, reply: bool = False) -> Awaitable[EventID]:
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
             if markdown:
                 content.format = Format.HTML
-                content.body, content.formatted_body = parse_markdown(content.body)
+                content.body, content.formatted_body = parse_markdown(content.body,
+                                                                      allow_html=html_in_markdown)
         if reply:
             content.set_reply(self)
         return self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(self, content: Union[str, MessageEventContent],
-              event_type: EventType = EventType.ROOM_MESSAGE,
-              markdown: bool = True) -> Awaitable[EventID]:
-        return self.respond(content, event_type, markdown, reply=True)
+              event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
+              html_in_markdown: bool = False) -> Awaitable[EventID]:
+        return self.respond(content, event_type, markdown, reply=True,
+                            html_in_markdown=html_in_markdown)
 
     def mark_read(self) -> Awaitable[None]:
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
