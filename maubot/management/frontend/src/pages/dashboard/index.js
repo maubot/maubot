@@ -77,7 +77,7 @@ class Dashboard extends Component {
     }
 
     async enableLogs() {
-        if (api.getFeatures().log) {
+        if (!api.getFeatures().log) {
             return
         }
 
