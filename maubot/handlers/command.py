@@ -54,6 +54,7 @@ class CommandHandler:
         self.__mb_arg_fallthrough__: bool = True
         self.__mb_event_handler__: bool = True
         self.__mb_event_type__: EventType = EventType.ROOM_MESSAGE
+        self.__mb_msgtypes__: List[MessageType] = (MessageType.TEXT,)
         self.__class_instance: Any = None
 
     @staticmethod
@@ -62,7 +63,7 @@ class CommandHandler:
 
     async def __call__(self, evt: MaubotMessageEvent, *, _existing_args: Dict[str, Any] = None,
                        remaining_val: str = None) -> Any:
-        if evt.sender == evt.client.mxid:
+        if evt.sender == evt.client.mxid or evt.content.msgtype not in self.__mb_msgtypes__:
             return
         if remaining_val is None:
             if not evt.content.body or evt.content.body[0] != "!":
@@ -189,8 +190,8 @@ class CommandHandler:
 
 
 def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = None,
-        event_type: EventType = EventType.ROOM_MESSAGE, require_subcommand: bool = True,
-        arg_fallthrough: bool = True) -> CommandHandlerDecorator:
+        event_type: EventType = EventType.ROOM_MESSAGE, msgtypes: List[MessageType] = None,
+        require_subcommand: bool = True, arg_fallthrough: bool = True) -> CommandHandlerDecorator:
     def decorator(func: Union[CommandHandler, CommandHandlerFunc]) -> CommandHandler:
         if not isinstance(func, CommandHandler):
             func = CommandHandler(func)
@@ -220,6 +221,8 @@ def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = Non
         func.__mb_require_subcommand__ = require_subcommand
         func.__mb_arg_fallthrough__ = arg_fallthrough
         func.__mb_event_type__ = event_type
+        if msgtypes:
+            func.__mb_msgtypes__ = msgtypes
         return func
 
     return decorator
