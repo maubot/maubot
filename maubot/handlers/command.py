@@ -158,7 +158,7 @@ class CommandHandler:
 
     @property
     def __mb_subcommands_list__(self) -> str:
-        return f"**Subcommands:** {', '.join(self.__mb_subcommands__.keys())}"
+        return f"**Subcommands:** {', '.join(sc.__mb_name__ for sc in self.__mb_subcommands__)}"
 
     @property
     def __mb_usage_without_subcommands__(self) -> str:
