@@ -1,0 +1,10 @@
+maubot: 0.1.0
+id: xyz.maubot.databasebot
+version: 1.0.0
+license: MIT
+modules:
+- databasebot
+main_class: DatabaseBot
+
+# This is required for a database to be available.
+database: true
