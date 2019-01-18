@@ -63,7 +63,7 @@ class CommandHandler:
         keys = ["parent", "subcommands", "arguments", "help", "get_name", "is_command_match",
                 "require_subcommand", "arg_fallthrough", "event_handler", "event_type", "msgtypes"]
         for key in keys:
-            key = f"__mb_${key}__"
+            key = f"__mb_{key}__"
             setattr(new_ch, key, getattr(self, key))
         return new_ch
 
