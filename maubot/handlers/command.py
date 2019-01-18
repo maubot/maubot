@@ -55,7 +55,26 @@ class CommandHandler:
         self.__mb_event_handler__: bool = True
         self.__mb_event_type__: EventType = EventType.ROOM_MESSAGE
         self.__mb_msgtypes__: List[MessageType] = (MessageType.TEXT,)
+        self.__instance_vars: Dict[str, CommandHandler] = {}
         self.__class_instance: Any = None
+
+    def __copy__(self) -> 'CommandHandler':
+        new_ch = type(self)(self.__mb_func__)
+        keys = ["parent", "subcommands", "arguments", "help", "get_name", "is_command_match",
+                "require_subcommand", "arg_fallthrough", "event_handler", "event_type", "msgtypes"]
+        for key in keys:
+            key = f"__mb_${key}__"
+            setattr(new_ch, key, getattr(self, key))
+        return new_ch
+
+    def __get__(self, instance, instancetype):
+        try:
+            return self.__instance_vars[instance]
+        except KeyError:
+            copy = self.__copy__()
+            copy.__class_instance = instance
+            self.__instance_vars[instance] = copy
+            return copy
 
     @staticmethod
     def __command_match_unset(self, val: str) -> str:
@@ -116,10 +135,6 @@ class CommandHandler:
                 await evt.reply(self.__mb_usage__)
                 return False, remaining_val
         return True, remaining_val
-
-    def __get__(self, instance, instancetype):
-        self.__class_instance = instance
-        return self
 
     @property
     def __mb_full_help__(self) -> str:
