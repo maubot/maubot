@@ -23,7 +23,6 @@ from sqlalchemy.engine.base import Engine
 from aiohttp import ClientSession
 
 if TYPE_CHECKING:
-    from mautrix.types import Event
     from mautrix.util.config import BaseProxyConfig
     from .client import MaubotMatrixClient
 
