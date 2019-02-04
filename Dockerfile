@@ -21,7 +21,10 @@ RUN apk add --no-cache \
       python3-dev \
       ca-certificates \
       su-exec \
- && pip3 install -r requirements.txt
+      py3-pillow \
+      py3-magic \
+ && pip3 install -r requirements.txt feedparser
+# TODO require pillow, magic and feedparser when maubot supports installing dependencies
 
 VOLUME /data
 
