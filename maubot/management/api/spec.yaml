@@ -399,6 +399,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /client/auth/servers:
+    get:
+      operationId: get_client_auth_servers
+      summary: Get the list of servers you can register or log in on via the maubot server
+      tags: [Clients]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example:
+                - maunium.net
+                - example.com
+                - matrix.org
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  '/client/auth/{server}/register':
+    parameters:
+    - name: server
+      in: path
+      description: The server name to register the account on.
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: client_auth_register
+      summary: |
+        Register a new account on the given Matrix server using the shared registration
+        secret configured into the maubot server.
+      tags: [Clients]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrixAuthentication'
+      responses:
+        200:
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: token_here
+                  user_id:
+                    type: string
+                    example: '@putkiteippi:maunium.net'
+                  home_server:
+                    type: string
+                    example: maunium.net
+                  device_id:
+                    type: string
+                    example: device_id_here
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/MatrixServerError'
+  '/client/auth/{server}/login':
+    parameters:
+    - name: server
+      in: path
+      description: The server name to log in to.
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: client_auth_login
+      summary: Log in to the given Matrix server via the maubot server
+      tags: [Clients]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrixAuthentication'
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    example: '@putkiteippi:maunium.net'
+                  access_token:
+                    type: string
+                    example: token_here
+                  device_id:
+                    type: string
+                    example: device_id_here
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/MatrixServerError'
 
 components:
   responses:
@@ -432,6 +533,23 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    MatrixServerError:
+      description: The Matrix server returned an error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errcode:
+                type: string
+                description: The `errcode` returned by the server.
+              error:
+                type: string
+                description: The human-readable error returned by the server.
+              http_status:
+                type: integer
+                description: The HTTP status returned by the server.
+
   securitySchemes:
     bearer:
       type: http
@@ -516,3 +634,14 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/PluginInstance'
+    MatrixAuthentication:
+      type: object
+      properties:
+        username:
+          type: string
+          example: putkiteippi
+          description: The user ID localpart to register/log in as.
+        password:
+          type: string
+          example: p455w0rd
+          description: The password for/of the user.

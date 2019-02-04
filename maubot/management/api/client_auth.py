@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, Tuple, NamedTuple, Optional
 from json import JSONDecodeError
+from http import HTTPStatus
 import hmac
 import hashlib
 
@@ -95,7 +96,8 @@ async def register(request: web.Request) -> web.Response:
         return web.json_response({
             "errcode": e.errcode,
             "error": e.message,
-        }, status=e.http_status)
+            "http_status": e.http_status,
+        }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 @routes.post("/client/auth/{server}/login")
