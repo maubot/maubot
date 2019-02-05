@@ -326,10 +326,17 @@ def argument(name: str, label: str = None, *, required: bool = True, matches: Op
 
 def passive(regex: Union[str, Pattern], *, msgtypes: Sequence[MessageType] = (MessageType.TEXT,),
             field: Callable[[MaubotMessageEvent], str] = lambda evt: evt.content.body,
-            event_type: EventType = EventType.ROOM_MESSAGE, multiple: bool = False
+            event_type: EventType = EventType.ROOM_MESSAGE, multiple: bool = False,
+            case_insensitive: bool = False, multiline: bool = False, dot_all: bool = False
             ) -> PassiveCommandHandlerDecorator:
     if not isinstance(regex, Pattern):
         regex = re.compile(regex)
+    if case_insensitive:
+        regex.flags |= re.IGNORECASE
+    if multiline:
+        regex.flags |= re.MULTILINE
+    if dot_all:
+        regex.flags |= re.DOTALL
 
     def decorator(func: CommandHandlerFunc) -> CommandHandlerFunc:
         combine = None
@@ -352,7 +359,7 @@ def passive(regex: Union[str, Pattern], *, msgtypes: Sequence[MessageType] = (Me
                 val = [(data[match.pos:match.endpos], *match.groups())
                        for match in regex.finditer(data)]
             else:
-                match = regex.match(data)
+                match = regex.search(data)
                 if match:
                     val = (data[match.pos:match.endpos], *match.groups())
                 else:
