@@ -330,13 +330,14 @@ def passive(regex: Union[str, Pattern], *, msgtypes: Sequence[MessageType] = (Me
             case_insensitive: bool = False, multiline: bool = False, dot_all: bool = False
             ) -> PassiveCommandHandlerDecorator:
     if not isinstance(regex, Pattern):
-        regex = re.compile(regex)
-    if case_insensitive:
-        regex.flags |= re.IGNORECASE
-    if multiline:
-        regex.flags |= re.MULTILINE
-    if dot_all:
-        regex.flags |= re.DOTALL
+        flags = re.RegexFlag.UNICODE
+        if case_insensitive:
+            flags |= re.IGNORECASE
+        if multiline:
+            flags |= re.MULTILINE
+        if dot_all:
+            flags |= re.DOTALL
+        regex = re.compile(regex, flags=flags)
 
     def decorator(func: CommandHandlerFunc) -> CommandHandlerFunc:
         combine = None
