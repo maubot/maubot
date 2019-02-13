@@ -76,7 +76,7 @@ class VersionValidator(ClickValidator):
 
 
 def spdx(val: str) -> str:
-    if spdxlib.valid(val):
+    if not spdxlib.valid(val):
         raise click.BadParameter(f"{val} is not a valid SPDX license identifier")
     return val
 

@@ -57,8 +57,9 @@ def init(name: str, id: str, version: Version, license: str, config: bool) -> No
                                 main_class=main_class)
     with open("maubot.yaml", "w") as file:
         file.write(meta)
-    with open("LICENSE", "w") as file:
-        file.write(spdx.get(license)["text"])
+    if license:
+        with open("LICENSE", "w") as file:
+            file.write(spdx.get(license)["text"])
     if not os.path.isdir(name):
         os.mkdir(name)
     mod = mod_template.render(config=config, name=main_class)
