@@ -88,7 +88,7 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
         for module in meta.modules:
             if os.path.isfile(f"{module}.py"):
                 zip.write(f"{module}.py")
-            elif os.path.isdir(module):
+            elif module is not None and os.path.isdir(module):
                 zipdir(zip, module)
             else:
                 print(Fore.YELLOW + f"Module {module} not found, skipping" + Fore.RESET)
