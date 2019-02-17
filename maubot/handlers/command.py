@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import (Union, Callable, Sequence, Pattern, Awaitable, NewType, Optional, Any, List,
-                    Dict, Tuple, Set, Type)
+                    Dict, Tuple, Set)
 from abc import ABC, abstractmethod
 import asyncio
 import functools
@@ -117,7 +117,7 @@ class CommandHandler:
                                   remaining_val: str) -> Tuple[bool, Any]:
         command, remaining_val = _split_in_two(remaining_val.strip(), " ")
         for subcommand in self.__mb_subcommands__:
-            if subcommand.__mb_is_command_match__(subcommand.__bound_instance__, command):
+            if subcommand.__mb_is_command_match__(subcommand, command):
                 return True, await subcommand(evt, _existing_args=call_args,
                                               remaining_val=remaining_val)
         return False, None
@@ -228,10 +228,10 @@ def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = Non
             else:
                 func.__mb_is_command_match__ = aliases
         elif isinstance(aliases, (list, set, tuple)):
-            func.__mb_is_command_match__ = lambda self, val: (val == func.__mb_name__
+            func.__mb_is_command_match__ = lambda self, val: (val == self.__mb_name__
                                                               or val in aliases)
         else:
-            func.__mb_is_command_match__ = lambda self, val: val == func.__mb_name__
+            func.__mb_is_command_match__ = lambda self, val: val == self.__mb_name__
         # Decorators are executed last to first, so we reverse the argument list.
         func.__mb_arguments__.reverse()
         func.__mb_require_subcommand__ = require_subcommand
