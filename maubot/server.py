@@ -38,15 +38,33 @@ class MaubotServer:
 
     def __init__(self, config: Config, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop or asyncio.get_event_loop()
-        self.app = web.Application(loop=self.loop, client_max_size=100*1024*1024)
+        self.app = web.Application(loop=self.loop, client_max_size=100 * 1024 * 1024)
         self.config = config
 
         as_path = PathBuilder(config["server.appservice_base_path"])
         self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
+        self.subapps = {}
 
         self.setup_management_ui()
 
         self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
+
+    def get_instance_subapp(self, instance_id: str) -> web.Application:
+        try:
+            return self.subapps[instance_id]
+        except KeyError:
+            app = web.Application(loop=self.loop)
+            self.app.add_subapp(self.config["server.plugin_base_path"].format(id=instance_id), app)
+            self.subapps[instance_id] = app
+            return app
+
+    def remove_instance_webapp(self, instance_id: str) -> None:
+        try:
+            subapp: web.Application = self.subapps.pop(instance_id)
+        except KeyError:
+            return
+        subapp.shutdown()
+        subapp.cleanup()
 
     def setup_management_ui(self) -> None:
         ui_base = self.config["server.ui_base_path"]

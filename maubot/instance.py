@@ -13,8 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 from asyncio import AbstractEventLoop
+from aiohttp import web
 import os.path
 import logging
 import io
@@ -33,6 +34,9 @@ from .client import Client
 from .loader import PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
 
+if TYPE_CHECKING:
+    from .server import MaubotServer
+
 log = logging.getLogger("maubot.instance")
 
 yaml = YAML()
@@ -41,6 +45,7 @@ yaml.indent(4)
 
 class PluginInstance:
     db: Session = None
+    webserver: 'MaubotServer' = None
     mb_config: Config = None
     loop: AbstractEventLoop = None
     cache: Dict[str, 'PluginInstance'] = {}
@@ -54,6 +59,7 @@ class PluginInstance:
     base_cfg: RecursiveDict[CommentedMap]
     inst_db: sql.engine.Engine
     inst_db_tables: Dict[str, sql.Table]
+    inst_webapp: web.Application
     started: bool
 
     def __init__(self, db_instance: DBPlugin):
@@ -66,6 +72,7 @@ class PluginInstance:
         self.plugin = None
         self.inst_db = None
         self.inst_db_tables = None
+        self.inst_webapp = None
         self.base_cfg = None
         self.cache[self.id] = self
 
@@ -105,6 +112,8 @@ class PluginInstance:
         if self.loader.meta.database:
             db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
             self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
+        if self.loader.meta.webapp:
+            self.inst_webapp = self.webserver.get_instance_subapp(self.id)
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
@@ -126,6 +135,8 @@ class PluginInstance:
             ZippedPluginLoader.trash(
                 os.path.join(self.mb_config["plugin_directories.db"], f"{self.id}.db"),
                 reason="deleted")
+        if self.inst_webapp:
+            self.webserver.remove_instance_webapp(self.id)
 
     def load_config(self) -> CommentedMap:
         return yaml.load(self.db_instance.config)
@@ -157,7 +168,7 @@ class PluginInstance:
             self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
         self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
                           instance_id=self.id, log=self.log, config=self.config,
-                          database=self.inst_db)
+                          database=self.inst_db, webapp=self.inst_webapp)
         try:
             await self.plugin.start()
         except Exception:
@@ -274,8 +285,10 @@ class PluginInstance:
     # endregion
 
 
-def init(db: Session, config: Config, loop: AbstractEventLoop) -> List[PluginInstance]:
+def init(db: Session, config: Config, webserver: 'MaubotServer', loop: AbstractEventLoop) -> List[
+    PluginInstance]:
     PluginInstance.db = db
     PluginInstance.mb_config = config
     PluginInstance.loop = loop
+    PluginInstance.webserver = webserver
     return PluginInstance.all()
