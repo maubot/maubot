@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Tuple
 import logging
 import asyncio
 
@@ -49,14 +50,16 @@ class MaubotServer:
 
         self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
 
-    def get_instance_subapp(self, instance_id: str) -> web.Application:
+    def get_instance_subapp(self, instance_id: str) -> Tuple[web.Application, str]:
+        subpath = self.config["server.plugin_base_path"].format(id=instance_id)
+        url = self.config["server.public_url"] + subpath
         try:
-            return self.subapps[instance_id]
+            return self.subapps[instance_id], url
         except KeyError:
             app = web.Application(loop=self.loop)
-            self.app.add_subapp(self.config["server.plugin_base_path"].format(id=instance_id), app)
+            self.app.add_subapp(subpath, app)
             self.subapps[instance_id] = app
-            return app
+            return app, url
 
     def remove_instance_webapp(self, instance_id: str) -> None:
         try:

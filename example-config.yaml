@@ -22,6 +22,8 @@ server:
     # The IP and port to listen to.
     hostname: 0.0.0.0
     port: 29316
+    # Public base URL where the server is visible.
+    public_url: https://example.com
     # The base management API path.
     base_path: /_matrix/maubot/v1
     # The base path for the UI.

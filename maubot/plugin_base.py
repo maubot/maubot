@@ -37,7 +37,8 @@ class Plugin(ABC):
 
     def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
                  instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
-                 database: Optional[Engine], webapp: Optional[Application]) -> None:
+                 database: Optional[Engine], webapp: Optional[Application],
+                 webapp_url: Optional[str]) -> None:
         self.client = client
         self.loop = loop
         self.http = http
@@ -46,6 +47,7 @@ class Plugin(ABC):
         self.config = config
         self.database = database
         self.webapp = webapp
+        self.webapp_url = webapp_url
         self._handlers_at_startup = []
 
     async def start(self) -> None:

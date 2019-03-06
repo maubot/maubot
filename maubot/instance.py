@@ -60,6 +60,7 @@ class PluginInstance:
     inst_db: sql.engine.Engine
     inst_db_tables: Dict[str, sql.Table]
     inst_webapp: web.Application
+    inst_webapp_url: str
     started: bool
 
     def __init__(self, db_instance: DBPlugin):
@@ -73,6 +74,7 @@ class PluginInstance:
         self.inst_db = None
         self.inst_db_tables = None
         self.inst_webapp = None
+        self.inst_webapp_url = None
         self.base_cfg = None
         self.cache[self.id] = self
 
@@ -113,7 +115,7 @@ class PluginInstance:
             db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
             self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
         if self.loader.meta.webapp:
-            self.inst_webapp = self.webserver.get_instance_subapp(self.id)
+            self.inst_webapp, self.inst_webapp_url = self.webserver.get_instance_subapp(self.id)
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
@@ -168,7 +170,8 @@ class PluginInstance:
             self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
         self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
                           instance_id=self.id, log=self.log, config=self.config,
-                          database=self.inst_db, webapp=self.inst_webapp)
+                          database=self.inst_db, webapp=self.inst_webapp,
+                          webapp_url=self.inst_webapp_url)
         try:
             await self.plugin.start()
         except Exception:

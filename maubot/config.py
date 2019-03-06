@@ -38,6 +38,7 @@ class Config(BaseFileConfig):
         copy("plugin_directories.db")
         copy("server.hostname")
         copy("server.port")
+        copy("server.public_url")
         copy("server.listen")
         copy("server.base_path")
         copy("server.ui_base_path")
