@@ -83,7 +83,7 @@ async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes,
     dirname = os.path.dirname(plugin.path)
     old_filename = os.path.basename(plugin.path)
     if str(plugin.meta.version) in old_filename:
-        replacement = (new_version if plugin.meta.version != new_version
+        replacement = (str(new_version) if plugin.meta.version != new_version
                        else f"{new_version}-ts{int(time())}")
         filename = re.sub(f"{re.escape(str(plugin.meta.version))}(-ts[0-9]+)?",
                           replacement, old_filename)
