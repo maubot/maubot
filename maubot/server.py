@@ -13,12 +13,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Tuple
+from typing import Tuple, Dict
 import logging
 import asyncio
 
 from aiohttp import web
-from aiohttp.web_urldispatcher import PrefixedSubAppResource
 from aiohttp.abc import AbstractAccessLogger
 import pkg_resources
 
@@ -45,27 +44,35 @@ class MaubotServer:
 
         as_path = PathBuilder(config["server.appservice_base_path"])
         self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
-        self.subapps = {}
+
+        self.plugin_apps: Dict[str, web.Application] = {}
+        self.app.router.add_view(config["server.plugin_base_path"], self.handle_plugin_path)
 
         self.setup_management_ui()
 
         self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
 
+    async def handle_plugin_path(self, request: web.Request) -> web.Response:
+        for path, app in self.plugin_apps.items():
+            if request.path.startswith(path):
+                # TODO there's probably a correct way to do these
+                request._rel_url.path = request._rel_url.path[len(path):]
+                return await app._handle(request)
+        return web.Response(status=404)
+
     def get_instance_subapp(self, instance_id: str) -> Tuple[web.Application, str]:
         subpath = self.config["server.plugin_base_path"].format(id=instance_id)
         url = self.config["server.public_url"] + subpath
         try:
-            return self.subapps[instance_id], url
+            return self.plugin_apps[subpath], url
         except KeyError:
             app = web.Application(loop=self.loop)
-            resource = PrefixedSubAppResource(subpath, app)
-            self.app.router.register_resource(resource)
-            self.subapps[instance_id] = app
+            self.plugin_apps[subpath] = app
             return app, url
 
     def remove_instance_webapp(self, instance_id: str) -> None:
         try:
-            subapp: web.Application = self.subapps.pop(instance_id)
+            subapp: web.Application = self.plugin_apps.pop(instance_id)
         except KeyError:
             return
         subapp.shutdown()
