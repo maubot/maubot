@@ -18,6 +18,7 @@ import logging
 import asyncio
 
 from aiohttp import web
+from aiohttp.web_urldispatcher import PrefixedSubAppResource
 from aiohttp.abc import AbstractAccessLogger
 import pkg_resources
 
@@ -57,7 +58,8 @@ class MaubotServer:
             return self.subapps[instance_id], url
         except KeyError:
             app = web.Application(loop=self.loop)
-            self.app.add_subapp(subpath, app)
+            resource = PrefixedSubAppResource(subpath, app)
+            self.app.router.register_resource(resource)
             self.subapps[instance_id] = app
             return app, url
 
