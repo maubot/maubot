@@ -22,10 +22,14 @@ server:
     # The IP and port to listen to.
     hostname: 0.0.0.0
     port: 29316
+    # Public base URL where the server is visible.
+    public_url: https://example.com
     # The base management API path.
     base_path: /_matrix/maubot/v1
     # The base path for the UI.
     ui_base_path: /_matrix/maubot
+    # The base path for plugin endpoints. {id} is replaced with the ID of the instance.
+    plugin_base_path: /_matrix/maubot/plugin/{id}
     # Override path from where to load UI resources.
     # Set to false to using pkg_resources to find the path.
     override_resource_path: /opt/maubot/frontend
