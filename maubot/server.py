@@ -55,8 +55,9 @@ class MaubotServer:
     async def handle_plugin_path(self, request: web.Request) -> web.Response:
         for path, app in self.plugin_routes.items():
             if request.path.startswith(path):
-                request = request.clone(
-                    rel_url=request.rel_url.with_path(request.rel_url.path[len(path):]))
+                request = request.clone(rel_url=request.rel_url
+                                        .with_path(request.rel_url.path[len(path):])
+                                        .with_query(request.query_string))
                 return await app.handle(request)
         return web.Response(status=404)
 
