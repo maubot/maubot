@@ -24,7 +24,7 @@ from aiohttp import ClientSession
 if TYPE_CHECKING:
     from mautrix.util.config import BaseProxyConfig
     from .client import MaubotMatrixClient
-    from .server import PluginWebApp
+    from .plugin_server import PluginWebApp
 
 
 class Plugin(ABC):

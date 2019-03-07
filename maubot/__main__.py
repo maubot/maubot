@@ -59,8 +59,7 @@ init_zip_loader(config)
 db_session = init_db(config)
 clients = init_client_class(db_session, loop)
 management_api = init_mgmt_api(config, loop)
-server = MaubotServer(config, loop)
-server.app.add_subapp(config["server.base_path"], management_api)
+server = MaubotServer(management_api, config, loop)
 plugins = init_plugin_instance_class(db_session, config, server, loop)
 
 for plugin in plugins:
