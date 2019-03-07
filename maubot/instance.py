@@ -35,7 +35,7 @@ from .loader import PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
 
 if TYPE_CHECKING:
-    from .server import MaubotServer
+    from .server import MaubotServer, PluginWebApp
 
 log = logging.getLogger("maubot.instance")
 
@@ -59,7 +59,7 @@ class PluginInstance:
     base_cfg: RecursiveDict[CommentedMap]
     inst_db: sql.engine.Engine
     inst_db_tables: Dict[str, sql.Table]
-    inst_webapp: web.Application
+    inst_webapp: 'PluginWebApp'
     inst_webapp_url: str
     started: bool
 
