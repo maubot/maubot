@@ -13,16 +13,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Tuple, Dict
 import logging
 import asyncio
 
-from aiohttp import web
+from aiohttp import web, hdrs
 from aiohttp.abc import AbstractAccessLogger
 import pkg_resources
 
 from mautrix.api import PathBuilder, Method
 
 from .config import Config
+from .plugin_server import PrefixResource, PluginWebApp
 from .__meta__ import __version__
 
 
@@ -35,18 +37,56 @@ class AccessLogger(AbstractAccessLogger):
 
 class MaubotServer:
     log: logging.Logger = logging.getLogger("maubot.server")
+    plugin_routes: Dict[str, PluginWebApp]
 
-    def __init__(self, config: Config, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(self, management_api: web.Application, config: Config,
+                 loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop or asyncio.get_event_loop()
-        self.app = web.Application(loop=self.loop, client_max_size=100*1024*1024)
+        self.app = web.Application(loop=self.loop, client_max_size=100 * 1024 * 1024)
         self.config = config
 
-        as_path = PathBuilder(config["server.appservice_base_path"])
-        self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
-
+        self.setup_appservice()
+        self.app.add_subapp(config["server.base_path"], management_api)
+        self.setup_instance_subapps()
         self.setup_management_ui()
 
         self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
+
+    async def handle_plugin_path(self, request: web.Request) -> web.Response:
+        for path, app in self.plugin_routes.items():
+            if request.path.startswith(path):
+                request = request.clone(rel_url=request.rel_url
+                                        .with_path(request.rel_url.path[len(path):])
+                                        .with_query(request.query_string))
+                return await app.handle(request)
+        return web.Response(status=404)
+
+    def get_instance_subapp(self, instance_id: str) -> Tuple[PluginWebApp, str]:
+        subpath = self.config["server.plugin_base_path"] + instance_id
+        url = self.config["server.public_url"] + subpath
+        try:
+            return self.plugin_routes[subpath], url
+        except KeyError:
+            app = PluginWebApp()
+            self.plugin_routes[subpath] = app
+            return app, url
+
+    def remove_instance_webapp(self, instance_id: str) -> None:
+        try:
+            subpath = self.config["server.plugin_base_path"] + instance_id
+            self.plugin_routes.pop(subpath).clear()
+        except KeyError:
+            return
+
+    def setup_instance_subapps(self) -> None:
+        self.plugin_routes = {}
+        resource = PrefixResource(self.config["server.plugin_base_path"].rstrip("/"))
+        resource.add_route(hdrs.METH_ANY, self.handle_plugin_path)
+        self.app.router.register_resource(resource)
+
+    def setup_appservice(self) -> None:
+        as_path = PathBuilder(self.config["server.appservice_base_path"])
+        self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
 
     def setup_management_ui(self) -> None:
         ui_base = self.config["server.ui_base_path"]

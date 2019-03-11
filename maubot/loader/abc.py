@@ -57,6 +57,7 @@ class PluginMeta(SerializableAttrs['PluginMeta']):
 
     maubot: Version = Version(__version__)
     database: bool = False
+    webapp: bool = False
     license: str = ""
     extra_files: List[str] = []
     dependencies: List[str] = []
