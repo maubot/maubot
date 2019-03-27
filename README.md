@@ -55,7 +55,9 @@ python -m maubot
 
 and point the browser to `http://localhost:29316/_matrix/maubot/#/login`
 
-After login, it is possible to create a new bot instance (clicking the + Instances button) via the screen like the one below ![alt text](https://github.com/maubot/maubot/blob/master/maubot/img/screenshot_new_instance.png "New instance")
+After login, it is possible to create a new bot instance (clicking the + Instances button) via the screen like the one below
+
+<img src="./img/screenshot_new_instance.png">
 
 
 ### [Management API spec](https://github.com/maubot/maubot/blob/master/maubot/management/api/spec.md)

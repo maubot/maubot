@@ -7,8 +7,8 @@ ruamel.yaml
 attrs
 bcrypt
 packaging
-
 click
 colorama
 PyInquirer
 jinja2
+prompt_toolkit==1.0.14
