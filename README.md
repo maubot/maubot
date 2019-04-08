@@ -18,6 +18,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [xkcd](https://github.com/maubot/xkcd) - A bot to view xkcd comics.
 * [echo](https://github.com/maubot/echo) - A bot that echoes pings and other stuff.
 * [rss](https://github.com/maubot/rss) - A bot that posts RSS feed updates to Matrix.
+* [reddit](https://github.com/TomCasavant/RedditMaubot) - A bot that condescendingly corrects a user when they enter an r/subreddit without providing a link to that subreddit
 
 ### Upcoming
 * dictionary - A bot to get the dictionary definitions of words.
