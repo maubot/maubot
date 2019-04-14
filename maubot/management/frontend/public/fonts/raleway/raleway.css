@@ -3,13 +3,8 @@
   font-family: 'Raleway';
   font-style: normal;
   font-weight: 300;
-  src: url('raleway-v13-latin-300.eot'); /* IE9 Compat Modes */
   src: local('Raleway Light'), local('Raleway-Light'),
-       url('raleway-v13-latin-300.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('raleway-v13-latin-300.woff2') format('woff2'), /* Super Modern Browsers */
-       url('raleway-v13-latin-300.woff') format('woff'), /* Modern Browsers */
-       url('raleway-v13-latin-300.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('raleway-v13-latin-300.svg#Raleway') format('svg'); /* Legacy iOS */
+       url('raleway-v13-latin-300.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
 /* raleway-regular - latin */
@@ -17,13 +12,8 @@
   font-family: 'Raleway';
   font-style: normal;
   font-weight: 400;
-  src: url('raleway-v13-latin-regular.eot'); /* IE9 Compat Modes */
   src: local('Raleway'), local('Raleway-Regular'),
-       url('raleway-v13-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('raleway-v13-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('raleway-v13-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('raleway-v13-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('raleway-v13-latin-regular.svg#Raleway') format('svg'); /* Legacy iOS */
+       url('raleway-v13-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
 
 /* raleway-700 - latin */
@@ -31,11 +21,6 @@
   font-family: 'Raleway';
   font-style: normal;
   font-weight: 700;
-  src: url('raleway-v13-latin-700.eot'); /* IE9 Compat Modes */
   src: local('Raleway Bold'), local('Raleway-Bold'),
-       url('raleway-v13-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('raleway-v13-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
-       url('raleway-v13-latin-700.woff') format('woff'), /* Modern Browsers */
-       url('raleway-v13-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('raleway-v13-latin-700.svg#Raleway') format('svg'); /* Legacy iOS */
+       url('raleway-v13-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
 }
