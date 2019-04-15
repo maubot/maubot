@@ -27,7 +27,7 @@ setuptools.setup(
         "alembic>=1.0.0,<2",
         "Markdown>=3.0.0,<4",
         "ruamel.yaml>=0.15.35,<0.16",
-        "attrs>=18.1.0,<19",
+        "attrs>=18.1.0",
         "bcrypt>=3.1.4,<4",
         "packaging>=10",
 
