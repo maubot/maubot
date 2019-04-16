@@ -62,6 +62,8 @@ class Plugin(ABC):
     async def stop(self) -> None:
         for func, event_type in self._handlers_at_startup:
             self.client.remove_event_handler(event_type, func)
+        if self.webapp:
+            self.webapp.clear()
 
     @classmethod
     def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
