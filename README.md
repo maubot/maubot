@@ -20,6 +20,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [rss](https://github.com/maubot/rss) - A bot that posts RSS feed updates to Matrix.
 * [reddit](https://github.com/TomCasavant/RedditMaubot) - A bot that condescendingly corrects a user when they enter an r/subreddit without providing a link to that subreddit
 * [giphy](https://github.com/TomCasavant/GiphyMaubot) - A bot that generates a gif (from giphy) given search terms
+* [trump](https://github.com/jeffcasavant/MaubotTrumpTweet) - A bot that generates a Trump tweet with the given content
 
 ### Upcoming
 * dictionary - A bot to get the dictionary definitions of words.
