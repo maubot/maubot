@@ -20,10 +20,9 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [rss](https://github.com/maubot/rss) - A bot that posts RSS feed updates to Matrix.
 * [reddit](https://github.com/TomCasavant/RedditMaubot) - A bot that condescendingly corrects a user when they enter an r/subreddit without providing a link to that subreddit
 * [giphy](https://github.com/TomCasavant/GiphyMaubot) - A bot that generates a gif (from giphy) given search terms
-
+* [poll](https://github.com/TomCasavant/PollMaubot) - A bot that will create a simple poll for users in a room
 ### Upcoming
 * dictionary - A bot to get the dictionary definitions of words.
-* poll - A simple poll bot.
 * reminder - A bot to ping you about something after a certain amount of time.
 * github - A GitHub client and webhook receiver bot.
 * wolfram - A Wolfram Alpha bot
