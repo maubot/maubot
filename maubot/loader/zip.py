@@ -215,7 +215,7 @@ class ZippedPluginLoader(PluginLoader):
 
     async def unload(self) -> None:
         for name, mod in list(sys.modules.items()):
-            if getattr(mod, "__file__", "").startswith(self.path):
+            if (getattr(mod, "__file__", "") or "").startswith(self.path):
                 del sys.modules[name]
         self._loaded = None
         self.log.debug(f"Unloaded plugin {self.meta.id} at {self.path}")

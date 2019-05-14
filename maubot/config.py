@@ -26,7 +26,7 @@ bcrypt_regex = re.compile(r"^\$2[ayb]\$.{56}$")
 class Config(BaseFileConfig):
     @staticmethod
     def _new_token() -> str:
-        return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(64))
+        return "".join(random.choices(string.ascii_lowercase + string.digits, k=64))
 
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         base = helper.base

@@ -55,14 +55,23 @@ class Plugin(ABC):
     async def start(self) -> None:
         for key in dir(self):
             val = getattr(self, key)
-            if hasattr(val, "__mb_event_handler__") and val.__mb_event_handler__:
-                self._handlers_at_startup.append((val, val.__mb_event_type__))
-                self.client.add_event_handler(val.__mb_event_type__, val)
+            try:
+                if val.__mb_event_handler__:
+                    self._handlers_at_startup.append((val, val.__mb_event_type__))
+                    self.client.add_event_handler(val.__mb_event_type__, val)
+            except AttributeError:
+                pass
+            try:
+                web_handlers = val.__mb_web_handler__
+                for method, path, kwargs in web_handlers:
+                    self.webapp.add_route(method=method, path=path, handler=val, **kwargs)
+            except AttributeError:
+                pass
 
     async def stop(self) -> None:
         for func, event_type in self._handlers_at_startup:
             self.client.remove_event_handler(event_type, func)
-        if self.webapp:
+        if self.webapp is not None:
             self.webapp.clear()
 
     @classmethod

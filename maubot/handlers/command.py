@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import (Union, Callable, Sequence, Pattern, Awaitable, NewType, Optional, Any, List,
-                    Dict, Tuple, Set)
+                    Dict, Tuple, Set, Iterable)
 from abc import ABC, abstractmethod
 import asyncio
 import functools
@@ -44,17 +44,17 @@ def _split_in_two(val: str, split_by: str) -> List[str]:
 class CommandHandler:
     def __init__(self, func: CommandHandlerFunc) -> None:
         self.__mb_func__: CommandHandlerFunc = func
-        self.__mb_parent__: CommandHandler = None
+        self.__mb_parent__: Optional[CommandHandler] = None
         self.__mb_subcommands__: List[CommandHandler] = []
         self.__mb_arguments__: List[Argument] = []
-        self.__mb_help__: str = None
-        self.__mb_get_name__: Callable[[], str] = None
+        self.__mb_help__: Optional[str] = None
+        self.__mb_get_name__: Callable[[Any], str] = lambda s: "noname"
         self.__mb_is_command_match__: Callable[[Any, str], bool] = self.__command_match_unset
         self.__mb_require_subcommand__: bool = True
         self.__mb_arg_fallthrough__: bool = True
         self.__mb_event_handler__: bool = True
         self.__mb_event_type__: EventType = EventType.ROOM_MESSAGE
-        self.__mb_msgtypes__: List[MessageType] = (MessageType.TEXT,)
+        self.__mb_msgtypes__: Iterable[MessageType] = (MessageType.TEXT,)
         self.__bound_copies__: Dict[Any, CommandHandler] = {}
         self.__bound_instance__: Any = None
 
@@ -78,7 +78,7 @@ class CommandHandler:
             return new_ch
 
     @staticmethod
-    def __command_match_unset(self, val: str) -> str:
+    def __command_match_unset(self, val: str) -> bool:
         raise NotImplementedError("Hmm")
 
     async def __call__(self, evt: MaubotMessageEvent, *, _existing_args: Dict[str, Any] = None,
@@ -132,7 +132,7 @@ class CommandHandler:
             except ArgumentSyntaxError as e:
                 await evt.reply(e.message + (f"\n{self.__mb_usage__}" if e.show_usage else ""))
                 return False, remaining_val
-            except ValueError as e:
+            except ValueError:
                 await evt.reply(self.__mb_usage__)
                 return False, remaining_val
         return True, remaining_val
@@ -206,7 +206,7 @@ class CommandHandler:
 
 
 def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = None,
-        event_type: EventType = EventType.ROOM_MESSAGE, msgtypes: List[MessageType] = None,
+        event_type: EventType = EventType.ROOM_MESSAGE, msgtypes: Iterable[MessageType] = None,
         require_subcommand: bool = True, arg_fallthrough: bool = True) -> CommandHandlerDecorator:
     def decorator(func: Union[CommandHandler, CommandHandlerFunc]) -> CommandHandler:
         if not isinstance(func, CommandHandler):
