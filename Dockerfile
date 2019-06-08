@@ -24,8 +24,8 @@ RUN apk add --no-cache \
       py3-pillow \
       py3-magic \
       py3-psycopg2 \
- && pip3 install -r requirements.txt feedparser
-# TODO require pillow, magic and feedparser when maubot supports installing dependencies
+ && pip3 install -r requirements.txt feedparser dateparser
+# TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 VOLUME /data
 

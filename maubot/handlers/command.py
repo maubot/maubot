@@ -126,7 +126,8 @@ class CommandHandler:
                              remaining_val: str) -> Tuple[bool, str]:
         for arg in self.__mb_arguments__:
             try:
-                remaining_val, call_args[arg.name] = arg.match(remaining_val.strip())
+                remaining_val, call_args[arg.name] = arg.match(remaining_val.strip(), evt=evt,
+                                                               instance=self.__bound_instance__)
                 if arg.required and not call_args[arg.name]:
                     raise ValueError("Argument required")
             except ArgumentSyntaxError as e:
@@ -260,7 +261,7 @@ class Argument(ABC):
         self.pass_raw = pass_raw
 
     @abstractmethod
-    def match(self, val: str) -> Tuple[str, Any]:
+    def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         pass
 
     def __call__(self, func: Union[CommandHandler, CommandHandlerFunc]) -> CommandHandler:
@@ -277,7 +278,7 @@ class RegexArgument(Argument):
         matches = f"^{matches}" if self.pass_raw else f"^{matches}$"
         self.regex = re.compile(matches)
 
-    def match(self, val: str) -> Tuple[str, Any]:
+    def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         orig_val = val
         if not self.pass_raw:
             val = val.split(" ")[0]
@@ -294,7 +295,7 @@ class CustomArgument(Argument):
         super().__init__(name, label, required=required, pass_raw=pass_raw)
         self.matcher = matcher
 
-    def match(self, val: str) -> Tuple[str, Any]:
+    def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         if self.pass_raw:
             return self.matcher(val)
         orig_val = val
@@ -306,7 +307,7 @@ class CustomArgument(Argument):
 
 
 class SimpleArgument(Argument):
-    def match(self, val: str) -> Tuple[str, Any]:
+    def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         if self.pass_raw:
             return "", val
         res = val.split(" ")[0]
