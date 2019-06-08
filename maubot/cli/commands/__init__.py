@@ -1,1 +1,1 @@
-from . import upload, build, login, init, logs
+from . import upload, build, login, init, logs, auth

@@ -21,7 +21,7 @@ from aiohttp import WSMsgType, WSMessage, ClientSession
 from mautrix.client.api.types.util import Obj
 import click
 
-from ..config import get_token, get_default_server
+from ..config import get_token
 from ..base import app
 
 history_count: int = 10
@@ -31,10 +31,7 @@ history_count: int = 10
 @click.argument("server", required=False)
 @click.option("-t", "--tail", default=10, help="Maximum number of old log lines to display")
 def logs(server: str, tail: int) -> None:
-    if not server:
-        server, token = get_default_server()
-    else:
-        token = get_token(server)
+    server, token = get_token(server)
     if not token:
         return
     global history_count

@@ -31,6 +31,8 @@ def command(help: str) -> Callable[[Callable], Callable]:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             for key, value in kwargs.items():
+                if key not in questions:
+                    continue
                 if value is not None and (questions[key]["type"] != "confirm" or value != "null"):
                     questions.pop(key, None)
             question_list = list(questions.values())
@@ -49,6 +51,8 @@ def command(help: str) -> Callable[[Callable], Callable]:
 def yesno(val: str) -> Optional[bool]:
     if not val:
         return None
+    elif isinstance(val, bool):
+        return val
     elif val.lower() in ("true", "t", "yes", "y"):
         return True
     elif val.lower() in ("false", "f", "no", "n"):
@@ -61,7 +65,7 @@ yesno.__name__ = "yes/no"
 def option(short: str, long: str, message: str = None, help: str = None,
            click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
            validator: Validator = None, required: bool = False, default: str = None,
-           is_flag: bool = False) -> Callable[[Callable], Callable]:
+           is_flag: bool = False, prompt: bool = True) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
     click_type = validator.click_type if isinstance(validator, ClickValidator) else click_type
@@ -70,6 +74,8 @@ def option(short: str, long: str, message: str = None, help: str = None,
 
     def decorator(func) -> Callable:
         click.option(short, long, help=help, type=click_type)(func)
+        if not prompt:
+            return func
         if not hasattr(func, "__inquirer_questions__"):
             func.__inquirer_questions__ = {}
         q = {

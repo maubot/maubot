@@ -98,10 +98,7 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
 
 
 def upload_plugin(output: Union[str, IO], server: str) -> None:
-    if not server:
-        server, token = get_default_server()
-    else:
-        token = get_token(server)
+    server, token = get_token(server)
     if not token:
         return
     if isinstance(output, str):

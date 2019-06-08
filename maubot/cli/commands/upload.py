@@ -33,10 +33,7 @@ class UploadError(Exception):
 @click.argument("path")
 @click.option("-s", "--server", help="The maubot instance to upload the plugin to")
 def upload(path: str, server: str) -> None:
-    if not server:
-        server, token = get_default_server()
-    else:
-        token = get_token(server)
+    server, token = get_token(server)
     if not token:
         return
     with open(path, "rb") as file:
