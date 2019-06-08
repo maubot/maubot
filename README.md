@@ -23,10 +23,10 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [trump](https://github.com/jeffcasavant/MaubotTrumpTweet) - A bot that generates a Trump tweet with the given content
 * [poll](https://github.com/TomCasavant/PollMaubot) - A bot that will create a simple poll for users in a room
 * [urban](https://github.com/dvdgsng/UrbanMaubot) - A bot that fetches definitions from [Urban Dictionary](https://www.urbandictionary.com/).
+* [reminder](https://github.com/maubot/reminder) - A bot to remind you about things.
 
 ### Upcoming
 * dictionary - A bot to get the dictionary definitions of words.
-* reminder - A bot to ping you about something after a certain amount of time.
 * github - A GitHub client and webhook receiver bot.
 * wolfram - A Wolfram Alpha bot
 * gitlab - A GitLab client and webhook receiver bot.
