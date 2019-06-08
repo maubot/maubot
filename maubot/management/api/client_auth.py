@@ -16,8 +16,10 @@
 from typing import Dict, Tuple, NamedTuple, Optional
 from json import JSONDecodeError
 from http import HTTPStatus
-import hmac
 import hashlib
+import random
+import string
+import hmac
 
 from aiohttp import web
 from mautrix.api import HTTPAPI, Path, Method
@@ -114,7 +116,7 @@ async def login(request: web.Request) -> web.Response:
                 "user": username,
             },
             "password": password,
-            "device_id": "maubot",
+            "device_id": f"maubot_{random.choices(string.ascii_uppercase + string.digits, k=8)}",
         }))
     except MatrixRequestError as e:
         return web.json_response({
