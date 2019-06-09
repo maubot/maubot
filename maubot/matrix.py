@@ -40,11 +40,13 @@ def parse_markdown(markdown: str, allow_html: bool = False) -> Tuple[str, str]:
 
 class MaubotMessageEvent(MessageEvent):
     client: MatrixClient
+    disable_reply: bool
 
     def __init__(self, base: MessageEvent, client: MatrixClient):
         super().__init__(**{a.name.lstrip("_"): getattr(base, a.name)
                             for a in attr.fields(MessageEvent)})
         self.client = client
+        self.disable_reply = False
 
     def respond(self, content: Union[str, MessageEventContent],
                 event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
@@ -55,7 +57,7 @@ class MaubotMessageEvent(MessageEvent):
                 content.format = Format.HTML
                 content.body, content.formatted_body = parse_markdown(content.body,
                                                                       allow_html=html_in_markdown)
-        if reply:
+        if reply and not self.disable_reply:
             content.set_reply(self)
         return self.client.send_message_event(self.room_id, event_type, content)
 
