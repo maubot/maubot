@@ -90,6 +90,7 @@ class MaubotMatrixClient(MatrixClient):
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
         event = await super().get_event(room_id, event_id)
         if isinstance(event, MessageEvent):
+            event.content.trim_reply_fallback()
             return MaubotMessageEvent(event, self)
         else:
             event.client = self
