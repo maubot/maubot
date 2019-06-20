@@ -229,10 +229,10 @@ def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = Non
             else:
                 func.__mb_is_command_match__ = aliases
         elif isinstance(aliases, (list, set, tuple)):
-            func.__mb_is_command_match__ = lambda self, val: (val == func.__mb_name__
+            func.__mb_is_command_match__ = lambda self, val: (val == func.__mb_get_name__(self)
                                                               or val in aliases)
         else:
-            func.__mb_is_command_match__ = lambda self, val: val == func.__mb_name__
+            func.__mb_is_command_match__ = lambda self, val: val == func.__mb_get_name__(self)
         # Decorators are executed last to first, so we reverse the argument list.
         func.__mb_arguments__.reverse()
         func.__mb_require_subcommand__ = require_subcommand
