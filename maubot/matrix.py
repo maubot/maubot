@@ -72,9 +72,7 @@ class MaubotMessageEvent(MessageEvent):
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
 
     def react(self, key: str) -> Awaitable[None]:
-        content = ReactionEventContent(relates_to=RelatesTo(rel_type=RelationType.ANNOTATION,
-                                                            event_id=self.event_id, key=key))
-        return self.client.send_message_event(self.room_id, EventType.REACTION, content)
+        return self.client.react(self.room_id, self.event_id, key)
 
 
 class MaubotMatrixClient(MatrixClient):
