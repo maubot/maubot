@@ -21,7 +21,8 @@ import attr
 from mautrix import Client as MatrixClient
 from mautrix.util.formatter import parse_html
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
-                           MessageType, TextMessageEventContent, Format, RelatesTo, StateEvent)
+                           MessageType, TextMessageEventContent, Format, RelatesTo, RelationType,
+                           ReactionEventContent)
 
 
 class EscapeHTML(Extension):
@@ -69,6 +70,11 @@ class MaubotMessageEvent(MessageEvent):
 
     def mark_read(self) -> Awaitable[None]:
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
+
+    def react(self, key: str) -> Awaitable[None]:
+        content = ReactionEventContent(relates_to=RelatesTo(rel_type=RelationType.ANNOTATION,
+                                                            event_id=self.event_id, key=key))
+        return self.client.send_message_event(self.room_id, EventType.REACTION, content)
 
 
 class MaubotMatrixClient(MatrixClient):
