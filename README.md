@@ -25,9 +25,8 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [urban](https://github.com/dvdgsng/UrbanMaubot) - A bot that fetches definitions from [Urban Dictionary](https://www.urbandictionary.com/).
 * [reminder](https://github.com/maubot/reminder) - A bot to remind you about things.
 * [translate](https://github.com/maubot/translate) - A bot to translate words.
+* [reactbot](https://github.com/maubot/reactbot) - A bot that responds to messages that match predefined rules.
 
-### Upcoming
-* dictionary - A bot to get the dictionary definitions of words.
-* github - A GitHub client and webhook receiver bot.
-* wolfram - A Wolfram Alpha bot
-* gitlab - A GitLab client and webhook receiver bot.
+Open a pull request or join the Matrix room linked above to get your plugin listed here
+
+The plugin wishlist lives at https://github.com/maubot/plugin-wishlist/issues
