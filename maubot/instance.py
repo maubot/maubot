@@ -173,7 +173,7 @@ class PluginInstance:
                           database=self.inst_db, webapp=self.inst_webapp,
                           webapp_url=self.inst_webapp_url)
         try:
-            await self.plugin.start()
+            await self.plugin.internal_start()
         except Exception:
             self.log.exception("Failed to start instance")
             self.db_instance.enabled = False
@@ -190,7 +190,7 @@ class PluginInstance:
         self.log.debug("Stopping plugin instance...")
         self.started = False
         try:
-            await self.plugin.stop()
+            await self.plugin.internal_stop()
         except Exception:
             self.log.exception("Failed to stop instance")
         self.plugin = None

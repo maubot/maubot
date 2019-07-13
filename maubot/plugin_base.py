@@ -52,7 +52,7 @@ class Plugin(ABC):
         self.webapp_url = webapp_url
         self._handlers_at_startup = []
 
-    async def start(self) -> None:
+    async def internal_start(self) -> None:
         for key in dir(self):
             val = getattr(self, key)
             try:
@@ -67,12 +67,20 @@ class Plugin(ABC):
                     self.webapp.add_route(method=method, path=path, handler=val, **kwargs)
             except AttributeError:
                 pass
+        await self.start()
 
-    async def stop(self) -> None:
+    async def start(self) -> None:
+        pass
+
+    async def internal_stop(self) -> None:
         for func, event_type in self._handlers_at_startup:
             self.client.remove_event_handler(event_type, func)
         if self.webapp is not None:
             self.webapp.clear()
+        await self.stop()
+
+    async def stop(self) -> None:
+        pass
 
     @classmethod
     def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
