@@ -37,7 +37,7 @@ async function defaultDelete(type, id) {
 }
 
 async function defaultPut(type, entry, id = undefined, suffix = undefined) {
-    const resp = await fetch(`${BASE_PATH}/${type}/${id || entry.id}${suffix}`, {
+    const resp = await fetch(`${BASE_PATH}/${type}/${id || entry.id}${suffix || ''}`, {
         headers: getHeaders(),
         body: JSON.stringify(entry),
         method: "PUT",
