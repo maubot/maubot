@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/maubot/maubot/issues"
   },
-  "homepage": "https://github.com/maubot/maubot",
+  "homepage": ".",
   "dependencies": {
     "node-sass": "^4.12.0",
     "react": "^16.8.6",
