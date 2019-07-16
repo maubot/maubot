@@ -36,8 +36,8 @@ async function defaultDelete(type, id) {
     return await resp.json()
 }
 
-async function defaultPut(type, entry, id = undefined) {
-    const resp = await fetch(`${BASE_PATH}/${type}/${id || entry.id}`, {
+async function defaultPut(type, entry, id = undefined, suffix = undefined) {
+    const resp = await fetch(`${BASE_PATH}/${type}/${id || entry.id}${suffix}`, {
         headers: getHeaders(),
         body: JSON.stringify(entry),
         method: "PUT",
@@ -221,6 +221,17 @@ export function getAvatarURL({ id, avatar_url }) {
 export const putClient = client => defaultPut("client", client)
 export const deleteClient = id => defaultDelete("client", id)
 
+export const getClientAuthServers = () => defaultGet("/client/auth/servers")
+
+export async function doClientAuth(server, type, username, password) {
+    const resp = await fetch(`${BASE_PATH}/client/auth/${server}/${type}`, {
+        headers: getHeaders(),
+        body: JSON.stringify({ username, password }),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
 export default {
     BASE_PATH,
     login, ping, getFeatures, remoteGetFeatures,
@@ -230,4 +241,5 @@ export default {
     getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient,
+    getClientAuthServers, doClientAuth
 }

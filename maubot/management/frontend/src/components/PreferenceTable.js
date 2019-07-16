@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React from "react"
 import Select from "react-select"
+import CreatableSelect from "react-select/creatable"
 import Switch from "./Switch"
 
 export const PrefTable = ({ children, wrapperClass }) => {
@@ -56,10 +57,12 @@ export const PrefSwitch = ({ rowName, active, origActive, fullWidth = false, ...
     </PrefRow>
 )
 
-export const PrefSelect = ({ rowName, value, origValue, fullWidth = false, ...args }) => (
+export const PrefSelect = ({ rowName, value, origValue, fullWidth = false, creatable = false, ...args }) => (
     <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}
              changed={origValue !== undefined && value.id !== origValue}>
-        <Select className="select" {...args} id={rowName} value={value}/>
+        {creatable
+            ? <CreatableSelect className="select" {...args} id={rowName} value={value}/>
+            : <Select className="select" {...args} id={rowName} value={value}/>}
     </PrefRow>
 )
 

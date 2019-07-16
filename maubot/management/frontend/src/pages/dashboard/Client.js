@@ -17,7 +17,7 @@ import React from "react"
 import { NavLink, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
-import { PrefTable, PrefSwitch, PrefInput } from "../../components/PreferenceTable"
+import { PrefTable, PrefSwitch, PrefInput, PrefSelect } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
 import BaseMainView from "./BaseMainView"
@@ -48,7 +48,7 @@ class Client extends BaseMainView {
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "sync",
-                "autojoin", "enabled", "started"]
+            "autojoin", "enabled", "started"]
     }
 
     get initialState() {
@@ -82,6 +82,36 @@ class Client extends BaseMainView {
         delete client.error
         delete client.instances
         return client
+    }
+
+    get selectedHomeserver() {
+        return this.state.homeserver
+            ? this.homeserverEntry([this.props.ctx.homeserversByURL[this.state.homeserver],
+                this.state.homeserver])
+            : {}
+    }
+
+    homeserverEntry = ([serverName, serverURL]) => serverURL && {
+        id: serverURL,
+        value: serverURL,
+        label: serverName || serverURL,
+    }
+
+    componentWillReceiveProps(nextProps) {
+        super.componentWillReceiveProps(nextProps)
+        this.updateHomeserverOptions()
+    }
+
+    updateHomeserverOptions() {
+        this.homeserverOptions = Object.entries(this.props.ctx.homeserversByName).map(this.homeserverEntry)
+    }
+
+    isValidHomeserver(value) {
+        try {
+            return Boolean(new URL(value))
+        } catch (err) {
+            return false
+        }
     }
 
     avatarUpload = async event => {
@@ -165,9 +195,10 @@ class Client extends BaseMainView {
                        name={this.isNew ? "id" : ""} className="id"
                        value={this.state.id} origValue={this.props.entry.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
-            <PrefInput rowName="Homeserver" type="text" name="homeserver"
-                       value={this.state.homeserver} origValue={this.props.entry.homeserver}
-                       placeholder="https://example.com" onChange={this.inputChange}/>
+            <PrefSelect rowName="Homeserver" options={this.homeserverOptions} isSearchable={true}
+                        value={this.selectedHomeserver} origValue={this.props.entry.homeserver}
+                        onChange={({ id }) => this.setState({ homeserver: id })}
+                        creatable={true} isValidNewOption={this.isValidHomeserver}/>
             <PrefInput rowName="Access token" type="text" name="access_token"
                        value={this.state.access_token} origValue={this.props.entry.access_token}
                        placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"

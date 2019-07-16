@@ -410,13 +410,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
+                type: object
+                description: Key-value map from server name to homeserver URL
+                additionalProperties:
                   type: string
+                  description: The homeserver URL
                 example:
-                - maunium.net
-                - example.com
-                - matrix.org
+                  maunium.net: https://maunium.net
+                  example.com: https://matrix.example.org
         401:
           $ref: '#/components/responses/Unauthorized'
   '/client/auth/{server}/register':

@@ -31,6 +31,8 @@ class Dashboard extends Component {
             instances: {},
             clients: {},
             plugins: {},
+            homeserversByName: {},
+            homeserversByURL: {},
             sidebarOpen: false,
             modalOpen: false,
             logFocus: null,
@@ -50,8 +52,8 @@ class Dashboard extends Component {
     }
 
     async componentWillMount() {
-        const [instanceList, clientList, pluginList] = await Promise.all([
-            api.getInstances(), api.getClients(), api.getPlugins(),
+        const [instanceList, clientList, pluginList, homeservers] = await Promise.all([
+            api.getInstances(), api.getClients(), api.getPlugins(), api.getClientAuthServers(),
             api.updateDebugOpenFileEnabled()])
         const instances = {}
         if (api.getFeatures().instance) {
@@ -71,7 +73,13 @@ class Dashboard extends Component {
                 plugins[plugin.id] = plugin
             }
         }
-        this.setState({ instances, clients, plugins })
+        const homeserversByName = homeservers
+        const homeserversByURL = {}
+        for (const [key, value] of Object.entries(homeservers)) {
+            homeserversByURL[value] = key
+        }
+        console.log(homeserversByName, homeserversByURL)
+        this.setState({ instances, clients, plugins, homeserversByName, homeserversByURL })
 
         await this.enableLogs()
     }

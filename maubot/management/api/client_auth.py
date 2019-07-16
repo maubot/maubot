@@ -47,7 +47,7 @@ def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool 
 
 @routes.get("/client/auth/servers")
 async def get_registerable_servers(_: web.Request) -> web.Response:
-    return web.json_response(list(registration_secrets().keys()))
+    return web.json_response({key: value["url"] for key, value in registration_secrets().items()})
 
 
 AuthRequestInfo = NamedTuple("AuthRequestInfo", api=HTTPAPI, secret=str, username=str, password=str)
