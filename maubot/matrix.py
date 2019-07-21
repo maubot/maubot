@@ -18,7 +18,7 @@ from markdown.extensions import Extension
 import markdown as md
 import attr
 
-from mautrix.client import Client as MatrixClient
+from mautrix.client import Client as MatrixClient, SyncStream
 from mautrix.util.formatter import parse_html
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
@@ -83,12 +83,12 @@ class MaubotMatrixClient(MatrixClient):
             content.relates_to = relates_to
         return self.send_message(room_id, content, **kwargs)
 
-    async def call_handlers(self, event: Event, source) -> None:
+    async def dispatch_event(self, event: Event, source: SyncStream = SyncStream.INTERNAL) -> None:
         if isinstance(event, MessageEvent):
             event = MaubotMessageEvent(event, self)
-        else:
+        elif source != SyncStream.INTERNAL:
             event.client = self
-        return await super().call_handlers(event, source)
+        return await super().dispatch_event(event, source)
 
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
         event = await super().get_event(room_id, event_id)

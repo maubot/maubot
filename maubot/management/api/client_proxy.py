@@ -36,6 +36,7 @@ async def proxy(request: web.Request) -> web.StreamResponse:
     except KeyError:
         pass
     headers = request.headers.copy()
+    del headers["Host"]
     headers["Authorization"] = f"Bearer {client.access_token}"
     if "X-Forwarded-For" not in headers:
         peer = request.transport.get_extra_info("peername")

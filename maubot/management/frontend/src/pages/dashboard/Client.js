@@ -44,6 +44,7 @@ class Client extends BaseMainView {
     constructor(props) {
         super(props)
         this.deleteFunc = api.deleteClient
+        this.homeserverOptions = {}
     }
 
     get entryKeys() {
@@ -69,6 +70,7 @@ class Client extends BaseMainView {
             saving: false,
             deleting: false,
             startingOrStopping: false,
+            clearingCache: false,
             error: "",
         }
     }
@@ -79,6 +81,7 @@ class Client extends BaseMainView {
         delete client.saving
         delete client.deleting
         delete client.startingOrStopping
+        delete client.clearingCache
         delete client.error
         delete client.instances
         return client
@@ -88,7 +91,7 @@ class Client extends BaseMainView {
         return this.state.homeserver
             ? this.homeserverEntry([this.props.ctx.homeserversByURL[this.state.homeserver],
                 this.state.homeserver])
-            : {}
+            : this.homeserverOptions[0] || {}
     }
 
     homeserverEntry = ([serverName, serverURL]) => serverURL && {
@@ -156,8 +159,39 @@ class Client extends BaseMainView {
         }
     }
 
+    clearCache = async () => {
+        this.setState({ clearingCache: true })
+        const resp = await api.clearClientCache(this.props.entry.id)
+        if (resp.success) {
+            this.setState({ clearingCache: false, error: "" })
+        } else {
+            this.setState({ clearingCache: false, error: resp.error })
+        }
+    }
+
     get loading() {
-        return this.state.saving || this.state.startingOrStopping || this.state.deleting
+        return this.state.saving || this.state.startingOrStopping || this.clearingCache || this.state.deleting
+    }
+
+    renderStartedContainer = () => {
+        let text
+        if (this.props.entry.started) {
+            if (this.props.entry.sync_ok) {
+                text = "Started"
+            } else {
+                text = "Erroring"
+            }
+        } else if (this.props.entry.enabled) {
+            text = "Stopped"
+        } else {
+            text = "Disabled"
+        }
+        return <div className="started-container">
+            <span className={`started ${this.props.entry.started}
+                             ${this.props.entry.sync_ok ? "sync_ok" : "sync_error"}
+                             ${this.props.entry.enabled ? "" : "disabled"}`}/>
+            <span className="text">{text}</span>
+        </div>
     }
 
     renderSidebar = () => !this.isNew && (
@@ -172,20 +206,16 @@ class Client extends BaseMainView {
                        onDragLeave={evt => evt.target.parentElement.classList.remove("drag")}/>
                 {this.state.uploadingAvatar && <Spinner/>}
             </div>
-            <div className="started-container">
-                <span className={`started ${this.props.entry.started}
-                        ${this.props.entry.enabled ? "" : "disabled"}`}/>
-                <span className="text">
-                    {this.props.entry.started ? "Started" :
-                        (this.props.entry.enabled ? "Stopped" : "Disabled")}
-                </span>
-            </div>
-            {(this.props.entry.started || this.props.entry.enabled) && (
+            {this.renderStartedContainer()}
+            {(this.props.entry.started || this.props.entry.enabled) && <>
                 <button className="save" onClick={this.startOrStop} disabled={this.loading}>
                     {this.state.startingOrStopping ? <Spinner/>
                         : (this.props.entry.started ? "Stop" : "Start")}
                 </button>
-            )}
+                <button className="clearcache" onClick={this.clearCache} disabled={this.loading}>
+                    {this.state.clearingCache ? <Spinner/> : "Clear cache"}
+                </button>
+            </>}
         </div>
     )
 
@@ -195,10 +225,17 @@ class Client extends BaseMainView {
                        name={this.isNew ? "id" : ""} className="id"
                        value={this.state.id} origValue={this.props.entry.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
-            <PrefSelect rowName="Homeserver" options={this.homeserverOptions} isSearchable={true}
-                        value={this.selectedHomeserver} origValue={this.props.entry.homeserver}
-                        onChange={({ id }) => this.setState({ homeserver: id })}
-                        creatable={true} isValidNewOption={this.isValidHomeserver}/>
+            {api.getFeatures().client_auth ? (
+                <PrefSelect rowName="Homeserver" options={this.homeserverOptions}
+                            isSearchable={true} value={this.selectedHomeserver}
+                            origValue={this.props.entry.homeserver}
+                            onChange={({ value }) => this.setState({ homeserver: value })}
+                            creatable={true} isValidNewOption={this.isValidHomeserver}/>
+            ) : (
+                <PrefInput rowName="Homeserver" type="text" name="homeserver"
+                           value={this.state.homeserver} origValue={this.props.entry.homeserver}
+                           placeholder="https://example.com" onChange={this.inputChange}/>
+            )}
             <PrefInput rowName="Access token" type="text" name="access_token"
                        value={this.state.access_token} origValue={this.props.entry.access_token}
                        placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"

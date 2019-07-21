@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Optional, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Set, Callable, Any, Awaitable, TYPE_CHECKING
 import asyncio
 import logging
 
@@ -23,6 +23,7 @@ from aiohttp import ClientSession
 from mautrix.errors import MatrixInvalidToken, MatrixRequestError
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
                            EventType, Filter, RoomFilter, RoomEventFilter)
+from mautrix.client import InternalEventType
 
 from .db import DBClient
 from .matrix import MaubotMatrixClient
@@ -51,11 +52,22 @@ class Client:
         self.log = log.getChild(self.id)
         self.references = set()
         self.started = False
+        self.sync_ok = True
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
                                          log=self.log, loop=self.loop, store=self.db_instance)
+        self.client.ignore_initial_sync = True
+        self.client.ignore_first_sync = True
         if self.autojoin:
             self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
+        self.client.add_event_handler(InternalEventType.SYNC_ERRORED, self._set_sync_ok(False))
+        self.client.add_event_handler(InternalEventType.SYNC_SUCCESSFUL, self._set_sync_ok(True))
+
+    def _set_sync_ok(self, ok: bool) -> Callable[[Dict[str, Any]], Awaitable[None]]:
+        async def handler(data: Dict[str, Any]) -> None:
+            self.sync_ok = ok
+
+        return handler
 
     async def start(self, try_n: Optional[int] = 0) -> None:
         try:
@@ -128,6 +140,13 @@ class Client:
             await self.stop_plugins()
             self.stop_sync()
 
+    def clear_cache(self) -> None:
+        self.stop_sync()
+        self.db_instance.filter_id = ""
+        self.db_instance.next_batch = ""
+        self.db.commit()
+        self.start_sync()
+
     def delete(self) -> None:
         try:
             del self.cache[self.id]
@@ -144,6 +163,7 @@ class Client:
             "enabled": self.enabled,
             "started": self.started,
             "sync": self.sync,
+            "sync_ok": self.sync_ok,
             "autojoin": self.autojoin,
             "displayname": self.displayname,
             "avatar_url": self.avatar_url,

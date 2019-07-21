@@ -75,10 +75,11 @@ class Dashboard extends Component {
         }
         const homeserversByName = homeservers
         const homeserversByURL = {}
-        for (const [key, value] of Object.entries(homeservers)) {
-            homeserversByURL[value] = key
+        if (api.getFeatures().client_auth) {
+            for (const [key, value] of Object.entries(homeservers)) {
+                homeserversByURL[value] = key
+            }
         }
-        console.log(homeserversByName, homeserversByURL)
         this.setState({ instances, clients, plugins, homeserversByName, homeserversByURL })
 
         await this.enableLogs()

@@ -25,8 +25,13 @@
         margin: .5rem
 
         &.true
-            background-color: $primary
-            box-shadow: 0 0 .75rem .75rem $primary
+            &.sync_ok
+                background-color: $primary
+                box-shadow: 0 0 .75rem .75rem $primary
+
+            &.sync_error
+                background-color: $warning
+                box-shadow: 0 0 .75rem .75rem $warning
 
         &.false
             background-color: $error-light

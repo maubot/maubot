@@ -399,6 +399,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/client/{id}/clearcache':
+    parameters:
+    - name: id
+      in: path
+      description: The Matrix user ID of the client to change
+      required: true
+      schema:
+        type: string
+    put:
+      operationId: clear_client_cache
+      summary: Clear the sync/state cache of a Matrix client
+      tags: [Clients]
+      responses:
+        200:
+          description: Cache cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/ClientNotFound'
   /client/auth/servers:
     get:
       operationId: get_client_auth_servers
@@ -607,29 +633,42 @@ components:
           type: string
           example: '@putkiteippi:maunium.net'
           readOnly: true
+          description: The Matrix user ID of this client.
         homeserver:
           type: string
           example: 'https://maunium.net'
+          description: The homeserver URL for this client.
         access_token:
           type: string
+          description: The Matrix access token for this client.
         enabled:
           type: boolean
           example: true
+          description: Whether or not this client is enabled.
         started:
           type: boolean
           example: true
+          description: Whether or not this client and its instances have been started.
         sync:
           type: boolean
           example: true
+          description: Whether or not syncing is enabled on this client.
+        sync_ok:
+          type: boolean
+          example: true
+          description: Whether or not the previous sync was successful on this client.
         autojoin:
           type: boolean
           example: true
+          description: Whether or not this client should automatically join rooms when invited.
         displayname:
           type: string
           example: J. E. Saarinen
+          description: The display name for this client.
         avatar_url:
           type: string
           example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
+          description: The content URI of the avatar for this client.
         instances:
           type: array
           readOnly: true

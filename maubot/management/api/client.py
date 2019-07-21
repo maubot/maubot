@@ -130,3 +130,13 @@ async def delete_client(request: web.Request) -> web.Response:
         await client.stop()
     client.delete()
     return resp.deleted
+
+
+@routes.post("/client/{id}/clearcache")
+async def clear_client_cache(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    client = Client.get(user_id, None)
+    if not client:
+        return resp.client_not_found
+    client.clear_cache()
+    return resp.ok
