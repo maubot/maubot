@@ -230,11 +230,11 @@ class Dashboard extends Component {
                         <Instance onChange={newEntry => this.add("instances", newEntry)}
                                   entry={{}} ctx={this.state}/>}/>
                     <Route path="/new/client" render={() =>
-                        <Client entry={{}} onChange={newEntry =>
-                            this.add("clients", newEntry)}/>}/>
+                        <Client onChange={newEntry => this.add("clients", newEntry)}
+                                entry={{}} ctx={this.state}/>}/>
                     <Route path="/new/plugin" render={() =>
-                        <Plugin entry={{}} onChange={newEntry =>
-                            this.add("plugins", newEntry)}/>}/>
+                        <Plugin onChange={newEntry => this.add("plugins", newEntry)}
+                                entry={{}} ctx={this.state}/>}/>
                     <Route path="/instance/:id" render={({ match }) =>
                         this.renderView("instances", Instance, match.params.id)}/>
                     <Route path="/client/:id" render={({ match }) =>
