@@ -18,7 +18,7 @@ from markdown.extensions import Extension
 import markdown as md
 import attr
 
-from mautrix import Client as MatrixClient
+from mautrix.client import Client as MatrixClient
 from mautrix.util.formatter import parse_html
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
