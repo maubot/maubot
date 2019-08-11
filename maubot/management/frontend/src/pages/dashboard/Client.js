@@ -91,7 +91,7 @@ class Client extends BaseMainView {
         return this.state.homeserver
             ? this.homeserverEntry([this.props.ctx.homeserversByURL[this.state.homeserver],
                 this.state.homeserver])
-            : this.homeserverOptions[0] || {}
+            : {}
     }
 
     homeserverEntry = ([serverName, serverURL]) => serverURL && {
