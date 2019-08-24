@@ -21,12 +21,12 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
-        "mautrix>=0.4.dev48,<0.5",
+        "mautrix>=0.4.dev65,<0.5",
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
         "alembic>=1.0.0,<2",
         "Markdown>=3.0.0,<4",
-        "ruamel.yaml>=0.15.35,<0.16",
+        "ruamel.yaml>=0.15.35,<0.17",
         "attrs>=18.1.0",
         "bcrypt>=3.1.4,<4",
         "packaging>=10",
