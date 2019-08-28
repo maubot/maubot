@@ -110,7 +110,7 @@ async def login(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    api, _, username, password = info
+    api, _, username, password, _ = info
     try:
         return web.json_response(await api.request(Method.POST, Path.login, content={
             "type": "m.login.password",
