@@ -74,7 +74,8 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
     except KeyError:
         return None, resp.invalid_server
     api = HTTPAPI(base_url, "", loop=get_loop())
-    return (api, secret, username, password), None
+    user_type = body.get("user_type", None)
+    return (api, secret, username, password, user_type), None
 
 
 @routes.post("/client/auth/{server}/register")
@@ -82,7 +83,7 @@ async def register(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    api, secret, username, password = info
+    api, secret, username, password, user_type = info
     res = await api.request(Method.GET, Path.admin.register)
     nonce = res["nonce"]
     mac = generate_mac(secret, nonce, username, password)
@@ -93,7 +94,8 @@ async def register(request: web.Request) -> web.Response:
             "password": password,
             "admin": False,
             "mac": mac,
-            "user_type": "bot",
+            # Older versions of synapse will ignore this field if it is None
+            "user_type": user_type,
         }))
     except MatrixRequestError as e:
         return web.json_response({
