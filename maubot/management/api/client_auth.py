@@ -93,6 +93,7 @@ async def register(request: web.Request) -> web.Response:
             "password": password,
             "admin": False,
             "mac": mac,
+            "user_type": "bot",
         }))
     except MatrixRequestError as e:
         return web.json_response({
