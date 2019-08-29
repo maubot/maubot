@@ -50,14 +50,17 @@ class MaubotMessageEvent(MessageEvent):
 
     def respond(self, content: Union[str, MessageEventContent],
                 event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-                html_in_markdown: bool = False, reply: bool = False) -> Awaitable[EventID]:
+                html_in_markdown: bool = False, reply: bool = False,
+                edits: Optional[Union[EventID, MessageEvent]] = None) -> Awaitable[EventID]:
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
             if markdown:
                 content.format = Format.HTML
                 content.body, content.formatted_body = parse_markdown(content.body,
                                                                       allow_html=html_in_markdown)
-        if reply and not self.disable_reply:
+        if edits:
+            content.set_edit(edits)
+        elif reply and not self.disable_reply:
             content.set_reply(self)
         return self.client.send_message_event(self.room_id, event_type, content)
 
@@ -72,6 +75,12 @@ class MaubotMessageEvent(MessageEvent):
 
     def react(self, key: str) -> Awaitable[None]:
         return self.client.react(self.room_id, self.event_id, key)
+
+    def edit(self, content: Union[str, MessageEventContent],
+             event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
+             html_in_markdown: bool = False) -> Awaitable[EventID]:
+        return self.respond(content, event_type, markdown, edits=self,
+                            html_in_markdown=html_in_markdown)
 
 
 class MaubotMatrixClient(MatrixClient):
