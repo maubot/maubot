@@ -167,7 +167,12 @@ class PluginInstance:
                 self.base_cfg = RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
             except (FileNotFoundError, KeyError):
                 self.base_cfg = None
-            self.config = config_class(self.load_config, lambda: self.base_cfg, self.save_config)
+            if self.base_cfg:
+                base_cfg_func = self.base_cfg.clone
+            else:
+                def base_cfg_func() -> None:
+                    return None
+            self.config = config_class(self.load_config, base_cfg_func, self.save_config)
         self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
                           instance_id=self.id, log=self.log, config=self.config,
                           database=self.inst_db, webapp=self.inst_webapp,
