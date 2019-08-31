@@ -30,18 +30,24 @@ const ClientListEntry = ({ entry }) => {
     } else if (!entry.started) {
         classes.push("stopped")
     }
-    const avatarURL = entry.avatar_url && api.getAvatarURL({
+    const avatarMXC = entry.avatar_url === "disable"
+        ? entry.remote_avatar_url
+        : entry.avatar_url
+    const avatarURL = avatarMXC && api.getAvatarURL({
         id: entry.id,
-        avatar_url: entry.avatar_url === "disabled"
-            ? entry.remote_avatar_url
-            : entry.avatar_url
+        avatar_url: avatarMXC,
     })
+    const displayname = (
+        entry.displayname === "disable"
+            ? entry.remote_displayname
+            : entry.displayname
+    ) || entry.id
     return (
         <NavLink className={classes.join(" ")} to={`/client/${entry.id}`}>
             {avatarURL
                 ? <img className='avatar' src={avatarURL} alt=""/>
                 : <NoAvatarIcon className='avatar'/>}
-            <span className="displayname">{entry.displayname || entry.id}</span>
+            <span className="displayname">{displayname}</span>
             <ChevronRight className='chevron'/>
         </NavLink>
     )
@@ -203,20 +209,22 @@ class Client extends BaseMainView {
         </div>
     }
 
+    get avatarMXC() {
+        return this.state.avatar_url === "disable" ? this.props.entry.remote_avatar_url : this.state.avatar_url
+    }
+
     get avatarURL() {
         return api.getAvatarURL({
             id: this.state.id,
-            avatar_url: this.state.avatar_url === "disabled"
-                ? this.props.entry.remote_avatar_url
-                : this.state.avatar_url
+            avatar_url: this.avatarMXC,
         })
     }
 
     renderSidebar = () => !this.isNew && (
         <div className="sidebar">
-            <div className={`avatar-container ${this.state.avatar_url ? "" : "no-avatar"}
+            <div className={`avatar-container ${this.avatarMXC ? "" : "no-avatar"}
                         ${this.state.uploadingAvatar ? "uploading" : ""}`}>
-                <img className="avatar" src={this.avatarURL} alt="Avatar"/>
+                {this.avatarMXC && <img className="avatar" src={this.avatarURL} alt="Avatar"/>}
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="image/png, image/jpeg"
                        onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}

@@ -46,8 +46,8 @@ class Client:
     client: MaubotMatrixClient
     started: bool
 
-    remote_displayname: str
-    remote_avatar_url: ContentURI
+    remote_displayname: Optional[str]
+    remote_avatar_url: Optional[ContentURI]
 
     def __init__(self, db_instance: DBClient) -> None:
         self.db_instance = db_instance
@@ -56,6 +56,8 @@ class Client:
         self.references = set()
         self.started = False
         self.sync_ok = True
+        self.remote_displayname = None
+        self.remote_avatar_url = None
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
                                          log=self.log, loop=self.loop, store=self.db_instance)
