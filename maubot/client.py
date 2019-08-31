@@ -200,13 +200,15 @@ class Client:
         if displayname is None or displayname == self.displayname:
             return
         self.db_instance.displayname = displayname
-        await self.client.set_displayname(self.displayname)
+        if self.displayname != "disable":
+            await self.client.set_displayname(self.displayname)
 
     async def update_avatar_url(self, avatar_url: ContentURI) -> None:
         if avatar_url is None or avatar_url == self.avatar_url:
             return
         self.db_instance.avatar_url = avatar_url
-        await self.client.set_avatar_url(self.avatar_url)
+        if self.avatar_url != "disable":
+            await self.client.set_avatar_url(self.avatar_url)
 
     async def update_access_details(self, access_token: str, homeserver: str) -> None:
         if not access_token and not homeserver:
