@@ -17,6 +17,7 @@ import React from "react"
 import { NavLink, withRouter } from "react-router-dom"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
 import { ReactComponent as UploadButton } from "../../res/upload.svg"
+import { ReactComponent as NoAvatarIcon } from "../../res/bot.svg"
 import { PrefTable, PrefSwitch, PrefInput, PrefSelect } from "../../components/PreferenceTable"
 import Spinner from "../../components/Spinner"
 import api from "../../api"
@@ -29,11 +30,19 @@ const ClientListEntry = ({ entry }) => {
     } else if (!entry.started) {
         classes.push("stopped")
     }
+    const avatarURL = entry.avatar_url && api.getAvatarURL({
+        id: entry.id,
+        avatar_url: entry.avatar_url === "disabled"
+            ? entry.remote_avatar_url
+            : entry.avatar_url
+    })
     return (
         <NavLink className={classes.join(" ")} to={`/client/${entry.id}`}>
-            <img className="avatar" src={api.getAvatarURL(entry)} alt=""/>
+            {avatarURL
+                ? <img className='avatar' src={avatarURL} alt=""/>
+                : <NoAvatarIcon className='avatar'/>}
             <span className="displayname">{entry.displayname || entry.id}</span>
-            <ChevronRight/>
+            <ChevronRight className='chevron'/>
         </NavLink>
     )
 }
@@ -194,11 +203,20 @@ class Client extends BaseMainView {
         </div>
     }
 
+    get avatarURL() {
+        return api.getAvatarURL({
+            id: this.state.id,
+            avatar_url: this.state.avatar_url === "disabled"
+                ? this.props.entry.remote_avatar_url
+                : this.state.avatar_url
+        })
+    }
+
     renderSidebar = () => !this.isNew && (
         <div className="sidebar">
             <div className={`avatar-container ${this.state.avatar_url ? "" : "no-avatar"}
                         ${this.state.uploadingAvatar ? "uploading" : ""}`}>
-                <img className="avatar" src={api.getAvatarURL(this.state)} alt="Avatar"/>
+                <img className="avatar" src={this.avatarURL} alt="Avatar"/>
                 <UploadButton className="upload"/>
                 <input className="file-selector" type="file" accept="image/png, image/jpeg"
                        onChange={this.avatarUpload} disabled={this.state.uploadingAvatar}

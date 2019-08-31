@@ -46,6 +46,9 @@ class Client:
     client: MaubotMatrixClient
     started: bool
 
+    remote_displayname: str
+    remote_avatar_url: ContentURI
+
     def __init__(self, db_instance: DBClient) -> None:
         self.db_instance = db_instance
         self.cache[self.id] = self
@@ -116,6 +119,7 @@ class Client:
         if self.avatar_url != "disable":
             await self.client.set_avatar_url(self.avatar_url)
             self.start_sync()
+        await self._update_remote_profile()
         self.started = True
         self.log.info("Client started, starting plugin instances...")
         await self.start_plugins()
@@ -167,6 +171,8 @@ class Client:
             "autojoin": self.autojoin,
             "displayname": self.displayname,
             "avatar_url": self.avatar_url,
+            "remote_displayname": self.remote_displayname,
+            "remote_avatar_url": self.remote_avatar_url,
             "instances": [instance.to_dict() for instance in self.references],
         }
 
@@ -202,6 +208,8 @@ class Client:
         self.db_instance.displayname = displayname
         if self.displayname != "disable":
             await self.client.set_displayname(self.displayname)
+        else:
+            await self._update_remote_profile()
 
     async def update_avatar_url(self, avatar_url: ContentURI) -> None:
         if avatar_url is None or avatar_url == self.avatar_url:
@@ -209,6 +217,8 @@ class Client:
         self.db_instance.avatar_url = avatar_url
         if self.avatar_url != "disable":
             await self.client.set_avatar_url(self.avatar_url)
+        else:
+            await self._update_remote_profile()
 
     async def update_access_details(self, access_token: str, homeserver: str) -> None:
         if not access_token and not homeserver:
@@ -227,6 +237,10 @@ class Client:
         self.db_instance.homeserver = homeserver
         self.db_instance.access_token = access_token
         self.start_sync()
+
+    async def _update_remote_profile(self) -> None:
+        profile = await self.client.get_profile(self.id)
+        self.remote_displayname, self.remote_avatar_url = profile.displayname, profile.avatar_url
 
     # region Properties
 

@@ -28,7 +28,7 @@ import InstanceDatabase from "./InstanceDatabase"
 const InstanceListEntry = ({ entry }) => (
     <NavLink className="instance entry" to={`/instance/${entry.id}`}>
         <span className="id">{entry.id}</span>
-        <ChevronRight/>
+        <ChevronRight className='chevron'/>
     </NavLink>
 )
 

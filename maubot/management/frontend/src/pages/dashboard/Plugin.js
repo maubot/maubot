@@ -25,7 +25,7 @@ import BaseMainView from "./BaseMainView"
 const PluginListEntry = ({ entry }) => (
     <NavLink className="plugin entry" to={`/plugin/${entry.id}`}>
         <span className="id">{entry.id}</span>
-        <ChevronRight/>
+        <ChevronRight className='chevron'/>
     </NavLink>
 )
 
