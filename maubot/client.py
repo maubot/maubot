@@ -120,7 +120,7 @@ class Client:
             await self.client.set_displayname(self.displayname)
         if self.avatar_url != "disable":
             await self.client.set_avatar_url(self.avatar_url)
-            self.start_sync()
+        self.start_sync()
         await self._update_remote_profile()
         self.started = True
         self.log.info("Client started, starting plugin instances...")
