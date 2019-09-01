@@ -50,7 +50,8 @@ async def get_registerable_servers(_: web.Request) -> web.Response:
     return web.json_response({key: value["url"] for key, value in registration_secrets().items()})
 
 
-AuthRequestInfo = NamedTuple("AuthRequestInfo", api=HTTPAPI, secret=str, username=str, password=str)
+AuthRequestInfo = NamedTuple("AuthRequestInfo", api=HTTPAPI, secret=str, username=str,
+                             password=str, user_type=str)
 
 
 async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthRequestInfo],
@@ -75,7 +76,7 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
         return None, resp.invalid_server
     api = HTTPAPI(base_url, "", loop=get_loop())
     user_type = body.get("user_type", None)
-    return (api, secret, username, password, user_type), None
+    return AuthRequestInfo(api, secret, username, password, user_type), None
 
 
 @routes.post("/client/auth/{server}/register")
@@ -111,6 +112,7 @@ async def login(request: web.Request) -> web.Response:
     if err is not None:
         return err
     api, _, username, password, _ = info
+    device_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     try:
         return web.json_response(await api.request(Method.POST, Path.login, content={
             "type": "m.login.password",
@@ -119,7 +121,7 @@ async def login(request: web.Request) -> web.Response:
                 "user": username,
             },
             "password": password,
-            "device_id": f"maubot_{random.choices(string.ascii_uppercase + string.digits, k=8)}",
+            "device_id": f"maubot_{device_id}",
         }))
     except MatrixRequestError as e:
         return web.json_response({
