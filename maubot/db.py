@@ -20,7 +20,7 @@ from sqlalchemy.engine.base import Engine
 import sqlalchemy as sql
 
 from mautrix.types import UserID, FilterID, SyncToken, ContentURI
-from mautrix.bridge.db import Base
+from mautrix.util.db import Base
 
 from .config import Config
 
