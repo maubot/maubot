@@ -56,8 +56,7 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
                            primary_user=primary_user, config=data.get("config", ""))
     instance = PluginInstance(db_instance)
     instance.load()
-    PluginInstance.db.add(db_instance)
-    PluginInstance.db.commit()
+    instance.db_instance.insert()
     await instance.start()
     return resp.created(instance.to_dict())
 

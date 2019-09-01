@@ -13,16 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, Iterable, TYPE_CHECKING
 from asyncio import AbstractEventLoop
-from aiohttp import web
 import os.path
 import logging
 import io
 
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml import YAML
-from sqlalchemy.orm import Session
 import sqlalchemy as sql
 
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
@@ -44,7 +42,6 @@ yaml.indent(4)
 
 
 class PluginInstance:
-    db: Session = None
     webserver: 'MaubotServer' = None
     mb_config: Config = None
     loop: AbstractEventLoop = None
@@ -130,8 +127,7 @@ class PluginInstance:
             del self.cache[self.id]
         except KeyError:
             pass
-        self.db.delete(self.db_instance)
-        self.db.commit()
+        self.db_instance.delete()
         if self.inst_db:
             self.inst_db.dispose()
             ZippedPluginLoader.trash(
@@ -207,14 +203,14 @@ class PluginInstance:
         try:
             return cls.cache[instance_id]
         except KeyError:
-            db_instance = db_instance or DBPlugin.query.get(instance_id)
+            db_instance = db_instance or DBPlugin.get(instance_id)
             if not db_instance:
                 return None
             return PluginInstance(db_instance)
 
     @classmethod
-    def all(cls) -> List['PluginInstance']:
-        return [cls.get(plugin.id, plugin) for plugin in DBPlugin.query.all()]
+    def all(cls) -> Iterable['PluginInstance']:
+        return (cls.get(plugin.id, plugin) for plugin in DBPlugin.all())
 
     def update_id(self, new_id: str) -> None:
         if new_id is not None and new_id != self.id:
@@ -293,9 +289,8 @@ class PluginInstance:
     # endregion
 
 
-def init(db: Session, config: Config, webserver: 'MaubotServer', loop: AbstractEventLoop) -> List[
-    PluginInstance]:
-    PluginInstance.db = db
+def init(config: Config, webserver: 'MaubotServer', loop: AbstractEventLoop
+         ) -> Iterable[PluginInstance]:
     PluginInstance.mb_config = config
     PluginInstance.loop = loop
     PluginInstance.webserver = webserver

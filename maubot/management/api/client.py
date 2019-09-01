@@ -68,8 +68,7 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
                            displayname=data.get("displayname", ""),
                            avatar_url=data.get("avatar_url", ""))
     client = Client(db_instance)
-    Client.db.add(db_instance)
-    Client.db.commit()
+    client.db_instance.insert()
     await client.start()
     return resp.created(client.to_dict())
 

@@ -56,11 +56,11 @@ log.info(f"Initializing maubot {__version__}")
 loop = asyncio.get_event_loop()
 
 init_zip_loader(config)
-db_session = init_db(config)
-clients = init_client_class(db_session, loop)
+db_engine = init_db(config)
+clients = init_client_class(loop)
 management_api = init_mgmt_api(config, loop)
 server = MaubotServer(management_api, config, loop)
-plugins = init_plugin_instance_class(db_session, config, server, loop)
+plugins = init_plugin_instance_class(config, server, loop)
 
 for plugin in plugins:
     plugin.load()
@@ -69,30 +69,17 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 signal.signal(signal.SIGTERM, signal.default_int_handler)
 
 
-async def periodic_commit():
-    while True:
-        await asyncio.sleep(60)
-        db_session.commit()
-
-
-periodic_commit_task: asyncio.Future = None
-
 try:
     log.info("Starting server")
     loop.run_until_complete(server.start())
     log.info("Starting clients and plugins")
     loop.run_until_complete(asyncio.gather(*[client.start() for client in clients], loop=loop))
     log.info("Startup actions complete, running forever")
-    periodic_commit_task = asyncio.ensure_future(periodic_commit(), loop=loop)
     loop.run_forever()
 except KeyboardInterrupt:
-    log.info("Interrupt received, stopping HTTP clients/servers and saving database")
-    if periodic_commit_task is not None:
-        periodic_commit_task.cancel()
-    log.debug("Stopping clients")
+    log.info("Interrupt received, stopping clients")
     loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()],
                                            loop=loop))
-    db_session.commit()
     if stop_log_listener is not None:
         log.debug("Closing websockets")
         loop.run_until_complete(stop_log_listener())
