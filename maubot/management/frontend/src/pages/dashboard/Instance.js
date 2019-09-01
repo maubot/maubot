@@ -176,7 +176,7 @@ class Instance extends BaseMainView {
                            placeholder="xyz.maubot.example" onChange={this.inputChange}/>
             )}
         </PrefTable>
-        {!this.isNew &&
+        {!this.isNew && Boolean(this.props.entry.base_config) &&
         <AceEditor mode="yaml" theme="github" onChange={config => this.setState({ config })}
                    name="config" value={this.state.config}
                    editorProps={{

@@ -53,11 +53,12 @@ class PluginInstance:
     client: Client
     plugin: Plugin
     config: BaseProxyConfig
-    base_cfg: RecursiveDict[CommentedMap]
+    base_cfg: Optional[RecursiveDict[CommentedMap]]
+    base_cfg_str: Optional[str]
     inst_db: sql.engine.Engine
     inst_db_tables: Dict[str, sql.Table]
-    inst_webapp: 'PluginWebApp'
-    inst_webapp_url: str
+    inst_webapp: Optional['PluginWebApp']
+    inst_webapp_url: Optional[str]
     started: bool
 
     def __init__(self, db_instance: DBPlugin):
@@ -73,6 +74,7 @@ class PluginInstance:
         self.inst_webapp = None
         self.inst_webapp_url = None
         self.base_cfg = None
+        self.base_cfg_str = None
         self.cache[self.id] = self
 
     def to_dict(self) -> dict:
@@ -83,6 +85,7 @@ class PluginInstance:
             "started": self.started,
             "primary_user": self.primary_user,
             "config": self.db_instance.config,
+            "base_config": self.base_cfg_str,
             "database": (self.inst_db is not None
                          and self.mb_config["api_features.instance_database"]),
         }
@@ -161,8 +164,12 @@ class PluginInstance:
             try:
                 base = await self.loader.read_file("base-config.yaml")
                 self.base_cfg = RecursiveDict(yaml.load(base.decode("utf-8")), CommentedMap)
+                buf = io.StringIO()
+                yaml.dump(self.base_cfg._data, buf)
+                self.base_cfg_str = buf.getvalue()
             except (FileNotFoundError, KeyError):
                 self.base_cfg = None
+                self.base_cfg_str = None
             if self.base_cfg:
                 base_cfg_func = self.base_cfg.clone
             else:
