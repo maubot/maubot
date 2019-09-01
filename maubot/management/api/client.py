@@ -85,13 +85,14 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         return resp.bad_client_connection_details
     except ValueError as e:
         return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
-    await client.update_avatar_url(data.get("avatar_url", None))
-    await client.update_displayname(data.get("displayname", None))
-    await client.update_started(data.get("started", None))
-    client.enabled = data.get("enabled", client.enabled)
-    client.autojoin = data.get("autojoin", client.autojoin)
-    client.sync = data.get("sync", client.sync)
-    return resp.updated(client.to_dict())
+    with client.db_instance.edit_mode():
+        await client.update_avatar_url(data.get("avatar_url", None))
+        await client.update_displayname(data.get("displayname", None))
+        await client.update_started(data.get("started", None))
+        client.enabled = data.get("enabled", client.enabled)
+        client.autojoin = data.get("autojoin", client.autojoin)
+        client.sync = data.get("sync", client.sync)
+        return resp.updated(client.to_dict())
 
 
 @routes.post("/client/new")

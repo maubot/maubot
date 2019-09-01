@@ -64,13 +64,13 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
 async def _update_instance(instance: PluginInstance, data: dict) -> web.Response:
     if not await instance.update_primary_user(data.get("primary_user", None)):
         return resp.primary_user_not_found
-    instance.update_id(data.get("id", None))
-    instance.update_enabled(data.get("enabled", None))
-    instance.update_config(data.get("config", None))
-    await instance.update_started(data.get("started", None))
-    await instance.update_type(data.get("type", None))
-    instance.db.commit()
-    return resp.updated(instance.to_dict())
+    with instance.db_instance.edit_mode():
+        instance.update_id(data.get("id", None))
+        instance.update_enabled(data.get("enabled", None))
+        instance.update_config(data.get("config", None))
+        await instance.update_started(data.get("started", None))
+        await instance.update_type(data.get("type", None))
+        return resp.updated(instance.to_dict())
 
 
 @routes.put("/instance/{id}")
@@ -90,7 +90,7 @@ async def update_instance(request: web.Request) -> web.Response:
 @routes.delete("/instance/{id}")
 async def delete_instance(request: web.Request) -> web.Response:
     instance_id = request.match_info.get("id", "").lower()
-    instance = PluginInstance.get(instance_id, None)
+    instance = PluginInstance.get(instance_id)
     if not instance:
         return resp.instance_not_found
     if instance.started:
