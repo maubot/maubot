@@ -26,6 +26,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [reminder](https://github.com/maubot/reminder) - A bot to remind you about things.
 * [translate](https://github.com/maubot/translate) - A bot to translate words.
 * [reactbot](https://github.com/maubot/reactbot) - A bot that responds to messages that match predefined rules.
+* [exec](https://github.com/maubot/exec) - A bot that executes code.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
