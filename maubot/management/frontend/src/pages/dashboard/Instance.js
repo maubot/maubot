@@ -19,6 +19,7 @@ import AceEditor from "react-ace"
 import "brace/mode/yaml"
 import "brace/theme/github"
 import { ReactComponent as ChevronRight } from "../../res/chevron-right.svg"
+import { ReactComponent as NoAvatarIcon } from "../../res/bot.svg"
 import PrefTable, { PrefInput, PrefSelect, PrefSwitch } from "../../components/PreferenceTable"
 import api from "../../api"
 import Spinner from "../../components/Spinner"
@@ -73,13 +74,31 @@ class Instance extends BaseMainView {
         this.updateClientOptions()
     }
 
+    getAvatarMXC(client) {
+        return client.avatar_url === "disable" ? client.remote_avatar_url : client.avatar_url
+    }
+
+    getAvatarURL(client) {
+        return api.getAvatarURL({
+            id: client.id,
+            avatar_url: this.getAvatarMXC(client),
+        })
+    }
+
     clientSelectEntry = client => client && {
         id: client.id,
         value: client.id,
         label: (
             <div className="select-client">
-                <img className="avatar" src={api.getAvatarURL(client)} alt=""/>
-                <span className="displayname">{client.displayname || client.id}</span>
+                {this.getAvatarMXC(client)
+                    ? <img className="avatar" src={this.getAvatarURL(client)} alt=""/>
+                    : <NoAvatarIcon className='avatar'/>}
+                <span className="displayname">{
+                    (client.displayname === "disable"
+                            ? client.remote_displayname
+                            : client.displayname
+                    ) || client.id
+                }</span>
             </div>
         ),
     }
