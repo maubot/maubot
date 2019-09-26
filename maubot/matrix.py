@@ -73,7 +73,7 @@ class MaubotMessageEvent(MessageEvent):
     def mark_read(self) -> Awaitable[None]:
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
 
-    def react(self, key: str) -> Awaitable[None]:
+    def react(self, key: str) -> Awaitable[EventID]:
         return self.client.react(self.room_id, self.event_id, key)
 
     def edit(self, content: Union[str, MessageEventContent],

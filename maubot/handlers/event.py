@@ -16,19 +16,20 @@
 from typing import Callable, Union, NewType
 
 from mautrix.types import EventType
-from mautrix.client import EventHandler
+from mautrix.client import EventHandler, InternalEventType
 
 EventHandlerDecorator = NewType("EventHandlerDecorator", Callable[[EventHandler], EventHandler])
 
 
-def on(var: Union[EventType, EventHandler]) -> Union[EventHandlerDecorator, EventHandler]:
+def on(var: Union[EventType, InternalEventType, EventHandler]
+       ) -> Union[EventHandlerDecorator, EventHandler]:
     def decorator(func: EventHandler) -> EventHandler:
         func.__mb_event_handler__ = True
-        if isinstance(var, EventType):
+        if isinstance(var, (EventType, InternalEventType)):
             func.__mb_event_type__ = var
         else:
             func.__mb_event_type__ = EventType.ALL
 
         return func
 
-    return decorator if isinstance(var, EventType) else decorator(var)
+    return decorator if isinstance(var, (EventType, InternalEventType)) else decorator(var)
