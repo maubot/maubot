@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Iterable, Optional
+import logging
+import sys
 
 from sqlalchemy import Column, String, Boolean, ForeignKey, Text
 from sqlalchemy.engine.base import Engine
@@ -72,13 +74,25 @@ class DBClient(Base):
 
 
 def init(config: Config) -> Engine:
-    db_engine = sql.create_engine(config["database"])
-    Base.metadata.bind = db_engine
+    db = sql.create_engine(config["database"])
+    Base.metadata.bind = db
 
     for table in (DBPlugin, DBClient):
-        table.db = db_engine
-        table.t = table.__table__
-        table.c = table.t.c
-        table.column_names = table.c.keys()
+        table.bind(db)
 
-    return db_engine
+    if not db.has_table("alembic_version"):
+        log = logging.getLogger("maubot.db")
+
+        if db.has_table("client") and db.has_table("plugin"):
+            log.warning("alembic_version table not found, but cligent and plugin tables found. "
+                        "Assuming pre-Alembic database and inserting version.")
+            db.execute("CREATE TABLE IF NOT EXISTS alembic_version ("
+                       "    version_num VARCHAR(32) PRIMARY KEY"
+                       ");")
+            db.execute("INSERT INTO alembic_version VALUES ('d295f8dcfa64');")
+        else:
+            log.critical("alembic_version table not found. "
+                         "Did you forget to `alembic upgrade head`?")
+            sys.exit(10)
+
+    return db
