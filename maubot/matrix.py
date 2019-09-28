@@ -85,11 +85,16 @@ class MaubotMessageEvent(MessageEvent):
 
 class MaubotMatrixClient(MatrixClient):
     def send_markdown(self, room_id: RoomID, markdown: str, msgtype: MessageType = MessageType.TEXT,
+                      edits: Optional[Union[EventID, MessageEvent]] = None,
                       relates_to: Optional[RelatesTo] = None, **kwargs) -> Awaitable[EventID]:
         content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
         content.body, content.formatted_body = parse_markdown(markdown)
         if relates_to:
+            if edits:
+                raise ValueError("Can't use edits and relates_to at the same time.")
             content.relates_to = relates_to
+        elif edits:
+            content.set_edit(edits)
         return self.send_message(room_id, content, **kwargs)
 
     async def dispatch_event(self, event: Event, source: SyncStream = SyncStream.INTERNAL) -> None:
