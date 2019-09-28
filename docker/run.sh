@@ -16,6 +16,6 @@ if [ ! -f /data/config.yaml ]; then
 fi
 
 mkdir -p /var/log/maubot /data/plugins /data/trash /data/dbs
-#alembic -x config=/data/config.yaml upgrade head
+alembic -x config=/data/config.yaml upgrade head
 fixperms
 exec su-exec $UID:$GID python3 -m maubot -c /data/config.yaml -b docker/example-config.yaml
