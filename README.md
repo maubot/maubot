@@ -27,6 +27,8 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [translate](https://github.com/maubot/translate) - A bot to translate words.
 * [reactbot](https://github.com/maubot/reactbot) - A bot that responds to messages that match predefined rules.
 * [exec](https://github.com/maubot/exec) - A bot that executes code.
+* [commitstrip](https://github.com/maubot/commitstrip) - A bot to view CommitStrips.
+* [supportportal](https://github.com/maubot/supportportal) - A bot to manage customer support on Matrix.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 

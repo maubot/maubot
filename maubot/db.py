@@ -84,7 +84,7 @@ def init(config: Config) -> Engine:
         log = logging.getLogger("maubot.db")
 
         if db.has_table("client") and db.has_table("plugin"):
-            log.warning("alembic_version table not found, but cligent and plugin tables found. "
+            log.warning("alembic_version table not found, but client and plugin tables found. "
                         "Assuming pre-Alembic database and inserting version.")
             db.execute("CREATE TABLE IF NOT EXISTS alembic_version ("
                        "    version_num VARCHAR(32) PRIMARY KEY"
