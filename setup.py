@@ -1,4 +1,5 @@
 import setuptools
+import glob
 import os
 
 path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "maubot", "__meta__.py")
@@ -21,7 +22,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
-        "mautrix>=0.4.dev70,<0.5",
+        "mautrix>=0.4.dev72,<0.5",
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
         "alembic>=1.0.0,<2",
@@ -54,6 +55,8 @@ setuptools.setup(
     """,
     data_files=[
         (".", ["example-config.yaml"]),
+        ("alembic", ["alembic/env.py"]),
+        ("alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
     package_data={
         "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",

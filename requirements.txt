@@ -1,5 +1,4 @@
-#mautrix
-https://github.com/tulir/mautrix-python/tarball/master#egg=mautrix
+mautrix
 aiohttp
 SQLAlchemy
 alembic
