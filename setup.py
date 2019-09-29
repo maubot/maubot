@@ -54,7 +54,7 @@ setuptools.setup(
         mbc=maubot.cli:app
     """,
     data_files=[
-        (".", ["example-config.yaml"]),
+        (".", ["example-config.yaml", "alembic.ini"]),
         ("alembic", ["alembic/env.py"]),
         ("alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
