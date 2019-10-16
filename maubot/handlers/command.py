@@ -284,8 +284,8 @@ class RegexArgument(Argument):
             val = val.split(" ")[0]
         match = self.regex.match(val)
         if match:
-            return (orig_val[:match.pos] + orig_val[match.endpos:],
-                    match.groups() or val[match.pos:match.endpos])
+            return (orig_val[:match.start()] + orig_val[match.end():],
+                    match.groups() or val[match.start():match.end()])
         return orig_val, None
 
 
