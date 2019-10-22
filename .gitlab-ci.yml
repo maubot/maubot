@@ -41,7 +41,7 @@ build standalone:
   stage: build
   script:
     - docker pull $CI_REGISTRY_IMAGE:standalone || true
-    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:standalone --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone maubot/standalone
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:standalone --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone . -f maubot/standalone/Dockerfile
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
 
 push latest standalone:
