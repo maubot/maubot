@@ -24,6 +24,7 @@ from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStat
                            EventType, Filter, RoomFilter, RoomEventFilter)
 from mautrix.client import InternalEventType
 
+from .lib.store_proxy import ClientStoreProxy
 from .db import DBClient
 from .matrix import MaubotMatrixClient
 
@@ -58,7 +59,8 @@ class Client:
         self.remote_avatar_url = None
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
-                                         log=self.log, loop=self.loop, store=self.db_instance)
+                                         log=self.log, loop=self.loop,
+                                         store=ClientStoreProxy(self.db_instance))
         self.client.ignore_initial_sync = True
         self.client.ignore_first_sync = True
         if self.autojoin:
@@ -107,13 +109,13 @@ class Client:
             self.db_instance.enabled = False
             return
         if not self.filter_id:
-            self.db_instance.filter_id = await self.client.create_filter(Filter(
+            self.db_instance.edit(filter_id=await self.client.create_filter(Filter(
                 room=RoomFilter(
                     timeline=RoomEventFilter(
                         limit=50,
                     ),
                 ),
-            ))
+            )))
         if self.displayname != "disable":
             await self.client.set_displayname(self.displayname)
         if self.avatar_url != "disable":

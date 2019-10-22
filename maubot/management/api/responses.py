@@ -18,6 +18,7 @@ from http import HTTPStatus
 from aiohttp import web
 from sqlalchemy.exc import OperationalError, IntegrityError
 
+
 class _Response:
     @property
     def body_not_json(self) -> web.Response:
