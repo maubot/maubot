@@ -3,7 +3,7 @@ FROM node:12 AS frontend-builder
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
 
-FROM alpine:edge
+FROM alpine:3.10
 
 ENV UID=1337 \
     GID=1337
@@ -11,7 +11,7 @@ ENV UID=1337 \
 COPY . /opt/maubot
 COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
 WORKDIR /opt/maubot
-RUN apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+RUN apk add --no-cache \
       py3-aiohttp \
       py3-sqlalchemy \
       py3-attrs \
@@ -24,7 +24,6 @@ RUN apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing \
       py3-pillow \
       py3-magic \
       py3-psycopg2 \
-      py3-matplotlib \
       py3-ruamel.yaml \
       py3-jinja2 \
       py3-click \
