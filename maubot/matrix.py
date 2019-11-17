@@ -14,27 +14,24 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Union, Awaitable, Optional, Tuple
-from markdown.extensions import Extension
-import markdown as md
+from html import escape
 import attr
 
 from mautrix.client import Client as MatrixClient, SyncStream
 from mautrix.util.formatter import parse_html
+from mautrix.util import markdown
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
 
 
-class EscapeHTML(Extension):
-    def extendMarkdown(self, md):
-        md.preprocessors.deregister("html_block")
-        md.inlinePatterns.deregister("html")
-
-
-escape_html = EscapeHTML()
-
-
-def parse_markdown(markdown: str, allow_html: bool = False) -> Tuple[str, str]:
-    html = md.markdown(markdown, extensions=[escape_html] if not allow_html else [])
+def parse_formatted(message: str, allow_html: bool = False, render_markdown: bool = True
+                    ) -> Tuple[str, str]:
+    if render_markdown:
+        html = markdown.render(message, allow_html=allow_html)
+    elif allow_html:
+        html = message
+    else:
+        return message, escape(message)
     return parse_html(html), html
 
 
@@ -50,14 +47,15 @@ class MaubotMessageEvent(MessageEvent):
 
     def respond(self, content: Union[str, MessageEventContent],
                 event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-                html_in_markdown: bool = False, reply: bool = False,
+                allow_html: bool = False, reply: bool = False,
                 edits: Optional[Union[EventID, MessageEvent]] = None) -> Awaitable[EventID]:
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
-            if markdown:
+            if allow_html or markdown:
                 content.format = Format.HTML
-                content.body, content.formatted_body = parse_markdown(content.body,
-                                                                      allow_html=html_in_markdown)
+                content.body, content.formatted_body = parse_formatted(content.body,
+                                                                       render_markdown=markdown,
+                                                                       allow_html=allow_html)
         if edits:
             content.set_edit(edits)
         elif reply and not self.disable_reply:
@@ -66,9 +64,9 @@ class MaubotMessageEvent(MessageEvent):
 
     def reply(self, content: Union[str, MessageEventContent],
               event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-              html_in_markdown: bool = False) -> Awaitable[EventID]:
-        return self.respond(content, event_type, markdown, reply=True,
-                            html_in_markdown=html_in_markdown)
+              allow_html: bool = False) -> Awaitable[EventID]:
+        return self.respond(content, event_type, markdown=markdown, reply=True,
+                            allow_html=allow_html)
 
     def mark_read(self) -> Awaitable[None]:
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
@@ -78,17 +76,19 @@ class MaubotMessageEvent(MessageEvent):
 
     def edit(self, content: Union[str, MessageEventContent],
              event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-             html_in_markdown: bool = False) -> Awaitable[EventID]:
-        return self.respond(content, event_type, markdown, edits=self,
-                            html_in_markdown=html_in_markdown)
+             allow_html: bool = False) -> Awaitable[EventID]:
+        return self.respond(content, event_type, markdown=markdown, edits=self,
+                            allow_html=allow_html)
 
 
 class MaubotMatrixClient(MatrixClient):
-    def send_markdown(self, room_id: RoomID, markdown: str, msgtype: MessageType = MessageType.TEXT,
+    def send_markdown(self, room_id: RoomID, markdown: str, *, allow_html: bool = False,
+                      msgtype: MessageType = MessageType.TEXT,
                       edits: Optional[Union[EventID, MessageEvent]] = None,
-                      relates_to: Optional[RelatesTo] = None, **kwargs) -> Awaitable[EventID]:
+                      relates_to: Optional[RelatesTo] = None, **kwargs
+                      ) -> Awaitable[EventID]:
         content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
-        content.body, content.formatted_body = parse_markdown(markdown)
+        content.body, content.formatted_body = parse_formatted(markdown, allow_html=allow_html)
         if relates_to:
             if edits:
                 raise ValueError("Can't use edits and relates_to at the same time.")
