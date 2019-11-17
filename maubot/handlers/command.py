@@ -281,7 +281,7 @@ class RegexArgument(Argument):
     def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         orig_val = val
         if not self.pass_raw:
-            val = val.split(" ")[0]
+            val = re.split(r"\s", val, 1)[0]
         match = self.regex.match(val)
         if match:
             return (orig_val[:match.start()] + orig_val[match.end():],
@@ -299,7 +299,7 @@ class CustomArgument(Argument):
         if self.pass_raw:
             return self.matcher(val)
         orig_val = val
-        val = val.split(" ")[0]
+        val = re.split(r"\s", val, 1)[0]
         res = self.matcher(val)
         if res:
             return orig_val[len(val):], res
@@ -310,7 +310,7 @@ class SimpleArgument(Argument):
     def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         if self.pass_raw:
             return "", val
-        res = val.split(" ")[0]
+        res = re.split(r"\s", val, 1)[0]
         return val[len(res):], res
 
 
