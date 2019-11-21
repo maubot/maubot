@@ -21,7 +21,7 @@ from aiohttp import ClientSession
 
 from mautrix.errors import MatrixInvalidToken, MatrixRequestError
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
-                           EventType, Filter, RoomFilter, RoomEventFilter)
+                           StateEvent, EventType, Filter, RoomFilter, RoomEventFilter)
 from mautrix.client import InternalEventType
 
 from .lib.store_proxy import ClientStoreProxy
@@ -65,6 +65,7 @@ class Client:
         self.client.ignore_first_sync = True
         if self.autojoin:
             self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
+        self.client.add_event_handler(EventType.ROOM_TOMBSTONE, self._handle_tombstone)
         self.client.add_event_handler(InternalEventType.SYNC_ERRORED, self._set_sync_ok(False))
         self.client.add_event_handler(InternalEventType.SYNC_SUCCESSFUL, self._set_sync_ok(True))
 
@@ -188,6 +189,13 @@ class Client:
     @classmethod
     def all(cls) -> Iterable['Client']:
         return (cls.get(user.id, user) for user in DBClient.all())
+
+    async def _handle_tombstone(self, evt: StateEvent) -> None:
+        if not evt.content.replacement_room:
+            self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
+            return
+        _, server = self.client.parse_user_id(evt.sender)
+        await self.client.join_room(evt.content.replacement_room, servers=[server])
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
