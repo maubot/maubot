@@ -22,7 +22,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
-        "mautrix>=0.4.dev78,<0.5",
+        "mautrix>=0.4.dev79,<0.5",
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
         "alembic>=1.0.0,<2",
