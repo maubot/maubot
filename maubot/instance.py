@@ -39,6 +39,7 @@ log = logging.getLogger("maubot.instance")
 
 yaml = YAML()
 yaml.indent(4)
+yaml.width = 200
 
 
 class PluginInstance:
