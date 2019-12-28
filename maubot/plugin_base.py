@@ -50,7 +50,7 @@ class Plugin(ABC):
         self.config = config
         self.database = database
         self.webapp = webapp
-        self.webapp_url = URL(webapp_url)
+        self.webapp_url = URL(webapp_url) if webapp_url else None
         self._handlers_at_startup = []
 
     def register_handler_class(self, obj) -> None:
