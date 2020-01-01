@@ -30,7 +30,8 @@ class Login extends Component {
 
     inputChanged = event => this.setState({ [event.target.name]: event.target.value })
 
-    login = async () => {
+    login = async evt => {
+        evt.preventDefault()
         this.setState({ loading: true })
         const resp = await api.login(this.state.username, this.state.password)
         if (resp.token) {
@@ -53,17 +54,17 @@ class Login extends Component {
             </div>
         }
         return <div className="login-wrapper">
-            <div className={`login ${this.state.error && "errored"}`}>
+            <form className={`login ${this.state.error && "errored"}`} onSubmit={this.login}>
                 <h1>Maubot Manager</h1>
                 <input type="text" placeholder="Username" value={this.state.username}
                        name="username" onChange={this.inputChanged}/>
                 <input type="password" placeholder="Password" value={this.state.password}
                        name="password" onChange={this.inputChanged}/>
-                <button onClick={this.login}>
+                <button onClick={this.login} type="submit">
                     {this.state.loading ? <Spinner/> : "Log in"}
                 </button>
                 {this.state.error && <div className="error">{this.state.error}</div>}
-            </div>
+            </form>
         </div>
     }
 }
