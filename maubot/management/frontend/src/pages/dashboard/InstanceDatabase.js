@@ -22,6 +22,7 @@ import { ReactComponent as OrderAsc } from "../../res/sort-up.svg"
 import api from "../../api"
 import Spinner from "../../components/Spinner"
 
+// eslint-disable-next-line no-extend-native
 Map.prototype.map = function(func) {
     const res = []
     for (const [key, value] of this) {
@@ -215,6 +216,7 @@ class InstanceDatabase extends Component {
         col: props.col,
     })
 
+    // eslint-disable-next-line no-control-regex
     sqlEscape = str => str.replace(/[\0\x08\x09\x1a\n\r"'\\%]/g, char => {
         switch (char) {
         case "\0":
