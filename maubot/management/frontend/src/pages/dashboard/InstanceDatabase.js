@@ -90,7 +90,7 @@ class InstanceDatabase extends Component {
     }
 
     buildSQLQuery(table = this.state.selectedTable, resetContent = true) {
-        let query = `SELECT * FROM ${table}`
+        let query = `SELECT * FROM "${table}"`
 
         if (this.order.size > 0) {
             const order = Array.from(this.order.entries()).reverse()
@@ -198,10 +198,10 @@ class InstanceDatabase extends Component {
             const val = values[index]
             condition.push(`${key}='${this.sqlEscape(val.toString())}'`)
         }
-        const query = `DELETE FROM ${this.state.selectedTable} WHERE ${condition.join(" AND ")}`
+        const query = `DELETE FROM "${this.state.selectedTable}" WHERE ${condition.join(" AND ")}`
         const res = await api.queryInstanceDatabase(this.props.instanceID, query)
         this.setState({
-            prevQuery: `DELETE FROM ${this.state.selectedTable} ...`,
+            prevQuery: `DELETE FROM "${this.state.selectedTable}" ...`,
             rowCount: res.rowcount,
         })
         await this.reloadContent(false)
