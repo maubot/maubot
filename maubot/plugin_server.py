@@ -84,4 +84,3 @@ class PrefixResource(web.Resource):
 
     def raw_match(self, path: str) -> bool:
         return path and path.startswith(self._prefix)
-

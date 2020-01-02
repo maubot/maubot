@@ -36,7 +36,6 @@ class DBPlugin(Base):
     primary_user: UserID = Column(String(255),
                                   ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
                                   nullable=False)
-    config: str = Column(Text, nullable=False, default='')
 
     @classmethod
     def all(cls) -> Iterable['DBPlugin']:
@@ -45,6 +44,20 @@ class DBPlugin(Base):
     @classmethod
     def get(cls, id: str) -> Optional['DBPlugin']:
         return cls._select_one_or_none(cls.c.id == id)
+
+
+class DBPluginFile(Base):
+    __tablename__ = "plugin_file"
+
+    plugin_id: str = Column(String(255),
+                            ForeignKey("plugin.id", onupdate="CASCADE", ondelete="CASCADE"),
+                            primary_key=True)
+    file_name: str = Column(String(255), primary_key=True)
+    content: str = Column(Text, nullable=False, default="")
+
+    @classmethod
+    def all_for_plugin(cls, id: str) -> Iterable['DBPluginFile']:
+        return cls._select_all(cls.c.plugin_id == id)
 
 
 class DBClient(Base):
