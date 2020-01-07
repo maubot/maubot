@@ -245,6 +245,7 @@ export async function doClientAuth(server, type, username, password) {
 }
 
 export default {
+    BASE_PATH,
     login, ping, setBasePath, getFeatures, remoteGetFeatures,
     openLogSocket,
     debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
