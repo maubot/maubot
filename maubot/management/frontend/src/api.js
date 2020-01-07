@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export const BASE_PATH = "/_matrix/maubot/v1"
+var BASE_PATH = "/_matrix/maubot/v1"
+
+export function setBasePath(basePath) {
+    BASE_PATH = basePath
+}
 
 function getHeaders(contentType = "application/json") {
     return {
@@ -241,8 +245,7 @@ export async function doClientAuth(server, type, username, password) {
 }
 
 export default {
-    BASE_PATH,
-    login, ping, getFeatures, remoteGetFeatures,
+    login, ping, setBasePath, getFeatures, remoteGetFeatures,
     openLogSocket,
     debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
     getInstances, getInstance, putInstance, deleteInstance,
