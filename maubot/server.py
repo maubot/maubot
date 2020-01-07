@@ -65,8 +65,7 @@ class MaubotServer:
 
     def get_instance_subapp(self, instance_id: str) -> Tuple[PluginWebApp, str]:
         subpath = self.config["server.plugin_base_path"] + instance_id
-        path_prefix = self.config["server.public_url_path_prefix"].rstrip("/")
-        url = self.config["server.public_url"] + path_prefix + subpath
+        url = self.config["server.public_url"] + subpath
         try:
             return self.plugin_routes[subpath], url
         except KeyError:
