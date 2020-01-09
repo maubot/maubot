@@ -17,7 +17,7 @@ from typing import Tuple, Dict
 import logging
 import asyncio
 import json
-from urllib.parse import urlparse
+from yarl import URL
 
 from aiohttp import web, hdrs
 from aiohttp.abc import AbstractAccessLogger
@@ -136,9 +136,8 @@ class MaubotServer:
         public_url = self.config["server.public_url"]
         base_path = self.config["server.base_path"]
         public_url_path = ""
-        if public_url != "":
-            url_parts = urlparse(public_url)
-            public_url_path = url_parts.path.rstrip("/")
+        if public_url:
+            public_url_path = URL(public_url).path.rstrip("/")
 
         # assemble with base_path
         api_path = f"{public_url_path}{base_path}"

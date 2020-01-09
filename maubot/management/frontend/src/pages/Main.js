@@ -42,7 +42,7 @@ class Main extends Component {
 
     async getBasePath() {
         try {
-            const resp = await fetch("./paths.json", {
+            const resp = await fetch(process.env.PUBLIC_URL + "/paths.json", {
                 headers: { "Content-Type": "application/json" }
             })
             const apiPathJson = await resp.json()
