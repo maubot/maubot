@@ -2,7 +2,7 @@ mautrix
 aiohttp
 SQLAlchemy
 alembic
-Markdown
+commonmark
 ruamel.yaml
 attrs
 bcrypt

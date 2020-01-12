@@ -22,11 +22,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
-        "mautrix>=0.4.dev72,<0.5",
+        "mautrix>=0.4,<0.5",
         "aiohttp>=3.0.1,<4",
         "SQLAlchemy>=1.2.3,<2",
         "alembic>=1.0.0,<2",
-        "Markdown>=3.0.0,<4",
+        "commonmark>=0.9.1,<1",
         "ruamel.yaml>=0.15.35,<0.17",
         "attrs>=18.1.0",
         "bcrypt>=3.1.4,<4",
@@ -47,6 +47,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     entry_points="""
         [console_scripts]

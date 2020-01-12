@@ -21,9 +21,10 @@ from aiohttp import ClientSession
 
 from mautrix.errors import MatrixInvalidToken, MatrixRequestError
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
-                           EventType, Filter, RoomFilter, RoomEventFilter)
+                           StateEvent, EventType, Filter, RoomFilter, RoomEventFilter)
 from mautrix.client import InternalEventType
 
+from .lib.store_proxy import ClientStoreProxy
 from .db import DBClient
 from .matrix import MaubotMatrixClient
 
@@ -58,11 +59,13 @@ class Client:
         self.remote_avatar_url = None
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
-                                         log=self.log, loop=self.loop, store=self.db_instance)
+                                         log=self.log, loop=self.loop,
+                                         store=ClientStoreProxy(self.db_instance))
         self.client.ignore_initial_sync = True
         self.client.ignore_first_sync = True
         if self.autojoin:
             self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
+        self.client.add_event_handler(EventType.ROOM_TOMBSTONE, self._handle_tombstone)
         self.client.add_event_handler(InternalEventType.SYNC_ERRORED, self._set_sync_ok(False))
         self.client.add_event_handler(InternalEventType.SYNC_SUCCESSFUL, self._set_sync_ok(True))
 
@@ -107,13 +110,13 @@ class Client:
             self.db_instance.enabled = False
             return
         if not self.filter_id:
-            self.db_instance.filter_id = await self.client.create_filter(Filter(
+            self.db_instance.edit(filter_id=await self.client.create_filter(Filter(
                 room=RoomFilter(
                     timeline=RoomEventFilter(
                         limit=50,
                     ),
                 ),
-            ))
+            )))
         if self.displayname != "disable":
             await self.client.set_displayname(self.displayname)
         if self.avatar_url != "disable":
@@ -186,6 +189,13 @@ class Client:
     @classmethod
     def all(cls) -> Iterable['Client']:
         return (cls.get(user.id, user) for user in DBClient.all())
+
+    async def _handle_tombstone(self, evt: StateEvent) -> None:
+        if not evt.content.replacement_room:
+            self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
+            return
+        _, server = self.client.parse_user_id(evt.sender)
+        await self.client.join_room(evt.content.replacement_room, servers=[server])
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:

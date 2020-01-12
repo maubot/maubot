@@ -22,6 +22,7 @@ import { ReactComponent as OrderAsc } from "../../res/sort-up.svg"
 import api from "../../api"
 import Spinner from "../../components/Spinner"
 
+// eslint-disable-next-line no-extend-native
 Map.prototype.map = function(func) {
     const res = []
     for (const [key, value] of this) {
@@ -89,7 +90,7 @@ class InstanceDatabase extends Component {
     }
 
     buildSQLQuery(table = this.state.selectedTable, resetContent = true) {
-        let query = `SELECT * FROM ${table}`
+        let query = `SELECT * FROM "${table}"`
 
         if (this.order.size > 0) {
             const order = Array.from(this.order.entries()).reverse()
@@ -197,10 +198,10 @@ class InstanceDatabase extends Component {
             const val = values[index]
             condition.push(`${key}='${this.sqlEscape(val.toString())}'`)
         }
-        const query = `DELETE FROM ${this.state.selectedTable} WHERE ${condition.join(" AND ")}`
+        const query = `DELETE FROM "${this.state.selectedTable}" WHERE ${condition.join(" AND ")}`
         const res = await api.queryInstanceDatabase(this.props.instanceID, query)
         this.setState({
-            prevQuery: `DELETE FROM ${this.state.selectedTable} ...`,
+            prevQuery: `DELETE FROM "${this.state.selectedTable}" ...`,
             rowCount: res.rowcount,
         })
         await this.reloadContent(false)
@@ -215,6 +216,7 @@ class InstanceDatabase extends Component {
         col: props.col,
     })
 
+    // eslint-disable-next-line no-control-regex
     sqlEscape = str => str.replace(/[\0\x08\x09\x1a\n\r"'\\%]/g, char => {
         switch (char) {
         case "\0":

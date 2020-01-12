@@ -36,3 +36,32 @@ push tag:
   - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+build standalone:
+  stage: build
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:standalone || true
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:standalone --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone . -f maubot/standalone/Dockerfile
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
+
+push latest standalone:
+  stage: push
+  only:
+  - master
+  variables:
+    GIT_STRATEGY: none
+  script:
+  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
+  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:standalone
+  - docker push $CI_REGISTRY_IMAGE:standalone
+
+push tag standalone:
+  stage: push
+  variables:
+    GIT_STRATEGY: none
+  except:
+  - master
+  script:
+  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
+  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone
+  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone

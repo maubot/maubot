@@ -20,6 +20,7 @@ from asyncio import AbstractEventLoop
 
 from sqlalchemy.engine.base import Engine
 from aiohttp import ClientSession
+from yarl import URL
 
 if TYPE_CHECKING:
     from mautrix.util.config import BaseProxyConfig
@@ -35,7 +36,7 @@ class Plugin(ABC):
     config: Optional['BaseProxyConfig']
     database: Optional[Engine]
     webapp: Optional['PluginWebApp']
-    webapp_url: Optional[str]
+    webapp_url: Optional[URL]
 
     def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
                  instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
@@ -49,12 +50,12 @@ class Plugin(ABC):
         self.config = config
         self.database = database
         self.webapp = webapp
-        self.webapp_url = webapp_url
+        self.webapp_url = URL(webapp_url) if webapp_url else None
         self._handlers_at_startup = []
 
-    async def internal_start(self) -> None:
-        for key in dir(self):
-            val = getattr(self, key)
+    def register_handler_class(self, obj) -> None:
+        for key in dir(obj):
+            val = getattr(obj, key)
             try:
                 if val.__mb_event_handler__:
                     self._handlers_at_startup.append((val, val.__mb_event_type__))
@@ -67,12 +68,23 @@ class Plugin(ABC):
                     self.webapp.add_route(method=method, path=path, handler=val, **kwargs)
             except AttributeError:
                 pass
+
+    async def pre_start(self) -> None:
+        pass
+
+    async def internal_start(self) -> None:
+        await self.pre_start()
+        self.register_handler_class(self)
         await self.start()
 
     async def start(self) -> None:
         pass
 
+    async def pre_stop(self) -> None:
+        pass
+
     async def internal_stop(self) -> None:
+        await self.pre_stop()
         for func, event_type in self._handlers_at_startup:
             self.client.remove_event_handler(event_type, func)
         if self.webapp is not None:
