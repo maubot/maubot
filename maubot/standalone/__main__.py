@@ -39,8 +39,6 @@ from ..matrix import MaubotMatrixClient
 from ..lib.store_proxy import ClientStoreProxy
 from ..__meta__ import __version__
 
-from supportportal import SupportPortalBot
-
 parser = argparse.ArgumentParser(
     description="A plugin-based Matrix bot system -- standalone mode.",
     prog="python -m maubot.standalone")
@@ -110,7 +108,7 @@ if not nb:
 bot_config = None
 if meta.config:
     log.debug("Loading config")
-    config_class = SupportPortalBot.get_config_class()
+    config_class = plugin.get_config_class()
 
 
     def load() -> CommentedMap:
@@ -167,7 +165,7 @@ async def main():
             )))
         client.start(nb.filter_id)
 
-    if config["autojoin"]:
+    if config["user.autojoin"]:
         log.debug("Autojoin is enabled")
 
         @client.on(EventType.ROOM_MEMBER)
