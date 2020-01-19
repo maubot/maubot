@@ -1,21 +1,12 @@
 #!/bin/sh
 
-function fixperms {
-    chown -R $UID:$GID /var/log /data /opt/maubot
-}
-
 cd /opt/maubot
 
-if [ ! -f /data/config.yaml ]; then
-	cp docker/example-config.yaml /data/config.yaml
-	mkdir -p /var/log /data/plugins /data/trash /data/dbs
-	echo "Config file not found. Example config copied to /data/config.yaml"
-	echo "Please modify the config file to your liking and restart the container."
-	fixperms
+if [ ! -f /config/config.yaml ]; then
+	echo "Config file not found."
 	exit
 fi
 
-mkdir -p /var/log/maubot /data/plugins /data/trash /data/dbs
-alembic -x config=/data/config.yaml upgrade head
-fixperms
-exec su-exec $UID:$GID python3 -m maubot -c /data/config.yaml -b docker/example-config.yaml
+mkdir -p /data/trash /data/dbs
+alembic -x config=/config/config.yaml upgrade head
+python3 -m maubot -c /config/config.yaml

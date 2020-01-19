@@ -5,11 +5,6 @@ RUN cd /frontend && yarn --prod && yarn build
 
 FROM alpine:3.11
 
-ENV UID=1337 \
-    GID=1337
-
-COPY . /opt/maubot
-COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
 WORKDIR /opt/maubot
 RUN apk add --no-cache \
       py3-aiohttp \
@@ -28,10 +23,19 @@ RUN apk add --no-cache \
       py3-jinja2 \
       py3-click \
       py3-packaging \
-      py3-markdown \
-      && pip3 install -r requirements.txt feedparser dateparser langdetect python-gitlab
+      py3-markdown
+
+COPY requirements.txt /opt/maubot/requirements.txt
+
+RUN pip3 install -r requirements.txt feedparser dateparser langdetect python-gitlab
+
+COPY . /opt/maubot
+COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
+
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 VOLUME /data
+VOLUME /config
+VOLUME /plugins
 
 CMD ["/opt/maubot/docker/run.sh"]
