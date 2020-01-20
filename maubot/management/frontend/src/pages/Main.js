@@ -47,10 +47,9 @@ class Main extends Component {
             })
             const apiPathJson = await resp.json()
             const apiPath = apiPathJson.api_path
-            console.log(apiPath)
             api.setBasePath(`${apiPath}`)
         } catch (err) {
-            console.error(err)
+            console.error("Failed to get API path:", err)
         }
     }
 

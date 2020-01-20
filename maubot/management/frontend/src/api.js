@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-var BASE_PATH = "/_matrix/maubot/v1"
+let BASE_PATH = "/_matrix/maubot/v1"
 
 export function setBasePath(basePath) {
     BASE_PATH = basePath
@@ -245,7 +245,6 @@ export async function doClientAuth(server, type, username, password) {
 }
 
 export default {
-    BASE_PATH,
     login, ping, setBasePath, getFeatures, remoteGetFeatures,
     openLogSocket,
     debugOpenFile, debugOpenFileEnabled, updateDebugOpenFileEnabled,
