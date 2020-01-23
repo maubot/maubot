@@ -36,18 +36,18 @@ def parse_formatted(message: str, allow_html: bool = False, render_markdown: boo
 
 
 class MaubotMessageEvent(MessageEvent):
-    client: MatrixClient
+    client: 'MaubotMatrixClient'
     disable_reply: bool
 
-    def __init__(self, base: MessageEvent, client: MatrixClient):
+    def __init__(self, base: MessageEvent, client: 'MaubotMatrixClient'):
         super().__init__(**{a.name.lstrip("_"): getattr(base, a.name)
                             for a in attr.fields(MessageEvent)})
         self.client = client
-        self.disable_reply = False
+        self.disable_reply = client.disable_replies
 
     def respond(self, content: Union[str, MessageEventContent],
                 event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-                allow_html: bool = False, reply: bool = False,
+                allow_html: bool = False, reply: Union[bool, str] = False,
                 edits: Optional[Union[EventID, MessageEvent]] = None) -> Awaitable[EventID]:
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
@@ -58,8 +58,15 @@ class MaubotMessageEvent(MessageEvent):
                                                                        allow_html=allow_html)
         if edits:
             content.set_edit(edits)
-        elif reply and not self.disable_reply:
-            content.set_reply(self)
+        elif reply:
+            if reply != "force" and self.disable_reply:
+                content.body = f"{self.sender}: {content.body}"
+                fmt_body = content.formatted_body or escape(content.body).replace("\n", "<br>")
+                content.formatted_body = (f'<a href="https://matrix.to/#/{self.sender}">'
+                                          f'{self.sender}'
+                                          f'</a>: {fmt_body}')
+            else:
+                content.set_reply(self)
         return self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(self, content: Union[str, MessageEventContent],
@@ -82,6 +89,12 @@ class MaubotMessageEvent(MessageEvent):
 
 
 class MaubotMatrixClient(MatrixClient):
+    disable_replies: bool
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.disable_replies = False
+
     def send_markdown(self, room_id: RoomID, markdown: str, *, allow_html: bool = False,
                       msgtype: MessageType = MessageType.TEXT,
                       edits: Optional[Union[EventID, MessageEvent]] = None,
