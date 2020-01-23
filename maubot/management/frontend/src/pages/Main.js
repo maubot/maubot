@@ -31,6 +31,7 @@ class Main extends Component {
     }
 
     async componentWillMount() {
+        await this.getBasePath()
         if (localStorage.accessToken) {
             await this.ping()
         } else {
@@ -38,6 +39,20 @@ class Main extends Component {
         }
         this.setState({ pinged: true })
     }
+
+    async getBasePath() {
+        try {
+            const resp = await fetch(process.env.PUBLIC_URL + "/paths.json", {
+                headers: { "Content-Type": "application/json" }
+            })
+            const apiPathJson = await resp.json()
+            const apiPath = apiPathJson.api_path
+            api.setBasePath(`${apiPath}`)
+        } catch (err) {
+            console.error("Failed to get API path:", err)
+        }
+    }
+
 
     async ping() {
         try {

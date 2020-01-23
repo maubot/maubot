@@ -16,6 +16,8 @@
 from typing import Tuple, Dict
 import logging
 import asyncio
+import json
+from yarl import URL
 
 from aiohttp import web, hdrs
 from aiohttp.abc import AbstractAccessLogger
@@ -128,6 +130,21 @@ class MaubotServer:
                 data = stream.read()
             self.app.router.add_get(f"{ui_base}/{file}", lambda _: web.Response(body=data,
                                                                                 content_type=mime))
+
+        # also set up a resource path for the public url path prefix config
+        # cut the prefix path from public_url
+        public_url = self.config["server.public_url"]
+        base_path = self.config["server.base_path"]
+        public_url_path = ""
+        if public_url:
+            public_url_path = URL(public_url).path.rstrip("/")
+
+        # assemble with base_path
+        api_path = f"{public_url_path}{base_path}"
+
+        path_prefix_response_body = json.dumps({"api_path": api_path.rstrip("/")})
+        self.app.router.add_get(f"{ui_base}/paths.json", lambda _: web.Response(body=path_prefix_response_body,
+                                                                                content_type="application/json"))
 
     def add_route(self, method: Method, path: PathBuilder, handler) -> None:
         self.app.router.add_route(method.value, str(path), handler)
