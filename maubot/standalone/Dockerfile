@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.10
+FROM docker.io/alpine:3.11
 
 COPY . /opt/maubot
 RUN cd /opt/maubot \

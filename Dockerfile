@@ -3,7 +3,7 @@ FROM node:12 AS frontend-builder
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
 
-FROM alpine:3.10
+FROM alpine:3.11
 
 ENV UID=1337 \
     GID=1337
