@@ -88,9 +88,11 @@ async def register(request: web.Request) -> web.Response:
     if err is not None:
         return err
     api, secret, username, password, user_type = info
+    if user_type is None:
+        user_type = "bot"
     res = await api.request(Method.GET, Path.admin.register)
     nonce = res["nonce"]
-    mac = generate_mac(secret, nonce, username, password)
+    mac = generate_mac(secret, nonce, username, password, user_type)
     try:
         return web.json_response(await api.request(Method.POST, Path.admin.register, content={
             "nonce": nonce,
