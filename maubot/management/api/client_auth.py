@@ -33,7 +33,7 @@ def registration_secrets() -> Dict[str, Dict[str, str]]:
     return get_config()["registration_secrets"]
 
 
-def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False):
+def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False, user_type: str = None):
     mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
     mac.update(nonce.encode("utf-8"))
     mac.update(b"\x00")
@@ -42,6 +42,9 @@ def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool 
     mac.update(password.encode("utf-8"))
     mac.update(b"\x00")
     mac.update(b"admin" if admin else b"notadmin")
+    if user_type is not None:
+        mac.update(b"\x00")
+        mac.update(user_type.encode("utf8"))
     return mac.hexdigest()
 
 
