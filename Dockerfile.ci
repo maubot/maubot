@@ -28,7 +28,7 @@ RUN apk add --no-cache --virtual .build-deps \
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 COPY . /opt/maubot
-ENV UID=1337 GID=1337
+ENV UID=1337 GID=1337 XDG_CONFIG_HOME=/data
 VOLUME /data
 
 CMD ["/opt/maubot/docker/run.sh"]

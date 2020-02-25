@@ -34,7 +34,7 @@ RUN apk add --no-cache --virtual .build-deps \
 
 COPY . /opt/maubot
 COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
-ENV UID=1337 GID=1337
+ENV UID=1337 GID=1337 XDG_CONFIG_HOME=/data
 VOLUME /data
 
 CMD ["/opt/maubot/docker/run.sh"]
