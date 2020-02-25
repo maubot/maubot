@@ -2,66 +2,51 @@ image: docker:stable
 
 stages:
 - build
-- push
+- manifest
 
 default:
   before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
-build:
+build amd64:
   stage: build
+  tags:
+  - amd64
   script:
   - docker pull $CI_REGISTRY_IMAGE:latest || true
-  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
-  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 .
+  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
+  - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
 
-push latest:
-  stage: push
-  only:
-  - master
-  variables:
-    GIT_STRATEGY: none
-  script:
-  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
-  - docker push $CI_REGISTRY_IMAGE:latest
-
-push tag:
-  stage: push
-  variables:
-    GIT_STRATEGY: none
-  except:
-  - master
-  script:
-  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-
-build standalone:
+build arm64:
   stage: build
+  tags:
+  - arm64
+  script:
+  - docker pull $CI_REGISTRY_IMAGE:latest || true
+  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 .
+  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
+  - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
+
+manifest:
+  stage: manifest
+  before_script:
+  - "mkdir -p $HOME/.docker && echo '{\"experimental\": \"enabled\"}' > $HOME/.docker/config.json"
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
+  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
+  - if [ $CI_COMMIT_BRANCH == "master" ]; then docker manifest create $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 && docker manifest push $CI_REGISTRY_IMAGE:latest; fi
+  - if [ $CI_COMMIT_BRANCH != "master" ]; then docker manifest create $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 && docker manifest push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME; fi
+  - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
+
+
+build standalone amd64:
+  stage: build
+  tags:
+  - amd64
   script:
     - docker pull $CI_REGISTRY_IMAGE:standalone || true
     - docker build --pull --cache-from $CI_REGISTRY_IMAGE:standalone --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone . -f maubot/standalone/Dockerfile
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
-
-push latest standalone:
-  stage: push
-  only:
-  - master
-  variables:
-    GIT_STRATEGY: none
-  script:
-  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
-  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:standalone
-  - docker push $CI_REGISTRY_IMAGE:standalone
-
-push tag standalone:
-  stage: push
-  variables:
-    GIT_STRATEGY: none
-  except:
-  - master
-  script:
-  - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
-  - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone
-  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone
+    - if [ $CI_COMMIT_BRANCH == "master" ]; then docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:standalone && docker push $CI_REGISTRY_IMAGE:standalone; fi
+    - if [ $CI_COMMIT_BRANCH != "master" ]; then docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone && docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone; fi
