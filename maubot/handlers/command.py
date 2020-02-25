@@ -89,6 +89,7 @@ class CommandHandler:
             if not evt.content.body or evt.content.body[0] != "!":
                 return
             command, remaining_val = _split_in_two(evt.content.body[1:], " ")
+            command = command.lower()
             if not self.__mb_is_command_match__(self.__bound_instance__, command):
                 return
         call_args: Dict[str, Any] = {**_existing_args} if _existing_args else {}
