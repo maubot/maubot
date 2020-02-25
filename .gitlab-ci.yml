@@ -33,7 +33,7 @@ build amd64:
   tags:
   - amd64
   script:
-  - echo frontend >> .dockerignore
+  - echo maubot/management/frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
   - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
@@ -44,7 +44,7 @@ build arm64:
   tags:
   - arm64
   script:
-  - echo frontend >> .dockerignore
+  - echo maubot/management/frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
   - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
