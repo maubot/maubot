@@ -29,7 +29,8 @@ RUN apk add --no-cache \
       py3-click \
       py3-packaging \
       py3-markdown \
-      && pip3 install -r requirements.txt feedparser dateparser langdetect python-gitlab
+      && pip3 install -r requirements.txt feedparser dateparser langdetect python-gitlab \
+      && mkdir -p /root/.config
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 VOLUME /data
