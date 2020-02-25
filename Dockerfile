@@ -33,6 +33,7 @@ RUN apk add --no-cache --virtual .build-deps \
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 COPY . /opt/maubot
+COPY ./docker/mbc.sh /usr/local/bin/mbc
 COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
 ENV UID=1337 GID=1337 XDG_CONFIG_HOME=/data
 VOLUME /data
