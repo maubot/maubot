@@ -1,8 +1,3 @@
-FROM node:12 AS frontend-builder
-
-COPY ./maubot/management/frontend /frontend
-RUN cd /frontend && yarn --prod && yarn build
-
 FROM alpine:3.11
 
 COPY requirements.txt /opt/maubot/requirements.txt
@@ -33,7 +28,6 @@ RUN apk add --no-cache --virtual .build-deps \
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 COPY . /opt/maubot
-COPY --from=frontend-builder /frontend/build /opt/maubot/frontend
 ENV UID=1337 GID=1337
 VOLUME /data
 

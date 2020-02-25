@@ -1,6 +1,7 @@
 image: docker:stable
 
 stages:
+- build frontend
 - build
 - manifest
 
@@ -8,13 +9,33 @@ default:
   before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
+build frontend:
+  image: node:lts-alpine
+  stage: build frontend
+  before_script: []
+  variables:
+    NODE_ENV: "production"
+  cache:
+    paths:
+    - maubot/management/frontend/node_modules
+  script:
+  - cd maubot/management/frontend
+  - yarn --prod
+  - yarn build
+  - mv build ../../../frontend
+  artifacts:
+    paths:
+    - frontend
+    expire_in: 1 hour
+
 build amd64:
   stage: build
   tags:
   - amd64
   script:
+  - echo frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
-  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 .
+  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
   - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
 
@@ -23,8 +44,9 @@ build arm64:
   tags:
   - arm64
   script:
+  - echo frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
-  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 .
+  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
   - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
 
