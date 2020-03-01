@@ -1,12 +1,6 @@
 FROM docker.io/alpine:3.11
 
-COPY . /opt/maubot
-RUN cd /opt/maubot \
-  && apk add --no-cache --virtual .build-deps \
-      python3-dev \
-      libffi-dev \
-      build-base \
-  && apk add --no-cache \
+RUN apk add --no-cache \
       py3-aiohttp \
       py3-sqlalchemy \
       py3-attrs \
@@ -18,6 +12,16 @@ RUN cd /opt/maubot \
       py3-ruamel.yaml \
       py3-jinja2 \
       py3-packaging \
-      py3-markdown \
-  && pip3 install . \
+      py3-markdown
+
+COPY requirements.txt /opt/maubot/requirements.txt
+RUN cd /opt/maubot \
+  && apk add --no-cache --virtual .build-deps \
+      python3-dev \
+      libffi-dev \
+      build-base \
+  && pip3 install -r requirements.txt \
   && apk del .build-deps
+
+COPY . /opt/maubot
+RUN cd /opt/maubot && pip3 install .
