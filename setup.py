@@ -2,6 +2,9 @@ import setuptools
 import glob
 import os
 
+with open("requirements.txt") as reqs:
+    install_requires = reqs.read().splitlines()
+
 path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "maubot", "__meta__.py")
 __version__ = "UNKNOWN"
 with open(path) as f:
@@ -21,22 +24,7 @@ setuptools.setup(
 
     packages=setuptools.find_packages(),
 
-    install_requires=[
-        "mautrix>=0.4,<0.5",
-        "aiohttp>=3.0.1,<4",
-        "SQLAlchemy>=1.2.3,<2",
-        "alembic>=1.0.0,<2",
-        "commonmark>=0.9.1,<1",
-        "ruamel.yaml>=0.15.35,<0.17",
-        "attrs>=18.1.0",
-        "bcrypt>=3.1.4,<4",
-        "packaging>=10",
-
-        "click>=7,<8",
-        "colorama>=0.4,<0.5",
-        "PyInquirer>=1,<2",
-        "jinja2>=2,<3",
-    ],
+    install_requires=install_requires,
 
     classifiers=[
         "Development Status :: 3 - Alpha",
