@@ -78,7 +78,7 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
     except KeyError:
         return None, resp.invalid_server
     api = HTTPAPI(base_url, "", loop=get_loop())
-    user_type = body.get("user_type", None)
+    user_type = body.get("user_type", "bot")
     return AuthRequestInfo(api, secret, username, password, user_type), None
 
 
@@ -88,8 +88,6 @@ async def register(request: web.Request) -> web.Response:
     if err is not None:
         return err
     api, secret, username, password, user_type = info
-    if user_type is None:
-        user_type = "bot"
     res = await api.request(Method.GET, Path.admin.register)
     nonce = res["nonce"]
     mac = generate_mac(secret, nonce, username, password, user_type)
