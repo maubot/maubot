@@ -33,7 +33,7 @@ def registration_secrets() -> Dict[str, Dict[str, str]]:
     return get_config()["registration_secrets"]
 
 
-def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False):
+def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False, user_type: str = None):
     mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
     mac.update(nonce.encode("utf-8"))
     mac.update(b"\x00")
@@ -42,6 +42,9 @@ def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool 
     mac.update(password.encode("utf-8"))
     mac.update(b"\x00")
     mac.update(b"admin" if admin else b"notadmin")
+    if user_type is not None:
+        mac.update(b"\x00")
+        mac.update(user_type.encode("utf8"))
     return mac.hexdigest()
 
 
@@ -75,7 +78,7 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
     except KeyError:
         return None, resp.invalid_server
     api = HTTPAPI(base_url, "", loop=get_loop())
-    user_type = body.get("user_type", None)
+    user_type = body.get("user_type", "bot")
     return AuthRequestInfo(api, secret, username, password, user_type), None
 
 
@@ -87,7 +90,7 @@ async def register(request: web.Request) -> web.Response:
     api, secret, username, password, user_type = info
     res = await api.request(Method.GET, Path.admin.register)
     nonce = res["nonce"]
-    mac = generate_mac(secret, nonce, username, password)
+    mac = generate_mac(secret, nonce, username, password, user_type)
     try:
         return web.json_response(await api.request(Method.POST, Path.admin.register, content={
             "nonce": nonce,
