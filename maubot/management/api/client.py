@@ -64,7 +64,7 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     db_instance = DBClient(id=mxid, homeserver=homeserver, access_token=access_token,
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
-                           autojoin=data.get("autojoin", True),
+                           autojoin=data.get("autojoin", True), online=data.get("online", True),
                            displayname=data.get("displayname", ""),
                            avatar_url=data.get("avatar_url", ""))
     client = Client(db_instance)
@@ -91,6 +91,7 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         await client.update_started(data.get("started", None))
         client.enabled = data.get("enabled", client.enabled)
         client.autojoin = data.get("autojoin", client.autojoin)
+        client.online = data.get("online", client.online)
         client.sync = data.get("sync", client.sync)
         return resp.updated(client.to_dict())
 

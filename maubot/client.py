@@ -21,7 +21,8 @@ from aiohttp import ClientSession
 
 from mautrix.errors import MatrixInvalidToken, MatrixRequestError
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
-                           StateEvent, EventType, Filter, RoomFilter, RoomEventFilter)
+                           StateEvent, EventType, Filter, RoomFilter, RoomEventFilter, EventFilter,
+                           PresenceState, StateFilter)
 from mautrix.client import InternalEventType
 
 from .lib.store_proxy import ClientStoreProxy
@@ -63,6 +64,7 @@ class Client:
                                          store=ClientStoreProxy(self.db_instance))
         self.client.ignore_initial_sync = True
         self.client.ignore_first_sync = True
+        self.client.presence = PresenceState.ONLINE if self.online else PresenceState.OFFLINE
         if self.autojoin:
             self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         self.client.add_event_handler(EventType.ROOM_TOMBSTONE, self._handle_tombstone)
@@ -114,7 +116,14 @@ class Client:
                 room=RoomFilter(
                     timeline=RoomEventFilter(
                         limit=50,
+                        lazy_load_members=True,
                     ),
+                    state=StateFilter(
+                        lazy_load_members=True,
+                    )
+                ),
+                presence=EventFilter(
+                    not_types=[EventType.PRESENCE],
                 ),
             )))
         if self.displayname != "disable":
@@ -169,6 +178,7 @@ class Client:
             "sync": self.sync,
             "sync_ok": self.sync_ok,
             "autojoin": self.autojoin,
+            "online": self.online,
             "displayname": self.displayname,
             "avatar_url": self.avatar_url,
             "remote_displayname": self.remote_displayname,
@@ -307,6 +317,15 @@ class Client:
         else:
             self.client.remove_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         self.db_instance.autojoin = value
+
+    @property
+    def online(self) -> bool:
+        return self.db_instance.online
+
+    @online.setter
+    def online(self, value: bool) -> None:
+        self.client.presence = PresenceState.ONLINE if value else PresenceState.OFFLINE
+        self.db_instance.online = value
 
     @property
     def displayname(self) -> str:

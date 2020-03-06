@@ -64,7 +64,7 @@ class Client extends BaseMainView {
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "sync",
-            "autojoin", "enabled", "started"]
+            "autojoin", "online", "enabled", "started"]
     }
 
     get initialState() {
@@ -77,6 +77,7 @@ class Client extends BaseMainView {
             sync: true,
             autojoin: true,
             enabled: true,
+            online: true,
             started: false,
 
             instances: [],
@@ -285,6 +286,9 @@ class Client extends BaseMainView {
                             enabled,
                             started: enabled && this.state.started,
                         })}/>
+            <PrefSwitch rowName="Online"
+                        active={this.state.online} origActive={this.props.entry.online}
+                        onToggle={online => this.setState({ online })} />
         </PrefTable>
     )
 

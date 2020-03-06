@@ -60,6 +60,7 @@ class DBClient(Base):
 
     sync: bool = Column(Boolean, nullable=False, default=True)
     autojoin: bool = Column(Boolean, nullable=False, default=True)
+    online: bool = Column(Boolean, nullable=False, default=True)
 
     displayname: str = Column(String(255), nullable=False, default="")
     avatar_url: ContentURI = Column(String(255), nullable=False, default="")
