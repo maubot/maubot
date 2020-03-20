@@ -32,9 +32,9 @@ RUN apk add --virtual .build-deps \
         build-base \
         git \
     && pip3 install -r requirements.txt \
-        dateparser langdetect python-gitlab \
+        dateparser langdetect python-gitlab giteapy \
     && apk del .build-deps
-# TODO also remove dateparser, langdetect and python-gitlab when maubot supports installing dependencies
+# TODO also remove dateparser, langdetect, python-gitlab and giteapy when maubot supports installing dependencies
 
 COPY . /opt/maubot
 COPY ./docker/mbc.sh /usr/local/bin/mbc
