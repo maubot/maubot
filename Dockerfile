@@ -21,7 +21,8 @@ RUN apk add --no-cache \
         py3-markdown \
         py3-pillow \
         py3-magic \
-        py3-feedparser
+        py3-feedparser \
+        py3-dateutil
 # TODO remove pillow, magic and feedparser when maubot supports installing dependencies
 
 COPY requirements.txt /opt/maubot/requirements.txt
