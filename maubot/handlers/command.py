@@ -164,7 +164,8 @@ class CommandHandler:
     @property
     def __mb_prefix__(self) -> str:
         if self.__mb_parent__:
-            return f"{self.__mb_parent__.__mb_prefix__} {self.__mb_name__}"
+            return (f"!{self.__mb_parent__.__mb_get_name__(self.__bound_instance__)} "
+                    f"{self.__mb_name__}")
         return f"!{self.__mb_name__}"
 
     @property
