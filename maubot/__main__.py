@@ -44,16 +44,16 @@ config.update()
 
 logging.config.dictConfig(copy.deepcopy(config["logging"]))
 
+loop = asyncio.get_event_loop()
+
 stop_log_listener = None
 if config["api_features.log"]:
     from .management.api.log import init as init_log_listener, stop_all as stop_log_listener
 
-    init_log_listener()
+    init_log_listener(loop)
 
 log = logging.getLogger("maubot.init")
 log.info(f"Initializing maubot {__version__}")
-
-loop = asyncio.get_event_loop()
 
 init_zip_loader(config)
 db_engine = init_db(config)

@@ -38,6 +38,7 @@ class LogCollector(logging.Handler):
     lines: Deque[dict]
     formatter: logging.Formatter
     listeners: List[web.WebSocketResponse]
+    loop: asyncio.AbstractEventLoop
 
     def __init__(self, level=logging.NOTSET) -> None:
         super().__init__(level)
@@ -69,7 +70,7 @@ class LogCollector(logging.Handler):
         for name, value in content.items():
             if isinstance(value, datetime):
                 content[name] = value.astimezone().isoformat()
-        asyncio.ensure_future(self.send(content))
+        asyncio.run_coroutine_threadsafe(self.send(content), loop=self.loop)
         self.lines.append(content)
 
     async def send(self, record: dict) -> None:
@@ -86,8 +87,9 @@ log = logging.getLogger("maubot.server.websocket")
 sockets = []
 
 
-def init() -> None:
+def init(loop: asyncio.AbstractEventLoop) -> None:
     log_root.addHandler(handler)
+    handler.loop = loop
 
 
 async def stop_all() -> None:
