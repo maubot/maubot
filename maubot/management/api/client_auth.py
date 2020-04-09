@@ -90,7 +90,7 @@ async def register(request: web.Request) -> web.Response:
     api, secret, username, password, user_type = info
     res = await api.request(Method.GET, Path.admin.register)
     nonce = res["nonce"]
-    mac = generate_mac(secret, nonce, username, password, user_type)
+    mac = generate_mac(secret, nonce, username, password, user_type=user_type)
     try:
         return web.json_response(await api.request(Method.POST, Path.admin.register, content={
             "nonce": nonce,
