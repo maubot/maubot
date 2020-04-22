@@ -30,6 +30,14 @@ history_count: int = 10
 enc = functools.partial(quote, safe="")
 
 
+friendly_errors = {
+    "server_not_found": "Registration target server not found.\n\n"
+                        "To log in or register through maubot, you must add the server to the\n"
+                        "registration_secrets section in the config. If you only want to log in,\n"
+                        "leave the `secret` field empty."
+}
+
+
 @cliq.command(help="Log into a Matrix account via the Maubot server")
 @cliq.option("-h", "--homeserver", help="The homeserver to log into", required=True)
 @cliq.option("-u", "--username", help="The username to log in with", required=True)
@@ -62,8 +70,9 @@ def auth(homeserver: str, username: str, password: str, server: str, register: b
             print(f"{Fore.GREEN}Access token: {Fore.CYAN}{resp['access_token']}{Fore.RESET}")
     except HTTPError as e:
         try:
-            err = json.load(e)
-        except json.JSONDecodeError:
-            err = {}
+            err_data = json.load(e)
+            error = friendly_errors.get(err_data["errcode"], err_data["error"])
+        except (json.JSONDecodeError, KeyError):
+            error = str(e)
         action = "register" if register else "log in"
-        print(f"{Fore.RED}Failed to {action}: {err.get('error', str(e))}{Fore.RESET}")
+        print(f"{Fore.RED}Failed to {action}: {error}{Fore.RESET}")
