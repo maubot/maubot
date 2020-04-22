@@ -222,7 +222,7 @@ class PluginInstance:
 
     def update_id(self, new_id: str) -> None:
         if new_id is not None and new_id != self.id:
-            self.db_instance.id = new_id
+            self.db_instance.id = new_id.lower()
 
     def update_config(self, config: str) -> None:
         if not config or self.db_instance.config == config:
