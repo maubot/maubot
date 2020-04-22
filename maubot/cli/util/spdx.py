@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict
+from typing import Dict, Optional
 import zipfile
 import pkg_resources
 import json
 
-spdx_list = None
+spdx_list: Optional[Dict[str, Dict[str, str]]] = None
 
 
 def load() -> None:
