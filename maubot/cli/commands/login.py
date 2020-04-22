@@ -28,7 +28,8 @@ from ..cliq import cliq
 @cliq.option("-u", "--username", help="The username of your account", default=os.environ.get("USER", None), required=True)
 @cliq.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
 @cliq.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
-def login(server, username, password) -> None:
+@cliq.option("-a", "--alias", help="Alias to reference the server without typing the full URL", default="", required=False)
+def login(server, username, password, alias) -> None:
     data = {
         "username": username,
         "password": password,
@@ -38,7 +39,11 @@ def login(server, username, password) -> None:
                      data=json.dumps(data).encode("utf-8")) as resp_data:
             resp = json.load(resp_data)
             config["servers"][server] = resp["token"]
-            config["default_server"] = server
+            if not config["default_server"]:
+                print(Fore.CYAN, "Setting", server, "as the default server")
+                config["default_server"] = server
+            if alias:
+                config["aliases"][alias] = server
             save_config()
             print(Fore.GREEN + "Logged in successfully")
     except HTTPError as e:

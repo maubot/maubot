@@ -27,7 +27,7 @@ import click
 from ...loader import PluginMeta
 from ..cliq.validators import PathValidator
 from ..base import app
-from ..config import get_default_server, get_token
+from ..config import get_token
 from .upload import upload_file
 
 yaml = YAML()

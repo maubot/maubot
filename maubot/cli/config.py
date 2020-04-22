@@ -21,6 +21,7 @@ from colorama import Fore
 
 config: Dict[str, Any] = {
     "servers": {},
+    "aliases": {},
     "default_server": None,
 }
 configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ.get("HOME"), ".config"))
@@ -40,7 +41,16 @@ def get_default_server() -> Tuple[Optional[str], Optional[str]]:
 def get_token(server: str) -> Tuple[Optional[str], Optional[str]]:
     if not server:
         return get_default_server()
+    if server in config["aliases"]:
+        server = config["aliases"][server]
     return server, _get_token(server)
+
+
+def _resolve_alias(alias: str) -> Optional[str]:
+    try:
+        return config["aliases"][alias]
+    except KeyError:
+        return None
 
 
 def _get_token(server: str) -> Optional[str]:
@@ -61,6 +71,7 @@ def load_config() -> None:
         with open(f"{configdir}/maubot-cli.json") as file:
             loaded = json.load(file)
             config["servers"] = loaded["servers"]
+            config["aliases"] = loaded["aliases"]
             config["default_server"] = loaded["default_server"]
     except FileNotFoundError:
         pass
