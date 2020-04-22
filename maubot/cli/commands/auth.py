@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from urllib.parse import quote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
+import functools
 import json
 
 from colorama import Fore
@@ -24,6 +26,8 @@ from ..config import get_token
 from ..cliq import cliq
 
 history_count: int = 10
+
+enc = functools.partial(quote, safe="")
 
 
 @cliq.command(help="Log into a Matrix account via the Maubot server")
@@ -40,7 +44,7 @@ def auth(homeserver: str, username: str, password: str, server: str, register: b
     if not token:
         return
     endpoint = "register" if register else "login"
-    req = Request(f"{server}/_matrix/maubot/v1/client/auth/{homeserver}/{endpoint}",
+    req = Request(f"{server}/_matrix/maubot/v1/client/auth/{enc(homeserver)}/{enc(endpoint)}",
                   headers={
                       "Authorization": f"Bearer {token}",
                       "Content-Type": "application/json",
