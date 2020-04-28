@@ -70,8 +70,8 @@ def load_config() -> None:
     try:
         with open(f"{configdir}/maubot-cli.json") as file:
             loaded = json.load(file)
-            config["servers"] = loaded["servers"]
-            config["aliases"] = loaded["aliases"]
-            config["default_server"] = loaded["default_server"]
+            config["servers"] = loaded.get("servers", {})
+            config["aliases"] = loaded.get("aliases", {})
+            config["default_server"] = loaded.get("default_server", None)
     except FileNotFoundError:
         pass
