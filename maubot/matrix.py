@@ -33,7 +33,7 @@ class HumanReadableString(MarkdownString):
 
 
 class MaubotHTMLParser(MatrixParser[HumanReadableString]):
-    e = HumanReadableString
+    fs = HumanReadableString
 
 
 def parse_formatted(message: str, allow_html: bool = False, render_markdown: bool = True
