@@ -31,6 +31,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [supportportal](https://github.com/maubot/supportportal) - A bot to manage customer support on Matrix.
 * [gitlab](https://github.com/maubot/gitlab) - A GitLab client and webhook receiver.
 * [github](https://github.com/maubot/github) - A GitHub client and webhook receiver.
+* [gitea](https://github.com/saces/maugitea) - A Gitea client and webhook receiver.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
