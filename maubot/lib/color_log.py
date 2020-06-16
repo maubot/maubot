@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2020 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from mautrix.util.color_log import (ColorFormatter as BaseColorFormatter, PREFIX, MAU_COLOR,
-                                    MXID_COLOR, RESET)
+from mautrix.util.logging.color import (ColorFormatter as BaseColorFormatter, PREFIX, MAU_COLOR,
+                                        MXID_COLOR, RESET)
 
 INST_COLOR = PREFIX + "35m"  # magenta
 LOADER_COLOR = PREFIX + "36m"  # blue
