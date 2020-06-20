@@ -22,8 +22,9 @@ RUN apk add --no-cache \
         py3-pillow \
         py3-magic \
         py3-feedparser \
-        py3-dateutil
-# TODO remove pillow, magic and feedparser when maubot supports installing dependencies
+        py3-dateutil \
+        py3-lxml
+# TODO remove pillow, magic, feedparser and lxml when maubot supports installing dependencies
 
 COPY requirements.txt /opt/maubot/requirements.txt
 WORKDIR /opt/maubot
@@ -32,9 +33,9 @@ RUN apk add --virtual .build-deps \
         build-base \
         git \
     && pip3 install -r requirements.txt \
-        dateparser langdetect python-gitlab \
+        dateparser langdetect python-gitlab pyquery \
     && apk del .build-deps
-# TODO also remove dateparser, langdetect and python-gitlab when maubot supports installing dependencies
+# TODO also remove dateparser, langdetect, python-gitlab and pyquery when maubot supports installing dependencies
 
 COPY . /opt/maubot
 COPY ./docker/mbc.sh /usr/local/bin/mbc
