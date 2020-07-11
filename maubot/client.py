@@ -60,7 +60,7 @@ class Client:
         self.remote_avatar_url = None
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
-                                         log=self.log, loop=self.loop,
+                                         log=self.log, loop=self.loop, device_id=self.device_id,
                                          store=ClientStoreProxy(self.db_instance))
         self.client.ignore_initial_sync = True
         self.client.ignore_first_sync = True
@@ -272,6 +272,10 @@ class Client:
     @property
     def access_token(self) -> str:
         return self.db_instance.access_token
+
+    @property
+    def device_id(self) -> str:
+        return self.db_instance.device_id
 
     @property
     def enabled(self) -> bool:

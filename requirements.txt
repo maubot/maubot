@@ -1,4 +1,4 @@
-mautrix==0.5.7
+mautrix==0.6.0.beta7
 aiohttp>=3,<4
 SQLAlchemy>=1,<2
 alembic>=1,<2

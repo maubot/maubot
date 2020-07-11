@@ -21,10 +21,8 @@ class ClientStoreProxy(ClientStore):
     def __init__(self, db_instance) -> None:
         self.db_instance = db_instance
 
-    @property
-    def next_batch(self) -> SyncToken:
-        return self.db_instance.next_batch
+    async def put_next_batch(self, next_batch: SyncToken) -> None:
+        self.db_instance.edit(next_batch=next_batch)
 
-    @next_batch.setter
-    def next_batch(self, value: SyncToken) -> None:
-        self.db_instance.edit(next_batch=value)
+    async def get_next_batch(self) -> SyncToken:
+        return self.db_instance.next_batch

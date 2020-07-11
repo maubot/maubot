@@ -21,7 +21,7 @@ from sqlalchemy import Column, String, Boolean, ForeignKey, Text
 from sqlalchemy.engine.base import Engine
 import sqlalchemy as sql
 
-from mautrix.types import UserID, FilterID, SyncToken, ContentURI
+from mautrix.types import UserID, FilterID, DeviceID, SyncToken, ContentURI
 from mautrix.util.db import Base
 
 from .config import Config
@@ -53,6 +53,7 @@ class DBClient(Base):
     id: UserID = Column(String(255), primary_key=True)
     homeserver: str = Column(String(255), nullable=False)
     access_token: str = Column(Text, nullable=False)
+    device_id: DeviceID = Column(String(255), nullable=True)
     enabled: bool = Column(Boolean, nullable=False, default=False)
 
     next_batch: SyncToken = Column(String(255), nullable=False, default="")
