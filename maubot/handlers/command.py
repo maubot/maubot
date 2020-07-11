@@ -129,7 +129,7 @@ class CommandHandler:
             try:
                 remaining_val, call_args[arg.name] = arg.match(remaining_val.strip(), evt=evt,
                                                                instance=self.__bound_instance__)
-                if arg.required and not call_args[arg.name]:
+                if arg.required and call_args[arg.name] is None:
                     raise ValueError("Argument required")
             except ArgumentSyntaxError as e:
                 await evt.reply(e.message + (f"\n{self.__mb_usage__}" if e.show_usage else ""))
@@ -303,7 +303,7 @@ class CustomArgument(Argument):
         orig_val = val
         val = re.split(r"\s", val, 1)[0]
         res = self.matcher(val)
-        if res:
+        if res is not None:
             return orig_val[len(val):], res
         return orig_val, None
 
