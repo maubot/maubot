@@ -35,6 +35,17 @@ def command(help: str) -> Callable[[Callable], Callable]:
                     continue
                 if value is not None and (questions[key]["type"] != "confirm" or value != "null"):
                     questions.pop(key, None)
+                try:
+                    required_unless = questions[key].pop("required_unless")
+                    if isinstance(required_unless, str) and kwargs[required_unless]:
+                        questions.pop(key)
+                    elif isinstance(required_unless, dict):
+                        for k, v in required_unless.items():
+                            if kwargs.get(v, object()) == v:
+                                questions.pop(key)
+                                break
+                except KeyError:
+                    pass
             question_list = list(questions.values())
             question_list.reverse()
             resp = prompt(question_list, keyboard_interrupt_msg="Aborted!")
@@ -65,7 +76,8 @@ yesno.__name__ = "yes/no"
 def option(short: str, long: str, message: str = None, help: str = None,
            click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
            validator: Validator = None, required: bool = False, default: str = None,
-           is_flag: bool = False, prompt: bool = True) -> Callable[[Callable], Callable]:
+           is_flag: bool = False, prompt: bool = True, required_unless: str = None
+           ) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
     click_type = validator.click_type if isinstance(validator, ClickValidator) else click_type
@@ -85,9 +97,11 @@ def option(short: str, long: str, message: str = None, help: str = None,
             "name": long[2:],
             "message": message,
         }
+        if required_unless is not None:
+            q["required_unless"] = required_unless
         if default is not None:
             q["default"] = default
-        if required:
+        if required or required_unless is not None:
             q["validator"] = Required(validator)
         elif validator:
             q["validator"] = validator
