@@ -137,11 +137,10 @@ class Client:
         await self.start_plugins()
 
     async def start_plugins(self) -> None:
-        await asyncio.gather(*[plugin.start() for plugin in self.references], loop=self.loop)
+        await asyncio.gather(*[plugin.start() for plugin in self.references])
 
     async def stop_plugins(self) -> None:
-        await asyncio.gather(*[plugin.stop() for plugin in self.references if plugin.started],
-                             loop=self.loop)
+        await asyncio.gather(*[plugin.stop() for plugin in self.references if plugin.started])
 
     def start_sync(self) -> None:
         if self.sync:

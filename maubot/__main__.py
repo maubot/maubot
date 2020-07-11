@@ -73,13 +73,12 @@ try:
     log.info("Starting server")
     loop.run_until_complete(server.start())
     log.info("Starting clients and plugins")
-    loop.run_until_complete(asyncio.gather(*[client.start() for client in clients], loop=loop))
+    loop.run_until_complete(asyncio.gather(*[client.start() for client in clients]))
     log.info("Startup actions complete, running forever")
     loop.run_forever()
 except KeyboardInterrupt:
     log.info("Interrupt received, stopping clients")
-    loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()],
-                                           loop=loop))
+    loop.run_until_complete(asyncio.gather(*[client.stop() for client in Client.cache.values()]))
     if stop_log_listener is not None:
         log.debug("Closing websockets")
         loop.run_until_complete(stop_log_listener())
