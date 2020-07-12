@@ -13,13 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Union, Awaitable, Optional, Tuple
+from typing import Union, Awaitable, Optional, Tuple, List
 from html import escape
+import asyncio
+
 import attr
 
 from mautrix.client import Client as MatrixClient, SyncStream
-from mautrix.util.formatter import parse_html
-from mautrix.util import markdown
+from mautrix.util import markdown, formatter
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
 
@@ -32,7 +33,7 @@ def parse_formatted(message: str, allow_html: bool = False, render_markdown: boo
         html = message
     else:
         return message, escape(message)
-    return parse_html(html), html
+    return formatter.parse_html(html), html
 
 
 class MaubotMessageEvent(MessageEvent):
@@ -110,12 +111,12 @@ class MaubotMatrixClient(MatrixClient):
             content.set_edit(edits)
         return self.send_message(room_id, content, **kwargs)
 
-    async def dispatch_event(self, event: Event, source: SyncStream = SyncStream.INTERNAL) -> None:
+    def dispatch_event(self, event: Event, source: SyncStream) -> List[asyncio.Task]:
         if isinstance(event, MessageEvent):
             event = MaubotMessageEvent(event, self)
         elif source != SyncStream.INTERNAL:
             event.client = self
-        return await super().dispatch_event(event, source)
+        return super().dispatch_event(event, source)
 
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
         event = await super().get_event(room_id, event_id)

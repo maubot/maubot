@@ -36,7 +36,7 @@ from .config import Config
 from ..plugin_base import Plugin
 from ..loader import PluginMeta
 from ..matrix import MaubotMatrixClient
-from ..lib.store_proxy import ClientStoreProxy
+from ..lib.store_proxy import SyncStoreProxy
 from ..__meta__ import __version__
 
 parser = argparse.ArgumentParser(
@@ -143,7 +143,7 @@ async def main():
     global client, bot
 
     client = MaubotMatrixClient(mxid=user_id, base_url=homeserver, token=access_token,
-                                client_session=http_client, loop=loop, store=ClientStoreProxy(nb),
+                                client_session=http_client, loop=loop, store=SyncStoreProxy(nb),
                                 log=logging.getLogger("maubot.client").getChild(user_id))
 
     while True:

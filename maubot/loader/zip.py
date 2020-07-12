@@ -22,7 +22,8 @@ import os
 
 from ruamel.yaml import YAML, YAMLError
 from packaging.version import Version
-from mautrix.client.api.types.util import SerializerError
+
+from mautrix.types import SerializerError
 
 from ..lib.zipimport import zipimporter, ZipImportError
 from ..plugin_base import Plugin

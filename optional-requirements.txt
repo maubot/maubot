@@ -1,0 +1,11 @@
+# Format: #/name defines a new extras_require group called name
+# Uncommented lines after the group definition insert things into that group.
+
+#/postgres
+psycopg2-binary>=2,<3
+
+#/e2be
+asyncpg>=0.20,<0.21
+python-olm>=3,<4
+pycryptodome>=3,<4
+unpaddedbase64>=1,<2

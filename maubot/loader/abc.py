@@ -19,8 +19,8 @@ import asyncio
 
 from attr import dataclass
 from packaging.version import Version, InvalidVersion
-from mautrix.client.api.types.util import (SerializableAttrs, SerializerError, serializer,
-                                           deserializer)
+
+from mautrix.types import SerializableAttrs, SerializerError, serializer, deserializer
 
 from ..__meta__ import __version__
 from ..plugin_base import Plugin

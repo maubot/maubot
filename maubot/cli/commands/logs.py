@@ -18,8 +18,9 @@ import asyncio
 
 from colorama import Fore
 from aiohttp import WSMsgType, WSMessage, ClientSession
-from mautrix.client.api.types.util import Obj
 import click
+
+from mautrix.types import Obj
 
 from ..config import get_token
 from ..base import app

@@ -23,6 +23,7 @@ import sqlalchemy as sql
 
 from mautrix.types import UserID, FilterID, DeviceID, SyncToken, ContentURI
 from mautrix.util.db import Base
+from mautrix.client.state_store.sqlalchemy import RoomState, UserProfile
 
 from .config import Config
 
@@ -79,7 +80,7 @@ def init(config: Config) -> Engine:
     db = sql.create_engine(config["database"])
     Base.metadata.bind = db
 
-    for table in (DBPlugin, DBClient):
+    for table in (DBPlugin, DBClient, RoomState, UserProfile):
         table.bind(db)
 
     if not db.has_table("alembic_version"):

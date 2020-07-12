@@ -57,7 +57,7 @@ log.info(f"Initializing maubot {__version__}")
 
 init_zip_loader(config)
 db_engine = init_db(config)
-clients = init_client_class(loop)
+clients = init_client_class(config, loop)
 management_api = init_mgmt_api(config, loop)
 server = MaubotServer(management_api, config, loop)
 plugins = init_plugin_instance_class(config, server, loop)
@@ -72,6 +72,9 @@ signal.signal(signal.SIGTERM, signal.default_int_handler)
 try:
     log.info("Starting server")
     loop.run_until_complete(server.start())
+    if Client.crypto_db:
+        log.debug("Starting client crypto database")
+        loop.run_until_complete(Client.crypto_db.start())
     log.info("Starting clients and plugins")
     loop.run_until_complete(asyncio.gather(*[client.start() for client in clients]))
     log.info("Startup actions complete, running forever")

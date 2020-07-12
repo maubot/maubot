@@ -18,11 +18,12 @@ from io import BytesIO
 import zipfile
 import os
 
-from mautrix.client.api.types.util import SerializerError
 from ruamel.yaml import YAML, YAMLError
 from colorama import Fore
 from PyInquirer import prompt
 import click
+
+from mautrix.types import SerializerError
 
 from ...loader import PluginMeta
 from ..cliq.validators import PathValidator

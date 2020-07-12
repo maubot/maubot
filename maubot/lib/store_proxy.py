@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from mautrix.client import ClientStore
+from mautrix.client import SyncStore
 from mautrix.types import SyncToken
 
 
-class ClientStoreProxy(ClientStore):
+class SyncStoreProxy(SyncStore):
     def __init__(self, db_instance) -> None:
         self.db_instance = db_instance
 

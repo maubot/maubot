@@ -5,6 +5,18 @@
 #   Postgres: postgres://username:password@hostname/dbname
 database: sqlite:///maubot.db
 
+# Database for encryption data.
+crypto_database:
+    # Type of database. Either "default", "pickle" or "postgres".
+    # When set to default, using SQLite as the main database will use pickle as the crypto database
+    # and using Postgres as the main database will use the same one as the crypto database.
+    #
+    # When using pickle, individual crypto databases are stored in the pickle_dir directory.
+    # When using non-default postgres, postgres_uri is used to connect to postgres.
+    type: default
+    postgres_uri: postgres://username:password@hostname/dbname
+    pickle_dir: ./crypto
+
 plugin_directories:
     # The directory where uploaded new plugins should be stored.
     upload: ./plugins
