@@ -1,0 +1,6 @@
+.editorconfig
+.codeclimate.yml
+*.png
+*.md
+.venv
+maubot/management/frontend/node_modules
