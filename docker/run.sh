@@ -6,7 +6,7 @@ function fixperms {
 
 cd /opt/maubot
 
-mkdir -p /var/log/maubot /data/plugins /data/trash /data/dbs
+mkdir -p /var/log/maubot /data/plugins /data/trash /data/dbs /data/crypto
 
 if [ ! -f /data/config.yaml ]; then
 	cp docker/example-config.yaml /data/config.yaml
