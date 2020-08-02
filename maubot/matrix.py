@@ -20,9 +20,22 @@ import asyncio
 import attr
 
 from mautrix.client import Client as MatrixClient, SyncStream
-from mautrix.util import markdown, formatter
+from mautrix.util.formatter import MatrixParser, MarkdownString, EntityType
+from mautrix.util import markdown
 from mautrix.types import (EventType, MessageEvent, Event, EventID, RoomID, MessageEventContent,
                            MessageType, TextMessageEventContent, Format, RelatesTo)
+
+
+class HumanReadableString(MarkdownString):
+    def format(self, entity_type: EntityType, **kwargs) -> 'MarkdownString':
+        if entity_type == EntityType.URL and kwargs['url'] != self.text:
+            self.text = f"{self.text} ({kwargs['url']})"
+            return self
+        return super(HumanReadableString, self).format(entity_type, **kwargs)
+
+
+class MaubotHTMLParser(MatrixParser[HumanReadableString]):
+    fs = HumanReadableString
 
 
 def parse_formatted(message: str, allow_html: bool = False, render_markdown: bool = True
@@ -33,7 +46,7 @@ def parse_formatted(message: str, allow_html: bool = False, render_markdown: boo
         html = message
     else:
         return message, escape(message)
-    return formatter.parse_html(html), html
+    return MaubotHTMLParser.parse(html).text, html
 
 
 class MaubotMessageEvent(MessageEvent):
