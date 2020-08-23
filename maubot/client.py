@@ -304,7 +304,7 @@ class Client:
         mxid = await new_client.whoami()
         if mxid != self.id:
             raise ValueError(f"MXID mismatch: {mxid}")
-        new_client.sync_store = self.db_instance
+        new_client.sync_store = SyncStoreProxy(self.db_instance)
         self.stop_sync()
         self.client = new_client
         self.db_instance.homeserver = homeserver

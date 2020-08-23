@@ -1,4 +1,4 @@
-mautrix==0.6.0rc4
+mautrix==0.7.0rc3
 aiohttp>=3,<4
 SQLAlchemy>=1,<2
 alembic>=1,<2

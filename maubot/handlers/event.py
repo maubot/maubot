@@ -33,3 +33,8 @@ def on(var: Union[EventType, InternalEventType, EventHandler]
         return func
 
     return decorator if isinstance(var, (EventType, InternalEventType)) else decorator(var)
+
+
+def off(func: EventHandler) -> EventHandler:
+    func.__mb_event_handler__ = False
+    return func
