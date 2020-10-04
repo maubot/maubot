@@ -34,6 +34,10 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [gitea](https://github.com/saces/maugitea) - A Gitea client and webhook receiver.
 * [twilio](https://github.com/jeffcasavant/MaubotTwilio) - Maubot-based SMS bridge
 * [tmdb](https://codeberg.org/lomion/tmdb-bot) - A bot that posts information about movies fetched from TheMovieDB.org.
+* [tex](https://github.com/maubot/tex) - A bot that renders LaTeX.
+* [altalias](https://github.com/maubot/altalias) - A bot that lets users publish alternate aliases in rooms.
+* [satwcomic](https://github.com/maubot/satwcomic) - A bot to view SatWComics.
+* [songwhip](https://github.com/maubot/songwhip) - A bot to post Songwhip links.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
