@@ -38,6 +38,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [altalias](https://github.com/maubot/altalias) - A bot that lets users publish alternate aliases in rooms.
 * [satwcomic](https://github.com/maubot/satwcomic) - A bot to view SatWComics.
 * [songwhip](https://github.com/maubot/songwhip) - A bot to post Songwhip links.
+* [pingcheck](https://edugit.org/nik/maubot-pingcheck) - A bot to ping the echo bot and send rtt to Icinga passive check
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
