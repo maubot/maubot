@@ -147,6 +147,8 @@ class CommandHandler:
     @property
     def __mb_full_help__(self) -> str:
         usage = self.__mb_usage_without_subcommands__ + "\n\n"
+        if not self.__mb_require_subcommand__:
+            usage += f"* {self.__mb_prefix__} {self.__mb_usage_args__} - {self.__mb_help__}\n"
         usage += "\n".join(cmd.__mb_usage_inline__ for cmd in self.__mb_subcommands__)
         return usage
 
@@ -188,7 +190,7 @@ class CommandHandler:
     def __mb_usage_without_subcommands__(self) -> str:
         if not self.__mb_arg_fallthrough__:
             return (f"**Usage:** {self.__mb_prefix__} {self.__mb_usage_args__}"
-                    f" _OR_ {self.__mb_usage_subcommand__}")
+                    f" _OR_ {self.__mb_prefix__} {self.__mb_usage_subcommand__}")
         return f"**Usage:** {self.__mb_prefix__} {self.__mb_usage_args__}"
 
     @property
