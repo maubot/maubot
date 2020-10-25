@@ -189,6 +189,8 @@ class CommandHandler:
     @property
     def __mb_usage_without_subcommands__(self) -> str:
         if not self.__mb_arg_fallthrough__:
+            if not self.__mb_arguments__:
+                return f"**Usage:** {self.__mb_prefix__} [subcommand] [...]"
             return (f"**Usage:** {self.__mb_prefix__} {self.__mb_usage_args__}"
                     f" _OR_ {self.__mb_prefix__} {self.__mb_usage_subcommand__}")
         return f"**Usage:** {self.__mb_prefix__} {self.__mb_usage_args__}"
