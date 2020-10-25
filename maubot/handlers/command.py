@@ -51,6 +51,7 @@ class CommandHandler:
         self.__mb_get_name__: Callable[[Any], str] = lambda s: "noname"
         self.__mb_is_command_match__: Callable[[Any, str], bool] = self.__command_match_unset
         self.__mb_require_subcommand__: bool = True
+        self.__mb_must_consume_args__: bool = True
         self.__mb_arg_fallthrough__: bool = True
         self.__mb_event_handler__: bool = True
         self.__mb_event_type__: EventType = EventType.ROOM_MESSAGE
@@ -109,6 +110,10 @@ class CommandHandler:
             elif self.__mb_require_subcommand__:
                 await evt.reply(self.__mb_full_help__)
                 return
+
+        if self.__mb_must_consume_args__ and remaining_val.strip():
+            await evt.reply(self.__mb_full_help__)
+            return
 
         if self.__bound_instance__:
             return await self.__mb_func__(self.__bound_instance__, evt, **call_args)
@@ -210,7 +215,8 @@ class CommandHandler:
 
 def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = None,
         event_type: EventType = EventType.ROOM_MESSAGE, msgtypes: Iterable[MessageType] = None,
-        require_subcommand: bool = True, arg_fallthrough: bool = True) -> CommandHandlerDecorator:
+        require_subcommand: bool = True, arg_fallthrough: bool = True,
+        must_consume_args: bool = True) -> CommandHandlerDecorator:
     def decorator(func: Union[CommandHandler, CommandHandlerFunc]) -> CommandHandler:
         if not isinstance(func, CommandHandler):
             func = CommandHandler(func)
@@ -239,6 +245,7 @@ def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = Non
         func.__mb_arguments__.reverse()
         func.__mb_require_subcommand__ = require_subcommand
         func.__mb_arg_fallthrough__ = arg_fallthrough
+        func.__mb_must_consume_args__ = must_consume_args
         func.__mb_event_type__ = event_type
         if msgtypes:
             func.__mb_msgtypes__ = msgtypes
