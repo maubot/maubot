@@ -1,4 +1,4 @@
-mautrix==0.8.0.beta10
+mautrix>=0.8.0
 aiohttp>=3,<3.7
 yarl<1.6
 SQLAlchemy>=1,<2
