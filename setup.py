@@ -39,9 +39,10 @@ setuptools.setup(
 
     install_requires=install_requires,
     extras_require=extras_require,
+    python_requires="~=3.7",
 
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 3 - Beta",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Topic :: Communications :: Chat",
         "Framework :: AsyncIO",
