@@ -39,6 +39,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [satwcomic](https://github.com/maubot/satwcomic) - A bot to view SatWComics.
 * [songwhip](https://github.com/maubot/songwhip) - A bot to post Songwhip links.
 * [invite](https://github.com/williamkray/maubot-invite) - A bot to generate invitation tokens from [matrix-registration](https://github.com/ZerataX/matrix-registration)
+* [ticker](https://github.com/williamkray/maubot-ticker) - A bot to return financial data about a stock or cryptocurrency.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
