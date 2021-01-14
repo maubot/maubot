@@ -45,8 +45,9 @@ RUN apk add --no-cache \
         py3-feedparser \
         py3-dateutil \
         py3-lxml \
-        py3-gitlab@edge
-# TODO remove pillow, magic, feedparser, lxml and gitlab when maubot supports installing dependencies
+        py3-gitlab@edge \
+        py3-semver@edge
+# TODO remove pillow, magic, feedparser, lxml, gitlab and semver when maubot supports installing dependencies
 
 COPY requirements.txt /opt/maubot/requirements.txt
 COPY optional-requirements.txt /opt/maubot/optional-requirements.txt
