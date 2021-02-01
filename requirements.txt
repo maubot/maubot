@@ -1,6 +1,6 @@
-mautrix>=0.8,<0.9
-aiohttp>=3,<3.7
-yarl<1.6
+mautrix>=0.8.12,<0.9
+aiohttp>=3,<4
+yarl>=1,<2
 SQLAlchemy>=1,<2
 alembic>=1,<2
 commonmark>=0.9,<1
