@@ -1,9 +1,15 @@
 # maubot
 A plugin-based [Matrix](https://matrix.org) bot system written in Python.
 
-### [Wiki](https://github.com/maubot/maubot/wiki)
+## Documentation
 
-### [Management API spec](https://github.com/maubot/maubot/blob/master/maubot/management/api/spec.md)
+All setup and usage instructions are located on
+[docs.mau.fi](https://docs.mau.fi/maubot/index.html). Some quick links:
+
+* [Setup](https://docs.mau.fi/maubot/usage/setup/index.html)
+  (or [with Docker](https://docs.mau.fi/maubot/usage/setup/docker.html))
+* [Basic usage](https://docs.mau.fi/maubot/usage/basic.html)
+* [Encryption](https://docs.mau.fi/maubot/usage/encryption.html)
 
 ## Discussion
 Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
