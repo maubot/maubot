@@ -141,13 +141,13 @@ class Client:
             self.log.error(f"Invalid token: {e}. Disabling client")
             self.db_instance.enabled = False
             return
-        except MatrixRequestError:
-            if try_n >= 5:
+        except Exception as e:
+            if try_n >= 8:
                 self.log.exception("Failed to get /account/whoami, disabling client")
                 self.db_instance.enabled = False
             else:
-                self.log.exception(f"Failed to get /account/whoami, "
-                                   f"retrying in {(try_n + 1) * 10}s")
+                self.log.warning(f"Failed to get /account/whoami, "
+                                   f"retrying in {(try_n + 1) * 10}s: {e}")
                 _ = asyncio.ensure_future(self.start(try_n + 1), loop=self.loop)
             return
         if user_id != self.id:
