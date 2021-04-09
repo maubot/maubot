@@ -26,8 +26,9 @@ from mautrix.types import MessageType, EventType
 from ..matrix import MaubotMessageEvent
 from . import event
 
-PrefixType = Optional[Union[str, Callable[[], str]]]
-AliasesType = Union[List[str], Tuple[str, ...], Set[str], Callable[[str], bool]]
+PrefixType = Optional[Union[str, Callable[[], str], Callable[[Any], str]]]
+AliasesType = Union[List[str], Tuple[str, ...], Set[str], Callable[[str], bool],
+                    Callable[[Any, str], bool]]
 CommandHandlerFunc = NewType("CommandHandlerFunc",
                              Callable[[MaubotMessageEvent, Any], Awaitable[Any]])
 CommandHandlerDecorator = NewType("CommandHandlerDecorator",

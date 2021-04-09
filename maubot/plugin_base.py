@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
 class Plugin(ABC):
     client: 'MaubotMatrixClient'
+    http: ClientSession
     id: str
     log: Logger
     loop: AbstractEventLoop
