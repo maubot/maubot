@@ -13,6 +13,8 @@ crypto_database:
     #
     # When using pickle, individual crypto databases are stored in the pickle_dir directory.
     # When using non-default postgres, postgres_uri is used to connect to postgres.
+    #
+    # WARNING: The pickle database is dangerous and should not be used in production.
     type: default
     postgres_uri: postgres://username:password@hostname/dbname
     pickle_dir: ./crypto
