@@ -235,7 +235,7 @@ def new(name: PrefixType = None, *, help: str = None, aliases: AliasesType = Non
             else:
                 func.__mb_get_name__ = lambda self: name
         else:
-            func.__mb_get_name__ = lambda self: func.__name__
+            func.__mb_get_name__ = lambda self: func.__mb_func__.__name__
         if callable(aliases):
             if len(inspect.getfullargspec(aliases).args) == 1:
                 func.__mb_is_command_match__ = lambda self, val: aliases(val)
