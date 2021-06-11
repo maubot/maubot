@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -69,8 +69,7 @@ class Instance extends BaseMainView {
         return instance
     }
 
-    componentWillReceiveProps(nextProps) {
-        super.componentWillReceiveProps(nextProps)
+    componentDidUpdate(prevProps) {
         this.updateClientOptions()
     }
 
@@ -95,8 +94,8 @@ class Instance extends BaseMainView {
                     : <NoAvatarIcon className='avatar'/>}
                 <span className="displayname">{
                     (client.displayname === "disable"
-                            ? client.remote_displayname
-                            : client.displayname
+                        ? client.remote_displayname
+                        : client.displayname
                     ) || client.id
                 }</span>
             </div>

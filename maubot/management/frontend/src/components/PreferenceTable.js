@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -57,7 +57,9 @@ export const PrefSwitch = ({ rowName, active, origActive, fullWidth = false, ...
     </PrefRow>
 )
 
-export const PrefSelect = ({ rowName, value, origValue, fullWidth = false, creatable = false, ...args }) => (
+export const PrefSelect = ({
+    rowName, value, origValue, fullWidth = false, creatable = false, ...args
+}) => (
     <PrefRow name={rowName} fullWidth={fullWidth} labelFor={rowName}
              changed={origValue !== undefined && value.id !== origValue}>
         {creatable

@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -51,7 +51,7 @@ class Dashboard extends Component {
         }
     }
 
-    async componentWillMount() {
+    async componentDidMount() {
         const [instanceList, clientList, pluginList, homeservers] = await Promise.all([
             api.getInstances(), api.getClients(), api.getPlugins(), api.getClientAuthServers(),
             api.updateDebugOpenFileEnabled()])

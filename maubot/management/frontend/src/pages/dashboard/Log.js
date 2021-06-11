@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -42,7 +42,7 @@ class LogEntry extends PureComponent {
             return <>
                 {req.method} {req.path}
                 <div className="content">
-                    {Object.entries(req.content).length > 0
+                    {Object.entries(req.content || {}).length > 0
                     && <JSONTree data={{ content: req.content }} hideRoot={true}/>}
                 </div>
             </>

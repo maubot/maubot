@@ -244,6 +244,7 @@ export async function doClientAuth(server, type, username, password) {
     return await resp.json()
 }
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
     login, ping, setBasePath, getFeatures, remoteGetFeatures,
     openLogSocket,

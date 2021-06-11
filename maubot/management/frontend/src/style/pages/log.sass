@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -18,69 +18,72 @@ div.log
     width: 100%
     overflow: auto
 
-    > div.lines
-        text-align: left
-        font-size: 12px
-        max-height: 100%
-        min-width: 100%
-        font-family: "Fira Code", monospace
-        display: table
+div.log > div.lines
+    text-align: left
+    font-size: 12px
+    max-height: 100%
+    min-width: 100%
+    font-family: "Fira Code", monospace
+    display: table
 
-        > div.row
-            display: table-row
-            white-space: pre
+div.log > div.lines > div.row
+    display: table-row
+    white-space: pre
 
-            &.debug
-                background-color: $background
+    &.trace
+        opacity: .75
 
-                &:nth-child(odd)
-                    background-color: $background-dark
+    &.debug, &.trace
+        background-color: $background
 
-            &.info
-                background-color: #AAFAFA
+        &:nth-child(odd)
+            background-color: $background-dark
 
-                &:nth-child(odd)
-                    background-color: #66FAFA
+    &.info
+        background-color: #AAFAFA
 
-            &.warning, &.warn
-                background-color: #FABB77
+        &:nth-child(odd)
+            background-color: #66FAFA
 
-                &:nth-child(odd)
-                    background-color: #FAAA55
+    &.warning, &.warn
+        background-color: #FABB77
 
-            &.error
-                background-color: #FAAAAA
+        &:nth-child(odd)
+            background-color: #FAAA55
 
-                &:nth-child(odd)
-                    background-color: #FA9999
+    &.error
+        background-color: #FAAAAA
 
-            &.fatal
-                background-color: #CC44CC
+        &:nth-child(odd)
+            background-color: #FA9999
 
-                &:nth-child(odd)
-                    background-color: #AA44AA
+    &.fatal
+        background-color: #CC44CC
 
-            &.unfocused
-                opacity: .25
+        &:nth-child(odd)
+            background-color: #AA44AA
 
-            > span
-                padding: .125rem .25rem
-                display: table-cell
+    &.unfocused
+        opacity: .25
 
-                &:first-child
-                    padding-left: 0
+    > span
+        padding: .125rem .25rem
+        display: table-cell
 
-                &:last-child
-                    padding-right: 0
+        &:first-child
+            padding-left: 0
 
-            a
-                color: inherit
-                text-decoration: none
+        &:last-child
+            padding-right: 0
 
-                &:hover
-                    text-decoration: underline
+    a
+        color: inherit
+        text-decoration: none
 
-            > span.text
-                > div.content > *
-                    background-color: inherit !important
-                    margin: 0 !important
+        &:hover
+            text-decoration: underline
+
+    > span.text
+        > div.content > *
+            background-color: inherit !important
+            margin: 0 !important

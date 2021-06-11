@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -64,7 +64,7 @@ class Client extends BaseMainView {
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "sync",
-            "autojoin", "online", "enabled", "started"]
+                "autojoin", "online", "enabled", "started"]
     }
 
     get initialState() {
@@ -106,7 +106,7 @@ class Client extends BaseMainView {
     get selectedHomeserver() {
         return this.state.homeserver
             ? this.homeserverEntry([this.props.ctx.homeserversByURL[this.state.homeserver],
-                this.state.homeserver])
+                                    this.state.homeserver])
             : {}
     }
 
@@ -116,13 +116,14 @@ class Client extends BaseMainView {
         label: serverName || serverURL,
     }
 
-    componentWillReceiveProps(nextProps) {
-        super.componentWillReceiveProps(nextProps)
+    componentDidUpdate(prevProps) {
         this.updateHomeserverOptions()
     }
 
     updateHomeserverOptions() {
-        this.homeserverOptions = Object.entries(this.props.ctx.homeserversByName).map(this.homeserverEntry)
+        this.homeserverOptions = Object
+            .entries(this.props.ctx.homeserversByName)
+            .map(this.homeserverEntry)
     }
 
     isValidHomeserver(value) {
@@ -186,7 +187,8 @@ class Client extends BaseMainView {
     }
 
     get loading() {
-        return this.state.saving || this.state.startingOrStopping || this.clearingCache || this.state.deleting
+        return this.state.saving || this.state.startingOrStopping
+            || this.clearingCache || this.state.deleting
     }
 
     renderStartedContainer = () => {
@@ -211,7 +213,8 @@ class Client extends BaseMainView {
     }
 
     get avatarMXC() {
-        return this.state.avatar_url === "disable" ? this.props.entry.remote_avatar_url : this.state.avatar_url
+        return this.state.avatar_url === "disable"
+            ? this.props.entry.remote_avatar_url : this.state.avatar_url
     }
 
     get avatarURL() {

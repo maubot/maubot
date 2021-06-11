@@ -1,5 +1,5 @@
 // maubot - A plugin-based Matrix bot system.
-// Copyright (C) 2019 Tulir Asokan
+// Copyright (C) 2021 Tulir Asokan
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -50,7 +50,7 @@ class InstanceDatabase extends Component {
         this.order = new Map()
     }
 
-    async componentWillMount() {
+    async componentDidMount() {
         const tables = new Map(Object.entries(await api.getInstanceDatabase(this.props.instanceID)))
         for (const [name, table] of tables) {
             table.name = name
