@@ -199,7 +199,7 @@ class PluginInstance:
             self.config = config_class(self.load_config, base_cfg_func, self.save_config)
         self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
                           instance_id=self.id, log=self.log, config=self.config,
-                          database=self.inst_db, webapp=self.inst_webapp,
+                          database=self.inst_db, loader=self.loader, webapp=self.inst_webapp,
                           webapp_url=self.inst_webapp_url)
         try:
             await self.plugin.internal_start()

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Type, Optional, TYPE_CHECKING
 from abc import ABC
-from logging import Logger
 from asyncio import AbstractEventLoop
 
 from sqlalchemy.engine.base import Engine
@@ -23,26 +22,29 @@ from aiohttp import ClientSession
 from yarl import URL
 
 if TYPE_CHECKING:
+    from mautrix.util.logging import TraceLogger
     from mautrix.util.config import BaseProxyConfig
     from .client import MaubotMatrixClient
     from .plugin_server import PluginWebApp
+    from .loader import BasePluginLoader
 
 
 class Plugin(ABC):
     client: 'MaubotMatrixClient'
     http: ClientSession
     id: str
-    log: Logger
+    log: 'TraceLogger'
     loop: AbstractEventLoop
+    loader: 'BasePluginLoader'
     config: Optional['BaseProxyConfig']
     database: Optional[Engine]
     webapp: Optional['PluginWebApp']
     webapp_url: Optional[URL]
 
     def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
-                 instance_id: str, log: Logger, config: Optional['BaseProxyConfig'],
+                 instance_id: str, log: 'TraceLogger', config: Optional['BaseProxyConfig'],
                  database: Optional[Engine], webapp: Optional['PluginWebApp'],
-                 webapp_url: Optional[str]) -> None:
+                 webapp_url: Optional[str], loader: 'BasePluginLoader') -> None:
         self.client = client
         self.loop = loop
         self.http = http
@@ -52,6 +54,7 @@ class Plugin(ABC):
         self.database = database
         self.webapp = webapp
         self.webapp_url = URL(webapp_url) if webapp_url else None
+        self.loader = loader
         self._handlers_at_startup = []
 
     def register_handler_class(self, obj) -> None:

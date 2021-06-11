@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -106,8 +106,19 @@ class ZippedPluginLoader(PluginLoader):
                 f"meta={self.meta} "
                 f"loaded={self._loaded is not None}>")
 
-    async def read_file(self, path: str) -> bytes:
+    def sync_read_file(self, path: str) -> bytes:
         return self._file.read(path)
+
+    async def read_file(self, path: str) -> bytes:
+        return self.sync_read_file(path)
+
+    def sync_list_files(self, directory: str) -> List[str]:
+        directory = directory.rstrip("/")
+        return [file.filename for file in self._file.filelist
+                if os.path.dirname(file.filename) == directory]
+
+    async def list_files(self, directory: str) -> List[str]:
+        return self.sync_list_files(directory)
 
     @staticmethod
     def _read_meta(source) -> Tuple[ZipFile, PluginMeta]:

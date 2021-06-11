@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -65,7 +65,30 @@ class PluginMeta(SerializableAttrs['PluginMeta']):
     soft_dependencies: List[str] = []
 
 
-class PluginLoader(ABC):
+class BasePluginLoader(ABC):
+    meta: PluginMeta
+
+    @property
+    @abstractmethod
+    def source(self) -> str:
+        pass
+
+    def sync_read_file(self, path: str) -> bytes:
+        raise NotImplementedError("This loader doesn't support synchronous operations")
+
+    @abstractmethod
+    async def read_file(self, path: str) -> bytes:
+        pass
+
+    def sync_list_files(self, directory: str) -> List[str]:
+        raise NotImplementedError("This loader doesn't support synchronous operations")
+
+    @abstractmethod
+    async def list_files(self, directory: str) -> List[str]:
+        pass
+
+
+class PluginLoader(BasePluginLoader, ABC):
     id_cache: Dict[str, 'PluginLoader'] = {}
 
     meta: PluginMeta
@@ -84,15 +107,6 @@ class PluginLoader(ABC):
             "version": str(self.meta.version),
             "instances": [instance.to_dict() for instance in self.references],
         }
-
-    @property
-    @abstractmethod
-    def source(self) -> str:
-        pass
-
-    @abstractmethod
-    async def read_file(self, path: str) -> bytes:
-        pass
 
     async def stop_instances(self) -> None:
         await asyncio.gather(*[instance.stop() for instance

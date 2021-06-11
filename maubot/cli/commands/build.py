@@ -16,6 +16,7 @@
 from typing import Optional, Union, IO
 from io import BytesIO
 import zipfile
+import glob
 import os
 
 from ruamel.yaml import YAML, YAMLError
@@ -94,8 +95,9 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
             else:
                 print(Fore.YELLOW + f"Module {module} not found, skipping" + Fore.RESET)
 
-        for file in meta.extra_files:
-            zip.write(file)
+        for pattern in meta.extra_files:
+            for file in glob.iglob(pattern):
+                zip.write(file)
 
 
 def upload_plugin(output: Union[str, IO], server: str) -> None:
