@@ -55,6 +55,7 @@ class Plugin(ABC):
         self._handlers_at_startup = []
 
     def register_handler_class(self, obj) -> None:
+        warned_webapp = False
         for key in dir(obj):
             val = getattr(obj, key)
             try:
@@ -65,10 +66,17 @@ class Plugin(ABC):
                 pass
             try:
                 web_handlers = val.__mb_web_handler__
-                for method, path, kwargs in web_handlers:
-                    self.webapp.add_route(method=method, path=path, handler=val, **kwargs)
             except AttributeError:
                 pass
+            else:
+                if len(web_handlers) > 0 and self.webapp is None:
+                    if not warned_webapp:
+                        self.log.warning(f"{type(obj).__name__} has web handlers, but the webapp"
+                                         " feature isn't enabled in the plugin's maubot.yaml")
+                    warned_webapp = True
+                    continue
+                for method, path, kwargs in web_handlers:
+                    self.webapp.add_route(method=method, path=path, handler=val, **kwargs)
 
     async def pre_start(self) -> None:
         pass
