@@ -1,4 +1,4 @@
-FROM node:12 AS frontend-builder
+FROM node:16 AS frontend-builder
 
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
