@@ -113,14 +113,25 @@ class PluginInstance:
                 self.db_instance.enabled = False
                 return False
         if self.loader.meta.database:
-            db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
-            self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
+            self.enable_database()
         if self.loader.meta.webapp:
-            self.inst_webapp, self.inst_webapp_url = self.webserver.get_instance_subapp(self.id)
+            self.enable_webapp()
         self.log.debug("Plugin instance dependencies loaded")
         self.loader.references.add(self)
         self.client.references.add(self)
         return True
+
+    def enable_webapp(self) -> None:
+        self.inst_webapp, self.inst_webapp_url = self.webserver.get_instance_subapp(self.id)
+
+    def disable_webapp(self) -> None:
+        self.webserver.remove_instance_webapp(self.id)
+        self.inst_webapp = None
+        self.inst_webapp_url = None
+
+    def enable_database(self) -> None:
+        db_path = os.path.join(self.mb_config["plugin_directories.db"], self.id)
+        self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
 
     def delete(self) -> None:
         if self.loader is not None:
@@ -138,7 +149,7 @@ class PluginInstance:
                 os.path.join(self.mb_config["plugin_directories.db"], f"{self.id}.db"),
                 reason="deleted")
         if self.inst_webapp:
-            self.webserver.remove_instance_webapp(self.id)
+            self.disable_webapp()
 
     def load_config(self) -> CommentedMap:
         return yaml.load(self.db_instance.config)
@@ -160,6 +171,15 @@ class PluginInstance:
             if not self.load():
                 return
         cls = await self.loader.load()
+        if self.loader.meta.webapp and self.inst_webapp is None:
+            self.log.debug("Enabling webapp after plugin meta reload")
+            self.enable_webapp()
+        elif not self.loader.meta.webapp and self.inst_webapp is not None:
+            self.log.debug("Disabling webapp after plugin meta reload")
+            self.disable_webapp()
+        if self.loader.meta.database and self.inst_db is None:
+            self.log.debug("Enabling database after plugin meta reload")
+            self.enable_database()
         config_class = cls.get_config_class()
         if config_class:
             try:
