@@ -22,7 +22,7 @@ import string
 import hmac
 
 from aiohttp import web
-from mautrix.api import HTTPAPI, Path, Method
+from mautrix.api import HTTPAPI, Path, SynapseAdminPath, Method
 from mautrix.errors import MatrixRequestError
 
 from .base import routes, get_config, get_loop
@@ -31,21 +31,6 @@ from .responses import resp
 
 def registration_secrets() -> Dict[str, Dict[str, str]]:
     return get_config()["registration_secrets"]
-
-
-def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False, user_type: str = None):
-    mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
-    mac.update(nonce.encode("utf-8"))
-    mac.update(b"\x00")
-    mac.update(user.encode("utf-8"))
-    mac.update(b"\x00")
-    mac.update(password.encode("utf-8"))
-    mac.update(b"\x00")
-    mac.update(b"admin" if admin else b"notadmin")
-    if user_type is not None:
-        mac.update(b"\x00")
-        mac.update(user_type.encode("utf8"))
-    return mac.hexdigest()
 
 
 @routes.get("/client/auth/servers")
@@ -82,25 +67,40 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
     return AuthRequestInfo(api, secret, username, password, user_type), None
 
 
+def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False,
+                 user_type: str = None) -> str:
+    mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
+    mac.update(nonce.encode("utf-8"))
+    mac.update(b"\x00")
+    mac.update(user.encode("utf-8"))
+    mac.update(b"\x00")
+    mac.update(password.encode("utf-8"))
+    mac.update(b"\x00")
+    mac.update(b"admin" if admin else b"notadmin")
+    if user_type is not None:
+        mac.update(b"\x00")
+        mac.update(user_type.encode("utf8"))
+    return mac.hexdigest()
+
+
 @routes.post("/client/auth/{server}/register")
 async def register(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
     api, secret, username, password, user_type = info
-    res = await api.request(Method.GET, Path.admin.register)
-    nonce = res["nonce"]
-    mac = generate_mac(secret, nonce, username, password, user_type=user_type)
+    path = SynapseAdminPath.v1.register
+    res = await api.request(Method.GET, path)
+    content = {
+        "nonce": res["nonce"],
+        "username": username,
+        "password": password,
+        "admin": False,
+        "mac": generate_mac(secret, res["nonce"], username, password, user_type=user_type),
+        "user_type": user_type,
+    }
     try:
-        return web.json_response(await api.request(Method.POST, Path.admin.register, content={
-            "nonce": nonce,
-            "username": username,
-            "password": password,
-            "admin": False,
-            "mac": mac,
-            # Older versions of synapse will ignore this field if it is None
-            "user_type": user_type,
-        }))
+        return web.json_response(await api.request(Method.POST, path, content=content))
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,

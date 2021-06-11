@@ -5,7 +5,7 @@
 psycopg2-binary>=2,<3
 
 #/e2be
-asyncpg>=0.20,<0.23
+asyncpg>=0.20,<0.24
 python-olm>=3,<4
 pycryptodome>=3,<4
 unpaddedbase64>=1,<2
