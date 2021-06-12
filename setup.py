@@ -62,8 +62,10 @@ setuptools.setup(
         ("alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
     package_data={
-        "maubot": ["management/frontend/build/*", "management/frontend/build/static/css/*",
-                   "management/frontend/build/static/js/*"],
+        "maubot": ["management/frontend/build/*",
+                   "management/frontend/build/static/css/*",
+                   "management/frontend/build/static/js/*",
+                   "management/frontend/build/static/media/*"],
         "maubot.cli": ["res/*"],
     },
 )
