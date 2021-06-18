@@ -49,7 +49,7 @@ def deserialize_version(version: str) -> Version:
 
 
 @dataclass
-class PluginMeta(SerializableAttrs['PluginMeta']):
+class PluginMeta(SerializableAttrs):
     id: str
     version: Version
     modules: List[str]
