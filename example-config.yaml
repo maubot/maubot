@@ -104,7 +104,7 @@ logging:
     loggers:
         maubot:
             level: DEBUG
-        mautrix:
+        mau:
             level: DEBUG
         aiohttp:
             level: INFO
