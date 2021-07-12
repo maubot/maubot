@@ -409,7 +409,7 @@ def init(config: 'Config', loop: asyncio.AbstractEventLoop) -> Iterable[Client]:
             parsed_url = URL(db_url)
             if parsed_url.scheme == "sqlite":
                 Client.crypto_pickle_dir = config["crypto_database.pickle_dir"]
-            elif parsed_url.scheme == "postgres":
+            elif parsed_url.scheme == "postgres" or parsed_url.scheme == "postgresql":
                 if not PgCryptoStore:
                     log.warning("Default database is postgres, but asyncpg is not installed. "
                                 "Encryption will not work.")
@@ -418,7 +418,7 @@ def init(config: 'Config', loop: asyncio.AbstractEventLoop) -> Iterable[Client]:
                                                      upgrade_table=PgCryptoStore.upgrade_table)
         elif db_type == "pickle":
             Client.crypto_pickle_dir = config["crypto_database.pickle_dir"]
-        elif db_type == "postgres" and PgCryptoStore:
+        elif (db_type == "postgres" or db_type == "postgresql") and PgCryptoStore:
             Client.crypto_db = AsyncDatabase(url=config["crypto_database.postgres_uri"],
                                              upgrade_table=PgCryptoStore.upgrade_table)
         else:
