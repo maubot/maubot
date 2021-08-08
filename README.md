@@ -49,6 +49,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [pingcheck](https://edugit.org/nik/maubot-pingcheck) - A bot to ping the echo bot and send rtt to Icinga passive check
 * [ticker](https://github.com/williamkray/maubot-ticker) - A bot to return financial data about a stock or cryptocurrency.
 * [weather](https://github.com/kellya/maubot-weather) - A bot to get the weather from wttr.in and return a single line of text for the location specified
+* [pocket](https://github.com/jaywink/maubot-pocket) - A bot integrating with Pocket to fetch articles and archive them.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
