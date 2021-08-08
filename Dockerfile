@@ -3,7 +3,7 @@ FROM node:16 AS frontend-builder
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 RUN apk add --no-cache \
         python3 py3-pip py3-setuptools py3-wheel \
@@ -30,7 +30,7 @@ RUN apk add --no-cache \
         py3-wcwidth \
         # encryption
         py3-cffi \
-        olm-dev \
+        py3-olm \
         py3-pycryptodome \
         py3-unpaddedbase64 \
         py3-future \
