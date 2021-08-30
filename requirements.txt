@@ -1,4 +1,4 @@
-mautrix>=0.9.6,<0.10
+mautrix>=0.9.6,<0.11
 aiohttp>=3,<4
 yarl>=1,<2
 SQLAlchemy>=1,<1.4
@@ -12,4 +12,4 @@ packaging>=10
 click>=7,<8
 colorama>=0.4,<0.5
 PyInquirer>=1,<2
-jinja2>=2,<3
+jinja2>=2,<4
