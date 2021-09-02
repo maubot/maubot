@@ -51,6 +51,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [weather](https://github.com/kellya/maubot-weather) - A bot to get the weather from wttr.in and return a single line of text for the location specified
 * [youtube](https://github.com/ggogel/YoutubePreviewMaubot) - A bot that responds to a YouTube link with the video title and thumbnail.
 * [reddit](https://github.com/ggogel/RedditPreviewMaubot) A bot that responds to a link of a reddit post with the sub name and title. If available, uploads the image or video. 
+* [pocket](https://github.com/jaywink/maubot-pocket) - A bot integrating with Pocket to fetch articles and archive them.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
