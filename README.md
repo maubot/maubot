@@ -49,6 +49,7 @@ Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 * [pingcheck](https://edugit.org/nik/maubot-pingcheck) - A bot to ping the echo bot and send rtt to Icinga passive check
 * [ticker](https://github.com/williamkray/maubot-ticker) - A bot to return financial data about a stock or cryptocurrency.
 * [weather](https://github.com/kellya/maubot-weather) - A bot to get the weather from wttr.in and return a single line of text for the location specified
+* [youtube](https://github.com/ggogel/YoutubePreviewMaubot) - A bot that responds to a YouTube link with the video title and thumbnail.
 
 Open a pull request or join the Matrix room linked above to get your plugin listed here
 
