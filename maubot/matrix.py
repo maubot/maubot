@@ -126,7 +126,7 @@ class MaubotMatrixClient(MatrixClient):
         return self.send_message(room_id, content, **kwargs)
 
     def dispatch_event(self, event: Event, source: SyncStream) -> List[asyncio.Task]:
-        if isinstance(event, MessageEvent):
+        if isinstance(event, MessageEvent) and not isinstance(event, MaubotMessageEvent):
             event = MaubotMessageEvent(event, self)
         elif source != SyncStream.INTERNAL:
             event.client = self
