@@ -17,7 +17,7 @@ from typing import Any, Callable, Union, Optional
 import functools
 
 from prompt_toolkit.validation import Validator
-from PyInquirer import prompt
+from questionary import prompt
 import click
 
 from ..base import app
@@ -48,7 +48,7 @@ def command(help: str) -> Callable[[Callable], Callable]:
                     pass
             question_list = list(questions.values())
             question_list.reverse()
-            resp = prompt(question_list, keyboard_interrupt_msg="Aborted!")
+            resp = prompt(question_list, kbi_msg="Aborted!")
             if not resp and question_list:
                 return
             kwargs = {**kwargs, **resp}
@@ -102,9 +102,9 @@ def option(short: str, long: str, message: str = None, help: str = None,
         if default is not None:
             q["default"] = default
         if required or required_unless is not None:
-            q["validator"] = Required(validator)
+            q["validate"] = Required(validator)
         elif validator:
-            q["validator"] = validator
+            q["validate"] = validator
         func.__inquirer_questions__[long[2:]] = q
         return func
 
