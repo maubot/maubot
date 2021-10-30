@@ -21,7 +21,7 @@ import os
 
 from ruamel.yaml import YAML, YAMLError
 from colorama import Fore
-from PyInquirer import prompt
+from questionary import prompt
 import click
 
 from mautrix.types import SerializerError

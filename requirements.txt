@@ -11,5 +11,5 @@ packaging>=10
 
 click>=7,<8
 colorama>=0.4,<0.5
-PyInquirer>=1,<2
+questionary>=1,<2
 jinja2>=2,<4
