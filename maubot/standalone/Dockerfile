@@ -1,6 +1,7 @@
 FROM docker.io/alpine:3.14
 
 RUN apk add --no-cache \
+      python3 py3-pip py3-setuptools py3-wheel \
       py3-aiohttp \
       py3-sqlalchemy \
       py3-attrs \
