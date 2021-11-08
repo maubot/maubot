@@ -17,6 +17,12 @@ from mautrix.util.config import BaseFileConfig, ConfigUpdateHelper
 
 
 class Config(BaseFileConfig):
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return os.environ[f"MAUBOT_{key.replace('.', '_').upper()}"]
+        except KeyError:
+            return super().__getitem__(key)
+
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         copy, _, base = helper
         copy("user.credentials.id")

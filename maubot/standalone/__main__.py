@@ -27,7 +27,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
 
-from mautrix.util.config import RecursiveDict
+from mautrix.util.config import RecursiveDict, BaseMissingError
 from mautrix.util.db import Base
 from mautrix.types import (UserID, Filter, RoomFilter, RoomEventFilter, StrippedStateEvent,
                            EventType, Membership)
@@ -55,6 +55,8 @@ config = Config(args.config, args.base_config)
 config.load()
 try:
     config.update()
+except BaseMissingError:
+    print("No example config found, not updating config")
 except Exception as e:
     print("Failed to update config:", e)
 
