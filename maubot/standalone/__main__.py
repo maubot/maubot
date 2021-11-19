@@ -26,7 +26,7 @@ import sys
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
-from aiohttp import web, hdrs, ClientSession
+from aiohttp import web, ClientSession
 from yarl import URL
 
 from mautrix.util.config import RecursiveDict, BaseMissingError
@@ -154,16 +154,6 @@ if meta.webapp:
     web_runner = web.AppRunner(web_app, access_log_class=AccessLogger)
     web_base_path = config["server.base_path"].rstrip("/")
     public_url = str(URL(config["server.public_url"]) / web_base_path).rstrip("/")
-
-    # async def _handle_plugin_request(req: web.Request) -> web.StreamResponse:
-    #     assert req.path.startswith(web_base_path)
-    #     req = req.clone(rel_url=req.rel_url
-    #                     .with_path(req.rel_url.path[len(web_base_path)])
-    #                     .with_query(req.query_string))
-    #     return await plugin_webapp.handle(req)
-    #
-    # web_app.router = plugin_webapp
-    # web_app.router.add_route(hdrs.METH_ANY, web_base_path, _handle_plugin_request)
 else:
     web_app = web_runner = public_url = plugin_webapp = None
 
