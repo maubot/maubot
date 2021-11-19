@@ -366,7 +366,7 @@ paths:
             schema:
               $ref: '#/components/schemas/MatrixClient'
       responses:
-        200:
+        202:
           description: Client updated
           content:
             application/json:
@@ -454,6 +454,12 @@ paths:
       required: true
       schema:
         type: string
+    - name: update_client
+      in: query
+      description: Should maubot store the access details in a Client instead of returning them?
+      required: false
+      schema:
+        type: boolean
     post:
       operationId: client_auth_register
       summary: |
@@ -475,18 +481,29 @@ paths:
                 properties:
                   access_token:
                     type: string
-                    example: token_here
+                    example: syt_123_456_789
                   user_id:
                     type: string
                     example: '@putkiteippi:maunium.net'
-                  home_server:
-                    type: string
-                    example: maunium.net
                   device_id:
                     type: string
-                    example: device_id_here
+                    example: maubot_F00BAR12
+        201:
+          description: Client created (when update_client is true)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
         401:
           $ref: '#/components/responses/Unauthorized'
+        409:
+          description: |
+            There is already a client with the user ID of that token.
+            This should usually not happen, because the user ID was just created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         500:
           $ref: '#/components/responses/MatrixServerError'
   '/client/auth/{server}/login':
@@ -497,6 +514,12 @@ paths:
       required: true
       schema:
         type: string
+    - name: update_client
+      in: query
+      description: Should maubot store the access details in a Client instead of returning them?
+      required: false
+      schema:
+        type: boolean
     post:
       operationId: client_auth_login
       summary: Log in to the given Matrix server via the maubot server
@@ -519,10 +542,22 @@ paths:
                     example: '@putkiteippi:maunium.net'
                   access_token:
                     type: string
-                    example: token_here
+                    example: syt_123_456_789
                   device_id:
                     type: string
-                    example: device_id_here
+                    example: maubot_F00BAR12
+        201:
+          description: Client created (when update_client is true)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        202:
+          description: Client updated (when update_client is true)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
         401:
           $ref: '#/components/responses/Unauthorized'
         500:
@@ -641,6 +676,9 @@ components:
         access_token:
           type: string
           description: The Matrix access token for this client.
+        device_id:
+          type: string
+          description: The Matrix device ID corresponding to the access token.
         enabled:
           type: boolean
           example: true

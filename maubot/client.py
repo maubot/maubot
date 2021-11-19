@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -86,10 +86,8 @@ class Client:
                                          log=self.log, loop=self.loop, device_id=self.device_id,
                                          sync_store=SyncStoreProxy(self.db_instance),
                                          state_store=self.global_state_store)
-        if OlmMachine and self.device_id and self.crypto_db:
-            self.crypto_store = self._make_crypto_store()
-            self.crypto = OlmMachine(self.client, self.crypto_store, self.global_state_store)
-            self.client.crypto = self.crypto
+        if self.enable_crypto:
+            self._prepare_crypto()
         else:
             self.crypto_store = None
             self.crypto = None
@@ -102,10 +100,15 @@ class Client:
         self.client.add_event_handler(InternalEventType.SYNC_ERRORED, self._set_sync_ok(False))
         self.client.add_event_handler(InternalEventType.SYNC_SUCCESSFUL, self._set_sync_ok(True))
 
-    def _make_crypto_store(self) -> 'CryptoStore':
-        if self.crypto_db:
-            return PgCryptoStore(account_id=self.id, pickle_key="mau.crypto", db=self.crypto_db)
-        raise ValueError("Crypto database not configured")
+    @property
+    def enable_crypto(self) -> bool:
+        return bool(OlmMachine and self.device_id and self.crypto_db)
+
+    def _prepare_crypto(self) -> None:
+        self.crypto_store = PgCryptoStore(account_id=self.id, pickle_key="mau.crypto",
+                                          db=self.crypto_db)
+        self.crypto = OlmMachine(self.client, self.crypto_store, self.global_state_store)
+        self.client.crypto = self.crypto
 
     def _set_sync_ok(self, ok: bool) -> Callable[[Dict[str, Any]], Awaitable[None]]:
         async def handler(data: Dict[str, Any]) -> None:
@@ -121,6 +124,19 @@ class Client:
         except Exception:
             self.log.exception("Failed to start")
 
+    async def _start_crypto(self) -> None:
+        self.log.debug("Enabling end-to-end encryption support")
+        await self.crypto_store.open()
+        crypto_device_id = await self.crypto_store.get_device_id()
+        if crypto_device_id and crypto_device_id != self.device_id:
+            self.log.warning("Mismatching device ID in crypto store and main database, "
+                             "resetting encryption")
+            await self.crypto_store.delete()
+            crypto_device_id = None
+        await self.crypto.load()
+        if not crypto_device_id:
+            await self.crypto_store.put_device_id(self.device_id)
+
     async def _start(self, try_n: Optional[int] = 0) -> None:
         if not self.enabled:
             self.log.debug("Not starting disabled client")
@@ -129,7 +145,7 @@ class Client:
             self.log.warning("Ignoring start() call to started client")
             return
         try:
-            user_id = await self.client.whoami()
+            whoami = await self.client.whoami()
         except MatrixInvalidToken as e:
             self.log.error(f"Invalid token: {e}. Disabling client")
             self.db_instance.enabled = False
@@ -143,8 +159,13 @@ class Client:
                                    f"retrying in {(try_n + 1) * 10}s: {e}")
                 _ = asyncio.ensure_future(self.start(try_n + 1), loop=self.loop)
             return
-        if user_id != self.id:
-            self.log.error(f"User ID mismatch: expected {self.id}, but got {user_id}")
+        if whoami.user_id != self.id:
+            self.log.error(f"User ID mismatch: expected {self.id}, but got {whoami.user_id}")
+            self.db_instance.enabled = False
+            return
+        elif whoami.device_id and self.device_id and whoami.device_id != self.device_id:
+            self.log.error(f"Device ID mismatch: expected {self.device_id}, "
+                           f"but got {whoami.device_id}")
             self.db_instance.enabled = False
             return
         if not self.filter_id:
@@ -167,15 +188,7 @@ class Client:
         if self.avatar_url != "disable":
             await self.client.set_avatar_url(self.avatar_url)
         if self.crypto:
-            self.log.debug("Enabling end-to-end encryption support")
-            await self.crypto_store.open()
-            crypto_device_id = await self.crypto_store.get_device_id()
-            if crypto_device_id and crypto_device_id != self.device_id:
-                self.log.warning("Mismatching device ID in crypto store and main database. "
-                                 "Encryption may not work.")
-            await self.crypto.load()
-            if not crypto_device_id:
-                await self.crypto_store.put_device_id(self.device_id)
+            await self._start_crypto()
         self.start_sync()
         await self._update_remote_profile()
         self.started = True
@@ -285,23 +298,31 @@ class Client:
         else:
             await self._update_remote_profile()
 
-    async def update_access_details(self, access_token: str, homeserver: str) -> None:
+    async def update_access_details(self, access_token: str, homeserver: str,
+                                    device_id: Optional[str] = None) -> None:
         if not access_token and not homeserver:
             return
         elif access_token == self.access_token and homeserver == self.homeserver:
             return
+        device_id = device_id or self.device_id
         new_client = MaubotMatrixClient(mxid=self.id, base_url=homeserver or self.homeserver,
                                         token=access_token or self.access_token, loop=self.loop,
-                                        client_session=self.http_client, device_id=self.device_id,
+                                        device_id=device_id, client_session=self.http_client,
                                         log=self.log, state_store=self.global_state_store)
-        mxid = await new_client.whoami()
-        if mxid != self.id:
-            raise ValueError(f"MXID mismatch: {mxid}")
+        whoami = await new_client.whoami()
+        if whoami.user_id != self.id:
+            raise ValueError(f"MXID mismatch: {whoami.user_id}")
+        elif whoami.device_id and device_id and whoami.device_id != device_id:
+            raise ValueError(f"Device ID mismatch: {whoami.device_id}")
         new_client.sync_store = SyncStoreProxy(self.db_instance)
         self.stop_sync()
         self.client = new_client
         self.db_instance.homeserver = homeserver
         self.db_instance.access_token = access_token
+        self.db_instance.device_id = device_id
+        if self.enable_crypto:
+            self._prepare_crypto()
+            await self._start_crypto()
         self.start_sync()
 
     async def _update_remote_profile(self) -> None:

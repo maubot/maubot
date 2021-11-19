@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -45,10 +45,11 @@ async def get_client(request: web.Request) -> web.Response:
 async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     homeserver = data.get("homeserver", None)
     access_token = data.get("access_token", None)
+    device_id = data.get("device_id", None)
     new_client = MatrixClient(mxid="@not:a.mxid", base_url=homeserver, token=access_token,
                               loop=Client.loop, client_session=Client.http_client)
     try:
-        mxid = await new_client.whoami()
+        whoami = await new_client.whoami()
     except MatrixInvalidToken:
         return resp.bad_client_access_token
     except MatrixRequestError:
@@ -56,27 +57,31 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
     except MatrixConnectionError:
         return resp.bad_client_connection_details
     if user_id is None:
-        existing_client = Client.get(mxid, None)
+        existing_client = Client.get(whoami.user_id, None)
         if existing_client is not None:
             return resp.user_exists
-    elif mxid != user_id:
-        return resp.mxid_mismatch(mxid)
-    db_instance = DBClient(id=mxid, homeserver=homeserver, access_token=access_token,
+    elif whoami.user_id != user_id:
+        return resp.mxid_mismatch(whoami.user_id)
+    elif whoami.device_id and device_id and whoami.device_id != device_id:
+        return resp.device_id_mismatch(whoami.device_id)
+    db_instance = DBClient(id=whoami.user_id, homeserver=homeserver, access_token=access_token,
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
                            autojoin=data.get("autojoin", True), online=data.get("online", True),
                            displayname=data.get("displayname", ""),
-                           avatar_url=data.get("avatar_url", ""))
+                           avatar_url=data.get("avatar_url", ""),
+                           device_id=device_id)
     client = Client(db_instance)
     client.db_instance.insert()
     await client.start()
     return resp.created(client.to_dict())
 
 
-async def _update_client(client: Client, data: dict) -> web.Response:
+async def _update_client(client: Client, data: dict, is_login: bool = False) -> web.Response:
     try:
         await client.update_access_details(data.get("access_token", None),
-                                           data.get("homeserver", None))
+                                           data.get("homeserver", None),
+                                           data.get("device_id", None))
     except MatrixInvalidToken:
         return resp.bad_client_access_token
     except MatrixRequestError:
@@ -93,7 +98,16 @@ async def _update_client(client: Client, data: dict) -> web.Response:
         client.autojoin = data.get("autojoin", client.autojoin)
         client.online = data.get("online", client.online)
         client.sync = data.get("sync", client.sync)
-        return resp.updated(client.to_dict())
+        return resp.updated(client.to_dict(), is_login=is_login)
+
+
+async def _create_or_update_client(user_id: UserID, data: dict, is_login: bool = False
+                                   ) -> web.Response:
+    client = Client.get(user_id, None)
+    if not client:
+        return await _create_client(user_id, data)
+    else:
+        return await _update_client(client, data, is_login=is_login)
 
 
 @routes.post("/client/new")
@@ -108,15 +122,11 @@ async def create_client(request: web.Request) -> web.Response:
 @routes.put("/client/{id}")
 async def update_client(request: web.Request) -> web.Response:
     user_id = request.match_info.get("id", None)
-    client = Client.get(user_id, None)
     try:
         data = await request.json()
     except JSONDecodeError:
         return resp.body_not_json
-    if not client:
-        return await _create_client(user_id, data)
-    else:
-        return await _update_client(client, data)
+    return await _create_or_update_client(user_id, data)
 
 
 @routes.delete("/client/{id}")

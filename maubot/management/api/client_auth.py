@@ -25,10 +25,11 @@ from aiohttp import web
 from mautrix.api import SynapseAdminPath, Method
 from mautrix.errors import MatrixRequestError
 from mautrix.client import ClientAPI
-from mautrix.types import LoginType
+from mautrix.types import LoginType, LoginResponse
 
 from .base import routes, get_config, get_loop
 from .responses import resp
+from .client import _create_or_update_client, _create_client
 
 
 def known_homeservers() -> Dict[str, Dict[str, str]]:
@@ -46,6 +47,7 @@ class AuthRequestInfo(NamedTuple):
     username: str
     password: str
     user_type: str
+    update_client: bool
 
 
 async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthRequestInfo],
@@ -70,15 +72,16 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
     secret = server.get("secret")
     api = ClientAPI(base_url=base_url, loop=get_loop())
     user_type = body.get("user_type", "bot")
-    return AuthRequestInfo(api, secret, username, password, user_type), None
+    update_client = request.query.get("update_client", "").lower() in ("1", "true", "yes")
+    return AuthRequestInfo(api, secret, username, password, user_type, update_client), None
 
 
-def generate_mac(secret: str, nonce: str, user: str, password: str, admin: bool = False,
+def generate_mac(secret: str, nonce: str, username: str, password: str, admin: bool = False,
                  user_type: str = None) -> str:
     mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
     mac.update(nonce.encode("utf-8"))
     mac.update(b"\x00")
-    mac.update(user.encode("utf-8"))
+    mac.update(username.encode("utf-8"))
     mac.update(b"\x00")
     mac.update(password.encode("utf-8"))
     mac.update(b"\x00")
@@ -94,28 +97,34 @@ async def register(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    client: ClientAPI
-    client, secret, username, password, user_type = info
-    if not secret:
+    if not info.secret:
         return resp.registration_secret_not_found
     path = SynapseAdminPath.v1.register
-    res = await client.api.request(Method.GET, path)
+    res = await info.client.api.request(Method.GET, path)
     content = {
         "nonce": res["nonce"],
-        "username": username,
-        "password": password,
+        "username": info.username,
+        "password": info.password,
         "admin": False,
-        "mac": generate_mac(secret, res["nonce"], username, password, user_type=user_type),
-        "user_type": user_type,
+        "user_type": info.user_type,
     }
+    content["mac"] = generate_mac(**content, secret=info.secret)
     try:
-        return web.json_response(await client.api.request(Method.POST, path, content=content))
+        raw_res = await info.client.api.request(Method.POST, path, content=content)
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
             "error": e.message,
             "http_status": e.http_status,
         }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    login_res = LoginResponse.deserialize(raw_res)
+    if info.update_client:
+        return await _create_client(login_res.user_id, {
+            "homeserver": str(info.client.api.base_url),
+            "access_token": login_res.access_token,
+            "device_id": login_res.device_id,
+        })
+    return web.json_response(login_res.serialize())
 
 
 @routes.post("/client/auth/{server}/login")
@@ -129,9 +138,15 @@ async def login(request: web.Request) -> web.Response:
         res = await client.login(identifier=info.username, login_type=LoginType.PASSWORD,
                                  password=info.password, device_id=f"maubot_{device_id}",
                                  initial_device_display_name="Maubot", store_access_token=False)
-        return web.json_response(res.serialize())
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
             "error": e.message,
         }, status=e.http_status)
+    if info.update_client:
+        return await _create_or_update_client(res.user_id, {
+            "homeserver": str(client.api.base_url),
+            "access_token": res.access_token,
+            "device_id": res.device_id,
+        }, is_login=True)
+    return web.json_response(res.serialize())

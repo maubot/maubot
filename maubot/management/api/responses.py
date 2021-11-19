@@ -69,6 +69,13 @@ class _Response:
             "errcode": "mxid_mismatch",
         }, status=HTTPStatus.BAD_REQUEST)
 
+    def device_id_mismatch(self, found: str) -> web.Response:
+        return web.json_response({
+            "error": "The Matrix device ID of the client and the device ID of the access token "
+                     f"don't match. Access token is for device {found}",
+            "errcode": "mxid_mismatch",
+        }, status=HTTPStatus.BAD_REQUEST)
+
     @property
     def pid_mismatch(self) -> web.Response:
         return web.json_response({
@@ -294,8 +301,9 @@ class _Response:
     def found(data: dict) -> web.Response:
         return web.json_response(data, status=HTTPStatus.OK)
 
-    def updated(self, data: dict) -> web.Response:
-        return self.found(data)
+    @staticmethod
+    def updated(data: dict, is_login: bool = False) -> web.Response:
+        return web.json_response(data, status=HTTPStatus.ACCEPTED if is_login else HTTPStatus.OK)
 
     def logged_in(self, token: str) -> web.Response:
         return self.found({

@@ -144,13 +144,13 @@ async def main():
 
     while True:
         try:
-            whoami_user_id = await client.whoami()
+            whoami = await client.whoami()
         except Exception:
             log.exception("Failed to connect to homeserver, retrying in 10 seconds...")
             await asyncio.sleep(10)
             continue
-        if whoami_user_id != user_id:
-            log.fatal(f"User ID mismatch: configured {user_id}, but server said {whoami_user_id}")
+        if whoami.user_id != user_id:
+            log.fatal(f"User ID mismatch: configured {user_id}, but server said {whoami.user_id}")
             sys.exit(1)
         break
 

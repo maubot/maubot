@@ -15,13 +15,39 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Callable, Union, Optional
 import functools
+import inspect
+import asyncio
+
+import aiohttp
 
 from prompt_toolkit.validation import Validator
 from questionary import prompt
 import click
 
 from ..base import app
+from ..config import get_token
 from .validators import Required, ClickValidator
+
+
+def with_http(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        async with aiohttp.ClientSession() as sess:
+            return await func(*args, sess=sess, **kwargs)
+
+    return wrapper
+
+
+def with_authenticated_http(func):
+    @functools.wraps(func)
+    async def wrapper(*args, server: str, **kwargs):
+        server, token = get_token(server)
+        if not token:
+            return
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {token}"}) as sess:
+            return await func(*args, sess=sess, server=server, **kwargs)
+
+    return wrapper
 
 
 def command(help: str) -> Callable[[Callable], Callable]:
@@ -52,7 +78,10 @@ def command(help: str) -> Callable[[Callable], Callable]:
             if not resp and question_list:
                 return
             kwargs = {**kwargs, **resp}
-            func(*args, **kwargs)
+
+            res = func(*args, **kwargs)
+            if inspect.isawaitable(res):
+                asyncio.run(res)
 
         return app.command(help=help)(wrapper)
 
