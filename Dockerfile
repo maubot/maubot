@@ -9,6 +9,7 @@ RUN apk add --no-cache \
         python3 py3-pip py3-setuptools py3-wheel \
         ca-certificates \
         su-exec \
+        yq \
         py3-aiohttp \
         py3-sqlalchemy \
         py3-attrs \
@@ -51,7 +52,8 @@ RUN apk add --virtual .build-deps python3-dev build-base git \
     && sed -Ei 's/psycopg2-binary.+//' optional-requirements.txt \
     && pip3 install -r requirements.txt -r optional-requirements.txt \
         dateparser langdetect python-gitlab pyquery cchardet semver tzlocal cssselect \
-    && apk del .build-deps
+    && apk del .build-deps \
+    && cp maubot/example-config.yaml . && rm -rf maubot
 # TODO also remove dateparser, langdetect and pyquery when maubot supports installing dependencies
 
 COPY . /opt/maubot
