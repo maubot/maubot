@@ -13,7 +13,6 @@
   },
   "homepage": ".",
   "dependencies": {
-    "sass": "^1.34.1",
     "react": "^17.0.2",
     "react-ace": "^9.4.1",
     "react-contextmenu": "^2.14.0",
@@ -21,7 +20,8 @@
     "react-json-tree": "^0.15.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
-    "react-select": "^4.3.1"
+    "react-select": "^5.2.1",
+    "sass": "^1.34.1"
   },
   "scripts": {
     "start": "react-scripts start",

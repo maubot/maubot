@@ -59,12 +59,12 @@ class Client extends BaseMainView {
     constructor(props) {
         super(props)
         this.deleteFunc = api.deleteClient
-        this.homeserverOptions = {}
+        this.homeserverOptions = []
     }
 
     get entryKeys() {
-        return ["id", "displayname", "homeserver", "avatar_url", "access_token", "sync",
-                "autojoin", "online", "enabled", "started"]
+        return ["id", "displayname", "homeserver", "avatar_url", "access_token", "device_id",
+                "sync", "autojoin", "online", "enabled", "started"]
     }
 
     get initialState() {
@@ -74,6 +74,7 @@ class Client extends BaseMainView {
             homeserver: "",
             avatar_url: "",
             access_token: "",
+            device_id: "",
             sync: true,
             autojoin: true,
             enabled: true,
@@ -256,20 +257,23 @@ class Client extends BaseMainView {
                        value={this.state.id} origValue={this.props.entry.id}
                        placeholder="@fancybot:example.com" onChange={this.inputChange}/>
             {api.getFeatures().client_auth ? (
-                <PrefSelect rowName="Homeserver" options={this.homeserverOptions}
+                <PrefSelect rowName="Homeserver" options={this.homeserverOptions} fullWidth={true}
                             isSearchable={true} value={this.selectedHomeserver}
                             origValue={this.props.entry.homeserver}
                             onChange={({ value }) => this.setState({ homeserver: value })}
                             creatable={true} isValidNewOption={this.isValidHomeserver}/>
             ) : (
-                <PrefInput rowName="Homeserver" type="text" name="homeserver"
+                <PrefInput rowName="Homeserver" type="text" name="homeserver" fullWidth={true}
                            value={this.state.homeserver} origValue={this.props.entry.homeserver}
                            placeholder="https://example.com" onChange={this.inputChange}/>
             )}
             <PrefInput rowName="Access token" type="text" name="access_token"
                        value={this.state.access_token} origValue={this.props.entry.access_token}
-                       placeholder="MDAxYWxvY2F0aW9uIG1hdHJpeC5sb2NhbAowMDEzaWRlbnRpZmllc"
+                       placeholder="syt_bWF1Ym90_tUleVHiGyLKwXLaAMqlm_0afdcq"
                        onChange={this.inputChange}/>
+            <PrefInput rowName="Device ID" type="text" name="device_id"
+                       value={this.state.device_id} origValue={this.props.entry.device_id}
+                       placeholder="maubot_F00BAR12" onChange={this.inputChange}/>
             <PrefInput rowName="Display name" type="text" name="displayname"
                        value={this.state.displayname} origValue={this.props.entry.displayname}
                        placeholder="My fancy bot" onChange={this.inputChange}/>
