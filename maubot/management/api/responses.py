@@ -181,6 +181,13 @@ class _Response:
         }, status=HTTPStatus.NOT_FOUND)
 
     @property
+    def registration_secret_not_found(self) -> web.Response:
+        return web.json_response({
+            "error": "Config does not have a registration secret for that server",
+            "errcode": "registration_secret_not_found",
+        }, status=HTTPStatus.NOT_FOUND)
+
+    @property
     def plugin_has_no_database(self) -> web.Response:
         return web.json_response({
             "error": "Given plugin does not have a database",

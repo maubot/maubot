@@ -32,7 +32,7 @@ enc = functools.partial(quote, safe="")
 friendly_errors = {
     "server_not_found": "Registration target server not found.\n\n"
                         "To log in or register through maubot, you must add the server to the\n"
-                        "registration_secrets section in the config. If you only want to log in,\n"
+                        "homeservers section in the config. If you only want to log in,\n"
                         "leave the `secret` field empty."
 }
 

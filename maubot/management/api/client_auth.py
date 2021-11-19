@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -22,30 +22,36 @@ import string
 import hmac
 
 from aiohttp import web
-from mautrix.api import HTTPAPI, Path, SynapseAdminPath, Method
+from mautrix.api import SynapseAdminPath, Method
 from mautrix.errors import MatrixRequestError
+from mautrix.client import ClientAPI
+from mautrix.types import LoginType
 
 from .base import routes, get_config, get_loop
 from .responses import resp
 
 
-def registration_secrets() -> Dict[str, Dict[str, str]]:
-    return get_config()["registration_secrets"]
+def known_homeservers() -> Dict[str, Dict[str, str]]:
+    return get_config()["homeservers"]
 
 
 @routes.get("/client/auth/servers")
-async def get_registerable_servers(_: web.Request) -> web.Response:
-    return web.json_response({key: value["url"] for key, value in registration_secrets().items()})
+async def get_known_servers(_: web.Request) -> web.Response:
+    return web.json_response({key: value["url"] for key, value in known_homeservers().items()})
 
 
-AuthRequestInfo = NamedTuple("AuthRequestInfo", api=HTTPAPI, secret=str, username=str,
-                             password=str, user_type=str)
+class AuthRequestInfo(NamedTuple):
+    client: ClientAPI
+    secret: str
+    username: str
+    password: str
+    user_type: str
 
 
 async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthRequestInfo],
                                                                   Optional[web.Response]]:
     server_name = request.match_info.get("server", None)
-    server = registration_secrets().get(server_name, None)
+    server = known_homeservers().get(server_name, None)
     if not server:
         return None, resp.server_not_found
     try:
@@ -59,10 +65,10 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
         return None, resp.username_or_password_missing
     try:
         base_url = server["url"]
-        secret = server["secret"]
     except KeyError:
         return None, resp.invalid_server
-    api = HTTPAPI(base_url, "", loop=get_loop())
+    secret = server.get("secret")
+    api = ClientAPI(base_url=base_url, loop=get_loop())
     user_type = body.get("user_type", "bot")
     return AuthRequestInfo(api, secret, username, password, user_type), None
 
@@ -88,9 +94,12 @@ async def register(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    api, secret, username, password, user_type = info
+    client: ClientAPI
+    client, secret, username, password, user_type = info
+    if not secret:
+        return resp.registration_secret_not_found
     path = SynapseAdminPath.v1.register
-    res = await api.request(Method.GET, path)
+    res = await client.api.request(Method.GET, path)
     content = {
         "nonce": res["nonce"],
         "username": username,
@@ -100,7 +109,7 @@ async def register(request: web.Request) -> web.Response:
         "user_type": user_type,
     }
     try:
-        return web.json_response(await api.request(Method.POST, path, content=content))
+        return web.json_response(await client.api.request(Method.POST, path, content=content))
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
@@ -114,18 +123,13 @@ async def login(request: web.Request) -> web.Response:
     info, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    api, _, username, password, _ = info
     device_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    client = info.client
     try:
-        return web.json_response(await api.request(Method.POST, Path.login, content={
-            "type": "m.login.password",
-            "identifier": {
-                "type": "m.id.user",
-                "user": username,
-            },
-            "password": password,
-            "device_id": f"maubot_{device_id}",
-        }))
+        res = await client.login(identifier=info.username, login_type=LoginType.PASSWORD,
+                                 password=info.password, device_id=f"maubot_{device_id}",
+                                 initial_device_display_name="Maubot", store_access_token=False)
+        return web.json_response(res.serialize())
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
