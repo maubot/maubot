@@ -3,9 +3,10 @@
 
 #/postgres
 psycopg2-binary>=2,<3
+asyncpg>=0.20,<0.26
 
 #/e2be
-asyncpg>=0.20,<0.25
+aiosqlite>=0.16,<0.18
 python-olm>=3,<4
 pycryptodome>=3,<4
 unpaddedbase64>=1,<2

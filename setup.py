@@ -57,15 +57,18 @@ setuptools.setup(
         mbc=maubot.cli:app
     """,
     data_files=[
-        (".", ["example-config.yaml", "alembic.ini"]),
+        (".", ["maubot/example-config.yaml", "alembic.ini"]),
         ("alembic", ["alembic/env.py"]),
         ("alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
     package_data={
-        "maubot": ["management/frontend/build/*",
-                   "management/frontend/build/static/css/*",
-                   "management/frontend/build/static/js/*",
-                   "management/frontend/build/static/media/*"],
+        "maubot": [
+            "example-config.yaml",
+            "management/frontend/build/*",
+            "management/frontend/build/static/css/*",
+            "management/frontend/build/static/js/*",
+            "management/frontend/build/static/media/*",
+        ],
         "maubot.cli": ["res/*"],
     },
 )

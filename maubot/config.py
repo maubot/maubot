@@ -32,9 +32,11 @@ class Config(BaseFileConfig):
         base = helper.base
         copy = helper.copy
         copy("database")
-        copy("crypto_database.type")
-        copy("crypto_database.postgres_uri")
-        copy("crypto_database.pickle_dir")
+        if isinstance(self["crypto_database"], dict):
+            if self["crypto_database.type"] == "postgres":
+                base["crypto_database"] = self["crypto_database.postgres_uri"]
+        else:
+            copy("crypto_database")
         copy("plugin_directories.upload")
         copy("plugin_directories.load")
         copy("plugin_directories.trash")

@@ -93,6 +93,7 @@ def init(loop: asyncio.AbstractEventLoop) -> None:
 
 
 async def stop_all() -> None:
+    log.debug("Closing log listener websockets")
     log_root.removeHandler(handler)
     for socket in sockets:
         try:
