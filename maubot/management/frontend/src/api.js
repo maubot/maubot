@@ -214,10 +214,10 @@ export async function uploadAvatar(id, data, mime) {
 }
 
 export function getAvatarURL({ id, avatar_url }) {
-    avatar_url = avatar_url || ""
-    if (avatar_url.startsWith("mxc://")) {
-        avatar_url = avatar_url.substr("mxc://".length)
+    if (!avatar_url?.startsWith("mxc://")) {
+        return null
     }
+    avatar_url = avatar_url.substr("mxc://".length)
     return `${BASE_PATH}/proxy/${id}/_matrix/media/r0/download/${avatar_url}?access_token=${
         localStorage.accessToken}`
 }

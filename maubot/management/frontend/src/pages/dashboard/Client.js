@@ -215,8 +215,12 @@ class Client extends BaseMainView {
     }
 
     get avatarMXC() {
-        return this.state.avatar_url === "disable"
-            ? this.props.entry.remote_avatar_url : this.state.avatar_url
+        if (this.state.avatar_url === "disable") {
+            return this.props.entry.remote_avatar_url
+        } else if (!this.state.avatar_url?.startsWith("mxc://")) {
+            return null
+        }
+        return this.state.avatar_url
     }
 
     get avatarURL() {
