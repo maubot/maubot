@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional, Type, cast
-from aiohttp import ClientSession
 import logging.config
 import importlib
 import argparse
@@ -27,6 +26,8 @@ import sys
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
+from aiohttp import web, hdrs, ClientSession
+from yarl import URL
 
 from mautrix.util.config import RecursiveDict, BaseMissingError
 from mautrix.util.db import Base
@@ -35,7 +36,9 @@ from mautrix.types import (Filter, RoomFilter, RoomEventFilter, StrippedStateEve
                            EventType, Membership, FilterID, SyncToken)
 
 from ..plugin_base import Plugin
+from ..plugin_server import PluginWebApp
 from ..loader import PluginMeta
+from ..server import AccessLogger
 from ..matrix import MaubotMatrixClient
 from ..lib.store_proxy import SyncStoreProxy
 from ..__meta__ import __version__
@@ -145,6 +148,25 @@ if meta.config:
         log.fatal("Failed to load plugin config", exc_info=True)
         sys.exit(1)
 
+if meta.webapp:
+    plugin_webapp = PluginWebApp()
+    web_app = web.Application(router=plugin_webapp)
+    web_runner = web.AppRunner(web_app, access_log_class=AccessLogger)
+    web_base_path = config["server.base_path"].rstrip("/")
+    public_url = str(URL(config["server.public_url"]) / web_base_path).rstrip("/")
+
+    # async def _handle_plugin_request(req: web.Request) -> web.StreamResponse:
+    #     assert req.path.startswith(web_base_path)
+    #     req = req.clone(rel_url=req.rel_url
+    #                     .with_path(req.rel_url.path[len(web_base_path)])
+    #                     .with_query(req.query_string))
+    #     return await plugin_webapp.handle(req)
+    #
+    # web_app.router = plugin_webapp
+    # web_app.router.add_route(hdrs.METH_ANY, web_base_path, _handle_plugin_request)
+else:
+    web_app = web_runner = public_url = plugin_webapp = None
+
 loop = asyncio.get_event_loop()
 
 client: Optional[MaubotMatrixClient] = None
@@ -220,9 +242,15 @@ async def main():
     plugin_log = cast(TraceLogger, logging.getLogger("maubot.instance.__main__"))
     bot = plugin(client=client, loop=loop, http=http_client, instance_id="__main__",
                  log=plugin_log, config=bot_config, database=db if meta.database else None,
-                 webapp=None, webapp_url=None, loader=loader)
+                 webapp=plugin_webapp, webapp_url=public_url, loader=loader)
 
     await bot.internal_start()
+
+    if web_runner:
+        await web_runner.setup()
+        site = web.TCPSite(web_runner, config["server.hostname"], config["server.port"])
+        await site.start()
+        log.info(f"Web server listening on {site.name}")
 
 
 async def stop() -> None:
@@ -230,6 +258,9 @@ async def stop() -> None:
     await bot.internal_stop()
     if crypto_db:
         await crypto_db.stop()
+    if web_runner:
+        await web_runner.shutdown()
+        await web_runner.cleanup()
 
 
 try:

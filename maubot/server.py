@@ -54,7 +54,7 @@ class MaubotServer:
 
         self.runner = web.AppRunner(self.app, access_log_class=AccessLogger)
 
-    async def handle_plugin_path(self, request: web.Request) -> web.Response:
+    async def handle_plugin_path(self, request: web.Request) -> web.StreamResponse:
         for path, app in self.plugin_routes.items():
             if request.path.startswith(path):
                 request = request.clone(rel_url=request.rel_url

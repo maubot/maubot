@@ -36,12 +36,13 @@ class Config(BaseFileConfig):
         copy("user.autojoin")
         copy("user.displayname")
         copy("user.avatar_url")
+        if "server" in base:
+            copy("server.hostname")
+            copy("server.port")
+            copy("server.base_path")
+            copy("server.public_url")
         if "database" in base:
             copy("database")
         if "plugin_config" in base:
             copy("plugin_config")
-        if "server" in base:
-            copy("server.hostname")
-            copy("server.port")
-            copy("server.public_url")
         copy("logging")

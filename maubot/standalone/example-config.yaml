@@ -21,6 +21,18 @@ user:
     # if you want the bot to handle messages that were sent while the bot was down.
     ignore_first_sync: true
 
+# Web server settings. These will only take effect if the plugin requests it using `webapp: true` in the meta file.
+server:
+    # The IP and port to listen to.
+    hostname: 0.0.0.0
+    port: 8080
+    # The base path where the plugin's web resources will be served. Unlike the normal mode,
+    # the webserver is dedicated for a single bot in standalone mode, so the default path
+    # is just /. If you want to emulate normal mode, set this to /_matrix/maubot/plugin/something
+    base_path: /
+    # The public URL where the resources are available. The base path is automatically appended to this.
+    public_url: https://example.com
+
 # The database for the plugin. Used for plugin data, the sync token and e2ee data (if enabled).
 # SQLite and Postgres are supported.
 database: sqlite:///bot.db
