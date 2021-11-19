@@ -110,6 +110,19 @@ class Client:
         self.crypto = OlmMachine(self.client, self.crypto_store, self.global_state_store)
         self.client.crypto = self.crypto
 
+    def _remove_crypto_event_handlers(self) -> None:
+        if not self.crypto:
+            return
+        handlers = [
+            (InternalEventType.DEVICE_OTK_COUNT, self.crypto.handle_otk_count),
+            (InternalEventType.DEVICE_LISTS, self.crypto.handle_device_lists),
+            (EventType.TO_DEVICE_ENCRYPTED, self.crypto.handle_to_device_event),
+            (EventType.ROOM_KEY_REQUEST, self.crypto.handle_room_key_request),
+            (EventType.ROOM_MEMBER, self.crypto.handle_member_event),
+        ]
+        for event_type, func in handlers:
+            self.client.remove_event_handler(event_type, func)
+
     def _set_sync_ok(self, ok: bool) -> Callable[[Dict[str, Any]], Awaitable[None]]:
         async def handler(data: Dict[str, Any]) -> None:
             self.sync_ok = ok
@@ -156,7 +169,7 @@ class Client:
                 self.db_instance.enabled = False
             else:
                 self.log.warning(f"Failed to get /account/whoami, "
-                                   f"retrying in {(try_n + 1) * 10}s: {e}")
+                                 f"retrying in {(try_n + 1) * 10}s: {e}")
                 _ = asyncio.ensure_future(self.start(try_n + 1), loop=self.loop)
             return
         if whoami.user_id != self.id:
@@ -316,6 +329,9 @@ class Client:
             raise ValueError(f"Device ID mismatch: {whoami.device_id}")
         new_client.sync_store = SyncStoreProxy(self.db_instance)
         self.stop_sync()
+        self._remove_crypto_event_handlers()
+        new_client.event_handlers = self.client.event_handlers
+        new_client.global_event_handlers = self.client.global_event_handlers
         self.client = new_client
         self.db_instance.homeserver = homeserver
         self.db_instance.access_token = access_token

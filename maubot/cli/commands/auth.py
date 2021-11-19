@@ -20,7 +20,6 @@ from yarl import URL
 import aiohttp
 import click
 
-from ..config import get_token
 from ..cliq import cliq
 
 history_count: int = 10
