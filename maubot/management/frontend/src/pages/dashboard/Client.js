@@ -75,6 +75,7 @@ class Client extends BaseMainView {
             avatar_url: "",
             access_token: "",
             device_id: "",
+            fingerprint: null,
             sync: true,
             autojoin: true,
             enabled: true,
@@ -274,6 +275,10 @@ class Client extends BaseMainView {
             <PrefInput rowName="Device ID" type="text" name="device_id"
                        value={this.state.device_id} origValue={this.props.entry.device_id}
                        placeholder="maubot_F00BAR12" onChange={this.inputChange}/>
+            {this.props.entry.fingerprint && <PrefInput
+                rowName="E2EE device fingerprint" type="text" disabled={true} fullWidth={true}
+                value={this.props.entry.fingerprint} className="fingerprint"
+            />}
             <PrefInput rowName="Display name" type="text" name="displayname"
                        value={this.state.displayname} origValue={this.props.entry.displayname}
                        placeholder="My fancy bot" onChange={this.inputChange}/>

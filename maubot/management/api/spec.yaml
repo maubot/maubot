@@ -679,6 +679,9 @@ components:
         device_id:
           type: string
           description: The Matrix device ID corresponding to the access token.
+        fingerprint:
+          type: string
+          description: The encryption device fingerprint for verification.
         enabled:
           type: boolean
           example: true
