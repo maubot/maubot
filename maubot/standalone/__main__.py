@@ -43,6 +43,15 @@ from .config import Config
 from .loader import FileSystemLoader
 from .database import NextBatch
 
+crypto_import_error = None
+
+try:
+    from mautrix.crypto import OlmMachine, PgCryptoStore, PgCryptoStateStore
+    from mautrix.util.async_db import Database as AsyncDatabase
+except ImportError as err:
+    crypto_import_error = err
+    OlmMachine = AsyncDatabase = PgCryptoStateStore = PgCryptoStore = None
+
 parser = argparse.ArgumentParser(
     description="A plugin-based Matrix bot system -- standalone mode.",
     prog="python -m maubot.standalone")
@@ -92,8 +101,18 @@ Base.metadata.create_all()
 NextBatch.bind(db)
 
 user_id = config["user.credentials.id"]
+device_id = config["user.credentials.device_id"]
 homeserver = config["user.credentials.homeserver"]
 access_token = config["user.credentials.access_token"]
+
+crypto_store = crypto_db = state_store = None
+if device_id and not OlmMachine:
+    log.warning("device_id set in config, but encryption dependencies not installed",
+                exc_info=crypto_import_error)
+elif device_id:
+    crypto_db = AsyncDatabase.create(config["database"], upgrade_table=PgCryptoStore.upgrade_table)
+    crypto_store = PgCryptoStore(account_id=user_id, pickle_key="mau.crypto", db=crypto_db)
+    state_store = PgCryptoStateStore(crypto_db)
 
 nb = NextBatch.get(user_id)
 if not nb:
@@ -140,7 +159,25 @@ async def main():
     client_log = logging.getLogger("maubot.client").getChild(user_id)
     client = MaubotMatrixClient(mxid=user_id, base_url=homeserver, token=access_token,
                                 client_session=http_client, loop=loop, log=client_log,
-                                sync_store=SyncStoreProxy(nb))
+                                sync_store=SyncStoreProxy(nb), state_store=state_store,
+                                device_id=device_id)
+    client.ignore_first_sync = config["user.ignore_first_sync"]
+    client.ignore_initial_sync = config["user.ignore_initial_sync"]
+    if crypto_store:
+        await crypto_db.start()
+        await state_store.upgrade_table.upgrade(crypto_db)
+        await crypto_store.open()
+
+        client.crypto = OlmMachine(client, crypto_store, state_store)
+        crypto_device_id = await crypto_store.get_device_id()
+        if crypto_device_id and crypto_device_id != device_id:
+            log.fatal("Mismatching device ID in crypto store and config "
+                      f"(store: {crypto_device_id}, config: {device_id})")
+            sys.exit(10)
+        await client.crypto.load()
+        if not crypto_device_id:
+            await crypto_store.put_device_id(device_id)
+        log.debug("Enabled encryption support")
 
     while True:
         try:
@@ -151,7 +188,12 @@ async def main():
             continue
         if whoami.user_id != user_id:
             log.fatal(f"User ID mismatch: configured {user_id}, but server said {whoami.user_id}")
-            sys.exit(1)
+            sys.exit(11)
+        elif whoami.device_id and device_id and whoami.device_id != device_id:
+            log.fatal(f"Device ID mismatch: configured {device_id}, "
+                      f"but server said {whoami.device_id}")
+            sys.exit(12)
+        log.debug(f"Confirmed connection as {whoami.user_id} / {whoami.device_id}")
         break
 
     if config["user.sync"]:
@@ -183,6 +225,13 @@ async def main():
     await bot.internal_start()
 
 
+async def stop() -> None:
+    client.stop()
+    await bot.internal_stop()
+    if crypto_db:
+        await crypto_db.stop()
+
+
 try:
     log.info("Starting plugin")
     loop.run_until_complete(main())
@@ -198,8 +247,7 @@ try:
     loop.run_forever()
 except KeyboardInterrupt:
     log.info("Interrupt received, stopping")
-    client.stop()
-    loop.run_until_complete(bot.internal_stop())
+    loop.run_until_complete(stop())
     loop.close()
     sys.exit(0)
 except Exception:

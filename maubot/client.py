@@ -31,21 +31,15 @@ from .db import DBClient
 from .matrix import MaubotMatrixClient
 
 try:
-    from mautrix.crypto import OlmMachine, StateStore as CryptoStateStore, CryptoStore
-
+    from mautrix.crypto import OlmMachine, StateStore as CryptoStateStore, PgCryptoStore
+    from mautrix.util.async_db import Database as AsyncDatabase
 
     class SQLStateStore(BaseSQLStateStore, CryptoStateStore):
         pass
 except ImportError as e:
-    OlmMachine = CryptoStateStore = CryptoStore = PickleCryptoStore = None
+    OlmMachine = CryptoStateStore = PgCryptoStore = AsyncDatabase = None
     SQLStateStore = BaseSQLStateStore
 
-try:
-    from mautrix.util.async_db import Database as AsyncDatabase
-    from mautrix.crypto import PgCryptoStore
-except ImportError:
-    AsyncDatabase = None
-    PgCryptoStore = None
 
 if TYPE_CHECKING:
     from .instance import PluginInstance
@@ -66,7 +60,7 @@ class Client:
     db_instance: DBClient
     client: MaubotMatrixClient
     crypto: Optional['OlmMachine']
-    crypto_store: Optional['CryptoStore']
+    crypto_store: Optional['PgCryptoStore']
     started: bool
 
     remote_displayname: Optional[str]

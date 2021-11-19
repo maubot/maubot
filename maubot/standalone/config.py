@@ -31,6 +31,7 @@ class Config(BaseFileConfig):
         copy("user.credentials.id")
         copy("user.credentials.homeserver")
         copy("user.credentials.access_token")
+        copy("user.credentials.device_id")
         copy("user.sync")
         copy("user.autojoin")
         copy("user.displayname")
