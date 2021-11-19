@@ -16,12 +16,14 @@
 from typing import Optional, Union, IO
 from io import BytesIO
 import zipfile
+import asyncio
 import glob
 import os
 
 from ruamel.yaml import YAML, YAMLError
-from colorama import Fore
+from aiohttp import ClientSession
 from questionary import prompt
+from colorama import Fore
 import click
 
 from mautrix.types import SerializerError
@@ -30,6 +32,7 @@ from ...loader import PluginMeta
 from ..cliq.validators import PathValidator
 from ..base import app
 from ..config import get_token
+from ..cliq import cliq
 from .upload import upload_file
 
 yaml = YAML()
@@ -100,15 +103,16 @@ def write_plugin(meta: PluginMeta, output: Union[str, IO]) -> None:
                 zip.write(file)
 
 
-def upload_plugin(output: Union[str, IO], server: str) -> None:
+@cliq.with_authenticated_http
+async def upload_plugin(output: Union[str, IO], *, server: str, sess: ClientSession) -> None:
     server, token = get_token(server)
     if not token:
         return
     if isinstance(output, str):
         with open(output, "rb") as file:
-            upload_file(file, server, token)
+            await upload_file(sess, file, server)
     else:
-        upload_file(output, server, token)
+        await upload_file(sess, output, server)
 
 
 @app.command(short_help="Build a maubot plugin",
@@ -137,4 +141,4 @@ def build(path: str, output: str, upload: bool, server: str) -> None:
     else:
         output.seek(0)
     if upload:
-        upload_plugin(output, server)
+        asyncio.run(upload_plugin(output, server=server))

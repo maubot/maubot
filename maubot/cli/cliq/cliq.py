@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,8 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Any, Callable, Union, Optional
+from typing import Any, Callable, Union, Optional, Type
 import functools
+import traceback
 import inspect
 import asyncio
 
@@ -22,6 +23,7 @@ import aiohttp
 
 from prompt_toolkit.validation import Validator
 from questionary import prompt
+from colorama import Fore
 import click
 
 from ..base import app
@@ -33,7 +35,10 @@ def with_http(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         async with aiohttp.ClientSession() as sess:
-            return await func(*args, sess=sess, **kwargs)
+            try:
+                return await func(*args, sess=sess, **kwargs)
+            except aiohttp.ClientError as e:
+                print(f"{Fore.RED}Connection error: {e}{Fore.RESET}")
 
     return wrapper
 
@@ -45,14 +50,17 @@ def with_authenticated_http(func):
         if not token:
             return
         async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {token}"}) as sess:
-            return await func(*args, sess=sess, server=server, **kwargs)
+            try:
+                return await func(*args, sess=sess, server=server, **kwargs)
+            except aiohttp.ClientError as e:
+                print(f"{Fore.RED}Connection error: {e}{Fore.RESET}")
 
     return wrapper
 
 
 def command(help: str) -> Callable[[Callable], Callable]:
     def decorator(func) -> Callable:
-        questions = func.__inquirer_questions__.copy()
+        questions = getattr(func, "__inquirer_questions__", {}).copy()
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -79,9 +87,13 @@ def command(help: str) -> Callable[[Callable], Callable]:
                 return
             kwargs = {**kwargs, **resp}
 
-            res = func(*args, **kwargs)
-            if inspect.isawaitable(res):
-                asyncio.run(res)
+            try:
+                res = func(*args, **kwargs)
+                if inspect.isawaitable(res):
+                    asyncio.run(res)
+            except Exception:
+                print(Fore.RED + "Fatal error running command" + Fore.RESET)
+                traceback.print_exc()
 
         return app.command(help=help)(wrapper)
 
@@ -104,12 +116,14 @@ yesno.__name__ = "yes/no"
 
 def option(short: str, long: str, message: str = None, help: str = None,
            click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
-           validator: Validator = None, required: bool = False, default: str = None,
-           is_flag: bool = False, prompt: bool = True, required_unless: str = None
-           ) -> Callable[[Callable], Callable]:
+           validator: Type[Validator] = None, required: bool = False,
+           default: Union[str, bool, None] = None, is_flag: bool = False, prompt: bool = True,
+           required_unless: str = None) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
-    click_type = validator.click_type if isinstance(validator, ClickValidator) else click_type
+
+    if isinstance(validator, type) and issubclass(validator, ClickValidator):
+        click_type = validator.click_type
     if is_flag:
         click_type = yesno
 

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,45 +13,45 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from urllib.request import urlopen, Request
-from urllib.error import HTTPError
 from typing import IO
 import json
 
 from colorama import Fore
+from yarl import URL
+import aiohttp
 import click
 
-from ..base import app
-from ..config import get_default_server, get_token
+from ..cliq import cliq
 
 
 class UploadError(Exception):
     pass
 
 
-@app.command(help="Upload a maubot plugin")
+@cliq.command(help="Upload a maubot plugin")
 @click.argument("path")
 @click.option("-s", "--server", help="The maubot instance to upload the plugin to")
-def upload(path: str, server: str) -> None:
-    server, token = get_token(server)
-    if not token:
-        return
+@cliq.with_authenticated_http
+async def upload(path: str, server: str, sess: aiohttp.ClientSession) -> None:
+    print("hmm")
     with open(path, "rb") as file:
-        upload_file(file, server, token)
+        await upload_file(sess, file, server)
 
 
-def upload_file(file: IO, server: str, token: str) -> None:
-    req = Request(f"{server}/_matrix/maubot/v1/plugins/upload?allow_override=true", data=file,
-                  headers={"Authorization": f"Bearer {token}", "Content-Type": "application/zip"})
-    try:
-        with urlopen(req) as resp_data:
-            resp = json.load(resp_data)
-            print(f"{Fore.GREEN}Plugin {Fore.CYAN}{resp['id']} v{resp['version']}{Fore.GREEN} "
+async def upload_file(sess: aiohttp.ClientSession, file: IO, server: str) -> None:
+    url = (URL(server) / "_matrix/maubot/v1/plugins/upload").with_query({"allow_override": "true"})
+    headers = {"Content-Type": "application/zip"}
+    async with sess.post(url, data=file, headers=headers) as resp:
+        if resp.status == 200:
+            data = await resp.json()
+            print(f"{Fore.GREEN}Plugin {Fore.CYAN}{data['id']} v{data['version']}{Fore.GREEN} "
                   f"uploaded to {Fore.CYAN}{server}{Fore.GREEN} successfully.{Fore.RESET}")
-    except HTTPError as e:
-        try:
-            err = json.load(e)
-        except json.JSONDecodeError:
-            err = {}
-        print(err.get("stacktrace", ""))
-        print(Fore.RED + "Failed to upload plugin: " + err.get("error", str(e)) + Fore.RESET)
+        else:
+            try:
+                err = await resp.json()
+                if "stacktrace" in err:
+                    print(err["stacktrace"])
+                err = err["error"]
+            except (aiohttp.ContentTypeError, json.JSONDecodeError, KeyError):
+                err = await resp.text()
+            print(f"{Fore.RED}Failed to upload plugin: {err}{Fore.RESET}")

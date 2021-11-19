@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from urllib.request import urlopen
-from urllib.error import HTTPError
 import json
 import os
 
 from colorama import Fore
+from yarl import URL
+import aiohttp
 
 from ..config import save_config, config
 from ..cliq import cliq
@@ -29,16 +29,17 @@ from ..cliq import cliq
 @cliq.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
 @cliq.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
 @cliq.option("-a", "--alias", help="Alias to reference the server without typing the full URL", default="", required=False)
-def login(server, username, password, alias) -> None:
+@cliq.with_http
+async def login(server: str, username: str, password: str, alias: str, sess: aiohttp.ClientSession) -> None:
     data = {
         "username": username,
         "password": password,
     }
-    try:
-        with urlopen(f"{server}/_matrix/maubot/v1/auth/login",
-                     data=json.dumps(data).encode("utf-8")) as resp_data:
-            resp = json.load(resp_data)
-            config["servers"][server] = resp["token"]
+    url = URL(server) / "_matrix/maubot/v1/auth/login"
+    async with sess.post(url, json=data) as resp:
+        if resp.status == 200:
+            data = await resp.json()
+            config["servers"][server] = data["token"]
             if not config["default_server"]:
                 print(Fore.CYAN, "Setting", server, "as the default server")
                 config["default_server"] = server
@@ -46,9 +47,9 @@ def login(server, username, password, alias) -> None:
                 config["aliases"][alias] = server
             save_config()
             print(Fore.GREEN + "Logged in successfully")
-    except HTTPError as e:
-        try:
-            err = json.load(e)
-        except json.JSONDecodeError:
-            err = {}
-        print(Fore.RED + err.get("error", str(e)) + Fore.RESET)
+        else:
+            try:
+                err = (await resp.json())["error"]
+            except (json.JSONDecodeError, KeyError):
+                err = await resp.text()
+            print(Fore.RED + err + Fore.RESET)
