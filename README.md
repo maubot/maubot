@@ -40,6 +40,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [altalias](https://github.com/maubot/altalias) - A bot that lets users publish alternate aliases in rooms.
 * [satwcomic](https://github.com/maubot/satwcomic) - A bot to view SatWComics.
 * [songwhip](https://github.com/maubot/songwhip) - A bot to post Songwhip links.
+* [manhole](https://github.com/maubot/manhole) - A plugin that lets you access a Python shell inside maubot.
 
 ### 3rd party plugins
 * [subreddit linkifier](https://github.com/TomCasavant/RedditMaubot) - A bot that condescendingly corrects a user when they enter an r/subreddit without providing a link to that subreddit
