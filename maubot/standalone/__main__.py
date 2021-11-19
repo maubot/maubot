@@ -26,7 +26,7 @@ import sys
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
-from aiohttp import web, ClientSession
+from aiohttp import web, hdrs, ClientSession
 from yarl import URL
 
 from mautrix.util.config import RecursiveDict, BaseMissingError
@@ -36,7 +36,7 @@ from mautrix.types import (Filter, RoomFilter, RoomEventFilter, StrippedStateEve
                            EventType, Membership, FilterID, SyncToken)
 
 from ..plugin_base import Plugin
-from ..plugin_server import PluginWebApp
+from ..plugin_server import PluginWebApp, PrefixResource
 from ..loader import PluginMeta
 from ..server import AccessLogger
 from ..matrix import MaubotMatrixClient
@@ -149,11 +149,23 @@ if meta.config:
         sys.exit(1)
 
 if meta.webapp:
-    plugin_webapp = PluginWebApp()
-    web_app = web.Application(router=plugin_webapp)
+    web_app = web.Application()
     web_runner = web.AppRunner(web_app, access_log_class=AccessLogger)
     web_base_path = config["server.base_path"].rstrip("/")
-    public_url = str(URL(config["server.public_url"]) / web_base_path).rstrip("/")
+    public_url = str(URL(config["server.public_url"]) / web_base_path.lstrip("/")).rstrip("/")
+    plugin_webapp = PluginWebApp()
+
+    async def _handle_plugin_request(req: web.Request) -> web.StreamResponse:
+        if req.path.startswith(web_base_path):
+            req = req.clone(rel_url=req.rel_url
+                            .with_path(req.rel_url.path[len(web_base_path):])
+                            .with_query(req.query_string))
+            return await plugin_webapp.handle(req)
+        return web.Response(status=404)
+
+    resource = PrefixResource(web_base_path)
+    resource.add_route(hdrs.METH_ANY, _handle_plugin_request)
+    web_app.router.register_resource(resource)
 else:
     web_app = web_runner = public_url = plugin_webapp = None
 
@@ -190,6 +202,12 @@ async def main():
         if not crypto_device_id:
             await crypto_store.put_device_id(device_id)
         log.debug("Enabled encryption support")
+
+    if web_runner:
+        await web_runner.setup()
+        site = web.TCPSite(web_runner, config["server.hostname"], config["server.port"])
+        await site.start()
+        log.info(f"Web server listening on {site.name}")
 
     while True:
         try:
@@ -235,12 +253,6 @@ async def main():
                  webapp=plugin_webapp, webapp_url=public_url, loader=loader)
 
     await bot.internal_start()
-
-    if web_runner:
-        await web_runner.setup()
-        site = web.TCPSite(web_runner, config["server.hostname"], config["server.port"])
-        await site.start()
-        log.info(f"Web server listening on {site.name}")
 
 
 async def stop() -> None:
