@@ -33,7 +33,6 @@ class UploadError(Exception):
 @click.option("-s", "--server", help="The maubot instance to upload the plugin to")
 @cliq.with_authenticated_http
 async def upload(path: str, server: str, sess: aiohttp.ClientSession) -> None:
-    print("hmm")
     with open(path, "rb") as file:
         await upload_file(sess, file, server)
 

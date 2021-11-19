@@ -47,6 +47,7 @@ class AuthRequestInfo(NamedTuple):
     username: str
     password: str
     user_type: str
+    device_name: str
     update_client: bool
 
 
@@ -69,11 +70,15 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
         base_url = server["url"]
     except KeyError:
         return None, resp.invalid_server
-    secret = server.get("secret")
-    api = ClientAPI(base_url=base_url, loop=get_loop())
-    user_type = body.get("user_type", "bot")
-    update_client = request.query.get("update_client", "").lower() in ("1", "true", "yes")
-    return AuthRequestInfo(api, secret, username, password, user_type, update_client), None
+    return AuthRequestInfo(
+        client=ClientAPI(base_url=base_url, loop=get_loop()),
+        secret=server.get("secret"),
+        username=username,
+        password=password,
+        user_type=body.get("user_type", "bot"),
+        device_name=body.get("device_name", "Maubot"),
+        update_client=request.query.get("update_client", "").lower() in ("1", "true", "yes"),
+    ), None
 
 
 def generate_mac(secret: str, nonce: str, username: str, password: str, admin: bool = False,
@@ -94,23 +99,23 @@ def generate_mac(secret: str, nonce: str, username: str, password: str, admin: b
 
 @routes.post("/client/auth/{server}/register")
 async def register(request: web.Request) -> web.Response:
-    info, err = await read_client_auth_request(request)
+    req, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    if not info.secret:
+    if not req.secret:
         return resp.registration_secret_not_found
     path = SynapseAdminPath.v1.register
-    res = await info.client.api.request(Method.GET, path)
+    res = await req.client.api.request(Method.GET, path)
     content = {
         "nonce": res["nonce"],
-        "username": info.username,
-        "password": info.password,
+        "username": req.username,
+        "password": req.password,
         "admin": False,
-        "user_type": info.user_type,
+        "user_type": req.user_type,
     }
-    content["mac"] = generate_mac(**content, secret=info.secret)
+    content["mac"] = generate_mac(**content, secret=req.secret)
     try:
-        raw_res = await info.client.api.request(Method.POST, path, content=content)
+        raw_res = await req.client.api.request(Method.POST, path, content=content)
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
@@ -118,9 +123,9 @@ async def register(request: web.Request) -> web.Response:
             "http_status": e.http_status,
         }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
     login_res = LoginResponse.deserialize(raw_res)
-    if info.update_client:
+    if req.update_client:
         return await _create_client(login_res.user_id, {
-            "homeserver": str(info.client.api.base_url),
+            "homeserver": str(req.client.api.base_url),
             "access_token": login_res.access_token,
             "device_id": login_res.device_id,
         })
@@ -129,23 +134,23 @@ async def register(request: web.Request) -> web.Response:
 
 @routes.post("/client/auth/{server}/login")
 async def login(request: web.Request) -> web.Response:
-    info, err = await read_client_auth_request(request)
+    req, err = await read_client_auth_request(request)
     if err is not None:
         return err
     device_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    client = info.client
     try:
-        res = await client.login(identifier=info.username, login_type=LoginType.PASSWORD,
-                                 password=info.password, device_id=f"maubot_{device_id}",
-                                 initial_device_display_name="Maubot", store_access_token=False)
+        res = await req.client.login(identifier=req.username, login_type=LoginType.PASSWORD,
+                                     password=req.password, device_id=f"maubot_{device_id}",
+                                     initial_device_display_name=req.device_name,
+                                     store_access_token=False)
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
             "error": e.message,
         }, status=e.http_status)
-    if info.update_client:
+    if req.update_client:
         return await _create_or_update_client(res.user_id, {
-            "homeserver": str(client.api.base_url),
+            "homeserver": str(req.client.api.base_url),
             "access_token": res.access_token,
             "device_id": res.device_id,
         }, is_login=True)

@@ -54,9 +54,12 @@ async def list_servers(server: str, sess: aiohttp.ClientSession) -> None:
                                             "create or update a client in maubot using it",
               is_flag=True, default=False)
 @click.option("-l", "--list", help="List available homeservers", is_flag=True, default=False)
+@click.option("-n", "--device-name", help="The initial e2ee device displayname (only for login)",
+              default="Maubot", required=False)
 @cliq.with_authenticated_http
 async def auth(homeserver: str, username: str, password: str, server: str, register: bool,
-               list: bool, update_client: bool, sess: aiohttp.ClientSession) -> None:
+               list: bool, update_client: bool, device_name: str, sess: aiohttp.ClientSession
+               ) -> None:
     if list:
         await list_servers(server, sess)
         return
@@ -64,7 +67,7 @@ async def auth(homeserver: str, username: str, password: str, server: str, regis
     url = URL(server) / "_matrix/maubot/v1/client/auth" / homeserver / endpoint
     if update_client:
         url = url.with_query({"update_client": "true"})
-    req_data = {"username": username, "password": password}
+    req_data = {"username": username, "password": password, "device_name": device_name}
 
     async with sess.post(url, json=req_data) as resp:
         if resp.status == 200:
