@@ -123,6 +123,10 @@ if not nb:
     nb.insert()
 
 bot_config = None
+if not meta.config and "base-config.yaml" in meta.extra_files:
+    log.warning("base-config.yaml in extra files, but config is not set to true. "
+                "Assuming legacy plugin and loading config.")
+    meta.config = True
 if meta.config:
     log.debug("Loading config")
     config_class = plugin.get_config_class()
@@ -255,9 +259,15 @@ async def main():
     await bot.internal_start()
 
 
-async def stop() -> None:
-    client.stop()
-    await bot.internal_stop()
+async def stop(suppress_stop_error: bool = False) -> None:
+    if client:
+        client.stop()
+    if bot:
+        try:
+            await bot.internal_stop()
+        except Exception:
+            if not suppress_stop_error:
+                log.exception("Error stopping bot")
     if crypto_db:
         await crypto_db.stop()
     if web_runner:
@@ -270,6 +280,8 @@ try:
     loop.run_until_complete(main())
 except Exception:
     log.fatal("Failed to start plugin", exc_info=True)
+    loop.run_until_complete(stop(suppress_stop_error=True))
+    loop.close()
     sys.exit(1)
 
 signal.signal(signal.SIGINT, signal.default_int_handler)
