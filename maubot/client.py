@@ -312,13 +312,20 @@ class Client:
         else:
             await self._update_remote_profile()
 
-    async def update_access_details(self, access_token: str, homeserver: str,
+    async def update_access_details(self, access_token: Optional[str], homeserver: Optional[str],
                                     device_id: Optional[str] = None) -> None:
         if not access_token and not homeserver:
             return
-        elif access_token == self.access_token and homeserver == self.homeserver:
+        if device_id is None:
+            device_id = self.device_id
+        elif not device_id:
+            device_id = None
+        if (
+            access_token == self.access_token
+            and homeserver == self.homeserver
+            and device_id == self.device_id
+        ):
             return
-        device_id = device_id or self.device_id
         new_client = MaubotMatrixClient(mxid=self.id, base_url=homeserver or self.homeserver,
                                         token=access_token or self.access_token, loop=self.loop,
                                         device_id=device_id, client_session=self.http_client,
@@ -330,9 +337,13 @@ class Client:
             raise ValueError(f"Device ID mismatch: {whoami.device_id}")
         new_client.sync_store = SyncStoreProxy(self.db_instance)
         self.stop_sync()
+
+        # TODO this event handler transfer is pretty hacky
         self._remove_crypto_event_handlers()
+        self.client.crypto = None
         new_client.event_handlers = self.client.event_handlers
         new_client.global_event_handlers = self.client.global_event_handlers
+
         self.client = new_client
         self.db_instance.homeserver = homeserver
         self.db_instance.access_token = access_token
@@ -340,6 +351,9 @@ class Client:
         if self.enable_crypto:
             self._prepare_crypto()
             await self._start_crypto()
+        else:
+            self.crypto_store = None
+            self.crypto = None
         self.start_sync()
 
     async def _update_remote_profile(self) -> None:
