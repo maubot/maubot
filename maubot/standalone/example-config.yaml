@@ -1,0 +1,41 @@
+# Bot account details
+user:
+    credentials:
+        id: "@bot:example.com"
+        homeserver: https://example.com
+        access_token: foo
+    # Enable /sync? This is not needed for purely unencrypted webhook-based bots, but is necessary in most other cases.
+    sync: true
+    # Automatically accept invites?
+    autojoin: false
+    # The displayname and avatar URL to set for the bot on startup.
+    displayname: Standalone Bot
+    avatar_url: mxc://maunium.net/AKwRzQkTbggfVZGEqexbYLIO
+
+# The database for the plugin. Also used to store the sync token.
+database: sqlite:///bot.db
+
+# Config for the plugin. Refer to the plugin's base-config.yaml to find what (if anything) to put here.
+plugin_config: {}
+
+# Standard Python logging configuration
+logging:
+    version: 1
+    formatters:
+        colored:
+            (): maubot.lib.color_log.ColorFormatter
+            format: "[%(asctime)s] [%(levelname)s@%(name)s] %(message)s"
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: colored
+    loggers:
+        maubot:
+            level: DEBUG
+        mau:
+            level: DEBUG
+        aiohttp:
+            level: INFO
+    root:
+        level: DEBUG
+        handlers: [console]

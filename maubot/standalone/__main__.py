@@ -1,5 +1,5 @@
-# supportportal - A maubot plugin to manage customer support on Matrix.
-# Copyright (C) 2019 Tulir Asokan
+# maubot - A plugin-based Matrix bot system.
+# Copyright (C) 2021 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,12 +13,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from typing import Optional, Type, cast
 from aiohttp import ClientSession
 import logging.config
 import importlib
 import argparse
 import asyncio
+import os.path
 import signal
 import copy
 import sys
@@ -29,22 +30,26 @@ import sqlalchemy as sql
 
 from mautrix.util.config import RecursiveDict, BaseMissingError
 from mautrix.util.db import Base
-from mautrix.types import (UserID, Filter, RoomFilter, RoomEventFilter, StrippedStateEvent,
-                           EventType, Membership)
+from mautrix.util.logging import TraceLogger
+from mautrix.types import (Filter, RoomFilter, RoomEventFilter, StrippedStateEvent,
+                           EventType, Membership, FilterID, SyncToken)
 
-from .config import Config
 from ..plugin_base import Plugin
 from ..loader import PluginMeta
 from ..matrix import MaubotMatrixClient
 from ..lib.store_proxy import SyncStoreProxy
 from ..__meta__ import __version__
+from .config import Config
+from .loader import FileSystemLoader
+from .database import NextBatch
 
 parser = argparse.ArgumentParser(
     description="A plugin-based Matrix bot system -- standalone mode.",
     prog="python -m maubot.standalone")
 parser.add_argument("-c", "--config", type=str, default="config.yaml",
                     metavar="<path>", help="the path to your config file")
-parser.add_argument("-b", "--base-config", type=str, default="example-config.yaml",
+parser.add_argument("-b", "--base-config", type=str,
+                    default="pkg://maubot.standalone/example-config.yaml",
                     metavar="<path>", help="the path to the example config "
                                            "(for automatic config updates)")
 parser.add_argument("-m", "--meta", type=str, default="maubot.yaml",
@@ -75,22 +80,10 @@ else:
     module = meta.modules[0]
     main_class = meta.main_class
 bot_module = importlib.import_module(module)
-plugin = getattr(bot_module, main_class)
+plugin: Type[Plugin] = getattr(bot_module, main_class)
+loader = FileSystemLoader(os.path.dirname(args.meta))
 
 log.info(f"Initializing standalone {meta.id} v{meta.version} on maubot {__version__}")
-
-
-class NextBatch(Base):
-    __tablename__ = "standalone_next_batch"
-
-    user_id: str = sql.Column(sql.String(255), primary_key=True)
-    next_batch: str = sql.Column(sql.String(255))
-    filter_id: str = sql.Column(sql.String(255))
-
-    @classmethod
-    def get(cls, user_id: UserID) -> Optional['NextBatch']:
-        return cls._select_one_or_none(cls.c.user_id == user_id)
-
 
 log.debug("Opening database")
 db = sql.create_engine(config["database"])
@@ -104,7 +97,7 @@ access_token = config["user.credentials.access_token"]
 
 nb = NextBatch.get(user_id)
 if not nb:
-    nb = NextBatch(user_id=user_id, next_batch="", filter_id="")
+    nb = NextBatch(user_id=user_id, next_batch=SyncToken(""), filter_id=FilterID(""))
     nb.insert()
 
 bot_config = None
@@ -135,8 +128,8 @@ if meta.config:
 
 loop = asyncio.get_event_loop()
 
-client: MaubotMatrixClient = None
-bot: Plugin = None
+client: Optional[MaubotMatrixClient] = None
+bot: Optional[Plugin] = None
 
 
 async def main():
@@ -144,9 +137,10 @@ async def main():
 
     global client, bot
 
+    client_log = logging.getLogger("maubot.client").getChild(user_id)
     client = MaubotMatrixClient(mxid=user_id, base_url=homeserver, token=access_token,
-                                client_session=http_client, loop=loop, store=SyncStoreProxy(nb),
-                                log=logging.getLogger("maubot.client").getChild(user_id))
+                                client_session=http_client, loop=loop, log=client_log,
+                                sync_store=SyncStoreProxy(nb))
 
     while True:
         try:
@@ -181,9 +175,10 @@ async def main():
     if displayname != "disable":
         await client.set_displayname(displayname)
 
+    plugin_log = cast(TraceLogger, logging.getLogger("maubot.instance.__main__"))
     bot = plugin(client=client, loop=loop, http=http_client, instance_id="__main__",
-                 log=logging.getLogger("maubot.instance.__main__"), config=bot_config,
-                 database=db if meta.database else None, webapp=None, webapp_url=None)
+                 log=plugin_log, config=bot_config, database=db if meta.database else None,
+                 webapp=None, webapp_url=None, loader=loader)
 
     await bot.internal_start()
 

@@ -70,5 +70,6 @@ setuptools.setup(
             "management/frontend/build/static/media/*",
         ],
         "maubot.cli": ["res/*"],
+        "maubot.standalone": ["example-config.yaml"],
     },
 )
