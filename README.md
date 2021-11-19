@@ -48,14 +48,14 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [poll](https://github.com/TomCasavant/PollMaubot) - A bot that will create a simple poll for users in a room
 * [urban](https://github.com/dvdgsng/UrbanMaubot) - A bot that fetches definitions from [Urban Dictionary](https://www.urbandictionary.com/).
 * [twilio](https://github.com/jeffcasavant/MaubotTwilio) - Maubot-based SMS bridge
-* †[tmdb](https://codeberg.org/lomion/tmdb-bot) - A bot that posts information about movies fetched from TheMovieDB.org.
+* [tmdb](https://codeberg.org/lomion/tmdb-bot) - A bot that posts information about movies fetched from TheMovieDB.org.
 * [invite](https://github.com/williamkray/maubot-invite) - A bot to generate invitation tokens from [matrix-registration](https://github.com/ZerataX/matrix-registration)
 * [wolframalpha](https://github.com/ggogel/WolframAlphaMaubot) - A bot that allows requesting information from [WolframAlpha](https://www.wolframalpha.com/).
 * †[pingcheck](https://edugit.org/nik/maubot-pingcheck) - A bot to ping the echo bot and send rtt to Icinga passive check
 * [ticker](https://github.com/williamkray/maubot-ticker) - A bot to return financial data about a stock or cryptocurrency.
 * [weather](https://github.com/kellya/maubot-weather) - A bot to get the weather from wttr.in and return a single line of text for the location specified
 * †[youtube previewer](https://github.com/ggogel/YoutubePreviewMaubot) - A bot that responds to a YouTube link with the video title and thumbnail.
-* †[reddit previewer](https://github.com/ggogel/RedditPreviewMaubot) - A bot that responds to a link of a reddit post with the sub name and title. If available, uploads the image or video. 
+* †[reddit previewer](https://github.com/ggogel/RedditPreviewMaubot) - A bot that responds to a link of a reddit post with the sub name and title. If available, uploads the image or video.
 * [pocket](https://github.com/jaywink/maubot-pocket) - A bot integrating with Pocket to fetch articles and archive them.
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
