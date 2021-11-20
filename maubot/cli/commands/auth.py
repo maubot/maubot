@@ -79,14 +79,13 @@ async def auth(homeserver: str, username: str, password: str, server: str, regis
     else:
         req_data = {"username": username, "password": password, "device_name": device_name}
 
-    action = "registered" if register else "logged in as"
     async with sess.post(url, json=req_data) as resp:
         if not 200 <= resp.status < 300:
-            await print_error(resp, action)
+            await print_error(resp, is_register=register)
         elif sso:
             await wait_sso(resp, sess, server, homeserver)
         else:
-            await print_response(resp, action)
+            await print_response(resp, is_register=register)
 
 
 async def wait_sso(resp: aiohttp.ClientResponse, sess: aiohttp.ClientSession,
@@ -98,12 +97,13 @@ async def wait_sso(resp: aiohttp.ClientResponse, sess: aiohttp.ClientSession,
     print(f"{Fore.GREEN}Waiting for login token...{Fore.RESET}")
     wait_url = URL(server) / "_matrix/maubot/v1/client/auth" / homeserver / "sso" / reg_id / "wait"
     async with sess.post(wait_url, json={}) as resp:
-        await print_response(resp, "logged in as")
+        await print_response(resp, is_register=False)
 
 
-async def print_response(resp: aiohttp.ClientResponse, action: str) -> None:
+async def print_response(resp: aiohttp.ClientResponse, is_register: bool) -> None:
     if resp.status == 200:
         data = await resp.json()
+        action = "registered" if is_register else "logged in as"
         print(f"{Fore.GREEN}Successfully {action} {Fore.CYAN}{data['user_id']}{Fore.GREEN}.")
         print(f"{Fore.GREEN}Access token: {Fore.CYAN}{data['access_token']}{Fore.RESET}")
         print(f"{Fore.GREEN}Device ID: {Fore.CYAN}{data['device_id']}{Fore.RESET}")
@@ -114,13 +114,14 @@ async def print_response(resp: aiohttp.ClientResponse, action: str) -> None:
               f"{Fore.CYAN}{data['id']}{Fore.GREEN} / "
               f"{Fore.CYAN}{data['device_id']}{Fore.GREEN}.{Fore.RESET}")
     else:
-        await print_error(resp, action)
+        await print_error(resp, is_register)
 
 
-async def print_error(resp: aiohttp.ClientResponse, action: str) -> None:
+async def print_error(resp: aiohttp.ClientResponse, is_register: bool) -> None:
     try:
         err_data = await resp.json()
         error = friendly_errors.get(err_data["errcode"], err_data["error"])
     except (aiohttp.ContentTypeError, json.JSONDecodeError, KeyError):
         error = await resp.text()
+    action = "register" if is_register else "log in"
     print(f"{Fore.RED}Failed to {action}: {error}{Fore.RESET}")
