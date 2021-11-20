@@ -241,7 +241,8 @@ class Client:
             "homeserver": self.homeserver,
             "access_token": self.access_token,
             "device_id": self.device_id,
-            "fingerprint": self.crypto.account.fingerprint if self.crypto else None,
+            "fingerprint": (self.crypto.account.fingerprint if self.crypto and self.crypto.account
+                            else None),
             "enabled": self.enabled,
             "started": self.started,
             "sync": self.sync,

@@ -29,7 +29,12 @@ log = logging.getLogger("maubot.server")
 @web.middleware
 async def auth(request: web.Request, handler: Handler) -> web.Response:
     subpath = request.path[len(get_config()["server.base_path"]):]
-    if subpath.startswith("/auth/") or subpath == "/features" or subpath == "/logs":
+    if (
+        subpath.startswith("/auth/")
+        or subpath.startswith("/client/auth_external_sso/complete/")
+        or subpath == "/features"
+        or subpath == "/logs"
+    ):
         return await handler(request)
     err = check_token(request)
     if err is not None:

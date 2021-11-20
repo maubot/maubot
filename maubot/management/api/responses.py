@@ -195,6 +195,20 @@ class _Response:
         }, status=HTTPStatus.NOT_FOUND)
 
     @property
+    def registration_no_sso(self) -> web.Response:
+        return web.json_response({
+            "error": "The register operation is only for registering with a password",
+            "errcode": "registration_no_sso",
+        }, status=HTTPStatus.BAD_REQUEST)
+
+    @property
+    def sso_not_supported(self) -> web.Response:
+        return web.json_response({
+            "error": "That server does not seem to support single sign-on",
+            "errcode": "sso_not_supported",
+        }, status=HTTPStatus.FORBIDDEN)
+
+    @property
     def plugin_has_no_database(self) -> web.Response:
         return web.json_response({
             "error": "Given plugin does not have a database",

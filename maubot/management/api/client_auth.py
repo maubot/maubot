@@ -17,12 +17,15 @@ from typing import Dict, Tuple, NamedTuple, Optional
 from json import JSONDecodeError
 from http import HTTPStatus
 import hashlib
+import asyncio
 import random
 import string
 import hmac
 
 from aiohttp import web
-from mautrix.api import SynapseAdminPath, Method
+from yarl import URL
+
+from mautrix.api import SynapseAdminPath, Method, Path
 from mautrix.errors import MatrixRequestError
 from mautrix.client import ClientAPI
 from mautrix.types import LoginType, LoginResponse
@@ -42,6 +45,7 @@ async def get_known_servers(_: web.Request) -> web.Response:
 
 
 class AuthRequestInfo(NamedTuple):
+    server_name: str
     client: ClientAPI
     secret: str
     username: str
@@ -49,6 +53,10 @@ class AuthRequestInfo(NamedTuple):
     user_type: str
     device_name: str
     update_client: bool
+    sso: bool
+
+
+truthy_strings = ("1", "true", "yes")
 
 
 async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthRequestInfo],
@@ -61,23 +69,28 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
         body = await request.json()
     except JSONDecodeError:
         return None, resp.body_not_json
+    sso = request.query.get("sso", "").lower() in truthy_strings
     try:
         username = body["username"]
         password = body["password"]
     except KeyError:
-        return None, resp.username_or_password_missing
+        if not sso:
+            return None, resp.username_or_password_missing
+        username = password = None
     try:
         base_url = server["url"]
     except KeyError:
         return None, resp.invalid_server
     return AuthRequestInfo(
+        server_name=server_name,
         client=ClientAPI(base_url=base_url, loop=get_loop()),
         secret=server.get("secret"),
         username=username,
         password=password,
         user_type=body.get("user_type", "bot"),
         device_name=body.get("device_name", "Maubot"),
-        update_client=request.query.get("update_client", "").lower() in ("1", "true", "yes"),
+        update_client=request.query.get("update_client", "").lower() in truthy_strings,
+        sso=sso,
     ), None
 
 
@@ -102,7 +115,9 @@ async def register(request: web.Request) -> web.Response:
     req, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    if not req.secret:
+    if req.sso:
+        return resp.registration_no_sso
+    elif not req.secret:
         return resp.registration_secret_not_found
     path = SynapseAdminPath.v1.register
     res = await req.client.api.request(Method.GET, path)
@@ -137,12 +152,40 @@ async def login(request: web.Request) -> web.Response:
     req, err = await read_client_auth_request(request)
     if err is not None:
         return err
-    device_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    if req.sso:
+        return await _do_sso(req)
+    else:
+        return await _do_login(req)
+
+
+async def _do_sso(req: AuthRequestInfo) -> web.Response:
+    flows = await req.client.get_login_flows()
+    if not flows.supports_type(LoginType.SSO):
+        return resp.sso_not_supported
+    waiter_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+    cfg = get_config()
+    public_url = (URL(cfg["server.public_url"]) / cfg["server.base_path"].lstrip("/")
+                  / "client/auth_external_sso/complete" / waiter_id)
+    sso_url = (req.client.api.base_url
+               .with_path(str(Path.login.sso.redirect))
+               .with_query({"redirectUrl": str(public_url)}))
+    sso_waiters[waiter_id] = req, get_loop().create_future()
+    return web.json_response({"sso_url": str(sso_url), "id": waiter_id})
+
+
+async def _do_login(req: AuthRequestInfo, login_token: Optional[str] = None) -> web.Response:
+    device_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    device_id = f"maubot_{device_id}"
     try:
-        res = await req.client.login(identifier=req.username, login_type=LoginType.PASSWORD,
-                                     password=req.password, device_id=f"maubot_{device_id}",
-                                     initial_device_display_name=req.device_name,
-                                     store_access_token=False)
+        if req.sso:
+            res = await req.client.login(token=login_token, login_type=LoginType.TOKEN,
+                                         device_id=device_id, store_access_token=False,
+                                         initial_device_display_name=req.device_name)
+        else:
+            res = await req.client.login(identifier=req.username, login_type=LoginType.PASSWORD,
+                                         password=req.password, device_id=device_id,
+                                         initial_device_display_name=req.device_name,
+                                         store_access_token=False)
     except MatrixRequestError as e:
         return web.json_response({
             "errcode": e.errcode,
@@ -155,3 +198,38 @@ async def login(request: web.Request) -> web.Response:
             "device_id": res.device_id,
         }, is_login=True)
     return web.json_response(res.serialize())
+
+
+sso_waiters: Dict[str, Tuple[AuthRequestInfo, asyncio.Future]] = {}
+
+
+@routes.post("/client/auth/{server}/sso/{id}/wait")
+async def wait_sso(request: web.Request) -> web.Response:
+    waiter_id = request.match_info["id"]
+    req, fut = sso_waiters[waiter_id]
+    try:
+        login_token = await fut
+    finally:
+        sso_waiters.pop(waiter_id, None)
+    return await _do_login(req, login_token)
+
+
+@routes.get("/client/auth_external_sso/complete/{id}")
+async def complete_sso(request: web.Request) -> web.Response:
+    try:
+        _, fut = sso_waiters[request.match_info["id"]]
+    except KeyError:
+        return web.Response(status=404, text="Invalid session ID\n")
+    if fut.cancelled():
+        return web.Response(status=200, text="The login was cancelled from the Maubot client\n")
+    elif fut.done():
+        return web.Response(status=200, text="The login token was already received\n")
+    try:
+        fut.set_result(request.query["loginToken"])
+    except KeyError:
+        return web.Response(status=400, text="Missing loginToken query parameter\n")
+    except asyncio.InvalidStateError:
+        return web.Response(status=500, text="Invalid state\n")
+    return web.Response(status=200,
+                        text="Login token received, please return to your Maubot client. "
+                             "This tab can be closed.\n")

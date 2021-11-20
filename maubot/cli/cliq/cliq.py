@@ -73,6 +73,11 @@ def command(help: str) -> Callable[[Callable], Callable]:
                     required_unless = questions[key].pop("required_unless")
                     if isinstance(required_unless, str) and kwargs[required_unless]:
                         questions.pop(key)
+                    elif isinstance(required_unless, list):
+                        for v in required_unless:
+                            if kwargs[v]:
+                                questions.pop(key)
+                                break
                     elif isinstance(required_unless, dict):
                         for k, v in required_unless.items():
                             if kwargs.get(v, object()) == v:
@@ -118,7 +123,7 @@ def option(short: str, long: str, message: str = None, help: str = None,
            click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
            validator: Type[Validator] = None, required: bool = False,
            default: Union[str, bool, None] = None, is_flag: bool = False, prompt: bool = True,
-           required_unless: str = None) -> Callable[[Callable], Callable]:
+           required_unless: Union[str, list, dict] = None) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
 

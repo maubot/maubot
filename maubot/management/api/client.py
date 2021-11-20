@@ -68,8 +68,8 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
                            enabled=data.get("enabled", True), next_batch=SyncToken(""),
                            filter_id=FilterID(""), sync=data.get("sync", True),
                            autojoin=data.get("autojoin", True), online=data.get("online", True),
-                           displayname=data.get("displayname", ""),
-                           avatar_url=data.get("avatar_url", ""),
+                           displayname=data.get("displayname", "disable"),
+                           avatar_url=data.get("avatar_url", "disable"),
                            device_id=device_id)
     client = Client(db_instance)
     client.db_instance.insert()
