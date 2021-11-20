@@ -34,7 +34,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [exec](https://github.com/maubot/exec) - A bot that executes code.
 * [commitstrip](https://github.com/maubot/commitstrip) - A bot to view CommitStrips.
 * [supportportal](https://github.com/maubot/supportportal) - A bot to manage customer support on Matrix.
-* [gitlab](https://github.com/maubot/gitlab) - A GitLab client and webhook receiver.
+* †[gitlab](https://github.com/maubot/gitlab) - A GitLab client and webhook receiver.
 * [github](https://github.com/maubot/github) - A GitHub client and webhook receiver.
 * [tex](https://github.com/maubot/tex) - A bot that renders LaTeX.
 * [altalias](https://github.com/maubot/altalias) - A bot that lets users publish alternate aliases in rooms.
