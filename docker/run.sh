@@ -41,5 +41,6 @@ fi
 alembic -x config=/data/config.yaml upgrade head
 fixperms
 fixconfig
+mv -n /data/plugins/*.db /data/dbs/
 
 exec su-exec $UID:$GID python3 -m maubot -c /data/config.yaml
