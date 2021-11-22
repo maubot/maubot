@@ -89,7 +89,11 @@ async def _update_client(client: Client, data: dict, is_login: bool = False) -> 
     except MatrixConnectionError:
         return resp.bad_client_connection_details
     except ValueError as e:
-        return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
+        str_err = str(e)
+        if str_err.startswith("MXID mismatch"):
+            return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
+        elif str_err.startswith("Device ID mismatch"):
+            return resp.device_id_mismatch(str(e)[len("Device ID mismatch: "):])
     with client.db_instance.edit_mode():
         await client.update_avatar_url(data.get("avatar_url", None))
         await client.update_displayname(data.get("displayname", None))
