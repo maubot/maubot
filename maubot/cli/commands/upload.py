@@ -41,7 +41,7 @@ async def upload_file(sess: aiohttp.ClientSession, file: IO, server: str) -> Non
     url = (URL(server) / "_matrix/maubot/v1/plugins/upload").with_query({"allow_override": "true"})
     headers = {"Content-Type": "application/zip"}
     async with sess.post(url, data=file, headers=headers) as resp:
-        if resp.status == 200:
+        if resp.status in (200, 201):
             data = await resp.json()
             print(f"{Fore.GREEN}Plugin {Fore.CYAN}{data['id']} v{data['version']}{Fore.GREEN} "
                   f"uploaded to {Fore.CYAN}{server}{Fore.GREEN} successfully.{Fore.RESET}")
