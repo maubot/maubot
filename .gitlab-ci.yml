@@ -72,4 +72,4 @@ build standalone amd64:
     - docker build --pull --cache-from $CI_REGISTRY_IMAGE:standalone --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone . -f maubot/standalone/Dockerfile
     - if [ "$CI_COMMIT_BRANCH" = "master" ]; then docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:standalone && docker push $CI_REGISTRY_IMAGE:standalone; fi
     - if [ "$CI_COMMIT_BRANCH" != "master" ]; then docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone && docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone; fi
-    - docker rmi $CI_REGISTRY_IMAGE:standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone
+    - docker rmi $CI_REGISTRY_IMAGE:standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-standalone $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-standalone || true
