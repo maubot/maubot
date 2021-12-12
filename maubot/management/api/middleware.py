@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Callable, Awaitable
 import logging
+import base64
 
 from aiohttp import web
 
@@ -52,7 +53,12 @@ async def error(request: web.Request, handler: Handler) -> web.Response:
         elif ex.status_code == 405:
             return resp.method_not_allowed
         return web.json_response({
-            "error": f"Unhandled HTTP {ex.status}",
+            "httpexception": {
+                "headers": {key: value for key, value in ex.headers.items()},
+                "class": type(ex).__name__,
+                "body": ex.text or base64.b64encode(ex.body)
+            },
+            "error": f"Unhandled HTTP {ex.status}: {ex.text[:128] or 'non-text response'}",
             "errcode": f"unhandled_http_{ex.status}",
         }, status=ex.status)
     except Exception:
