@@ -55,6 +55,7 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         mbc=maubot.cli:app
+        maubot=maubot.__main__:main
     """,
     data_files=[
         (".", ["maubot/example-config.yaml", "alembic.ini"]),
