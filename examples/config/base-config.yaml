@@ -1,2 +1,5 @@
-# Message to send when user sends !getmessage
-message: Default configuration active
+# Who is allowed to use the bot?
+whitelist:
+  - "@user:example.com"
+# The prefix for the main command without the !
+command_prefix: hello-world
