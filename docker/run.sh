@@ -4,24 +4,24 @@ function fixperms {
 	chown -R $UID:$GID /var/log /data /opt/maubot
 }
 
+function fixdefault {
+	_value=$(yq e "$1" /data/config.yaml)
+	if [[ "$_value" == "$2" ]]; then
+		yq e -i "$1 = "'"'"$3"'"' /data/config.yaml
+	fi
+}
+
 function fixconfig {
-	# If the DB path is the default relative path, replace it with an absolute /data path
-	_db_url=$(yq e '.database' /data/config.yaml)
-	if [[ _db_url == "sqlite:///maubot.db" ]]; then
-		yq e -i '.database = "sqlite:////data/maubot.db"' /data/config.yaml
-	fi
-	_log_path=$(yq e '.logging.handlers.file.filename' /data/config.yaml)
-	if [[ _log_path == "./maubot.log" ]]; then
-		yq e -i '.logging.handlers.file.filename = "/var/log/maubot.log"' /data/config.yaml
-	fi
-	# Set the correct resource paths
-	yq e -i '
-		.server.override_resource_path = "/opt/maubot/frontend" |
-		.plugin_directories.upload = "/data/plugins" |
-		.plugin_directories.load = ["/data/plugins"] |
-		.plugin_directories.trash = "/data/trash" |
-		.plugin_directories.db = "/data/dbs"
-	' /data/config.yaml
+	# Change relative default paths to absolute paths in /data
+	fixdefault '.database' 'sqlite:///maubot.db' 'sqlite:////data/maubot.db'
+	fixdefault '.plugin_directories.upload' './plugins' '/data/plugins'
+	fixdefault '.plugin_directories.load[0]' './plugins' '/data/plugins'
+	fixdefault '.plugin_directories.trash' './trash' '/data/trash'
+	fixdefault '.plugin_directories.db' './plugins' '/data/dbs'
+	fixdefault '.plugin_directories.db' './dbs' '/data/dbs'
+	fixdefault '.logging.handlers.file.filename' './maubot.log' '/var/log/maubot.log'
+	# This doesn't need to be configurable
+	yq e -i '.server.override_resource_path = "/opt/maubot/frontend"'
 }
 
 cd /opt/maubot
