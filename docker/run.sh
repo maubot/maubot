@@ -21,7 +21,7 @@ function fixconfig {
 	fixdefault '.plugin_directories.db' './dbs' '/data/dbs'
 	fixdefault '.logging.handlers.file.filename' './maubot.log' '/var/log/maubot.log'
 	# This doesn't need to be configurable
-	yq e -i '.server.override_resource_path = "/opt/maubot/frontend"'
+	yq e -i '.server.override_resource_path = "/opt/maubot/frontend"' /data/config.yaml
 }
 
 cd /opt/maubot
