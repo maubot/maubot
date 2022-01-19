@@ -64,7 +64,7 @@ class Client extends BaseMainView {
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "device_id",
-                "sync", "autojoin", "online", "enabled", "started"]
+                "sync", "autojoin", "online", "enabled", "started", "rooms", "invites"]
     }
 
     get initialState() {
@@ -81,6 +81,11 @@ class Client extends BaseMainView {
             enabled: true,
             online: true,
             started: false,
+            rooms: [],
+            invites: [],
+            joiningRooms: [],
+            ignoringRooms: [],
+            leavingRooms: [],
 
             instances: [],
 
@@ -102,6 +107,9 @@ class Client extends BaseMainView {
         delete client.clearingCache
         delete client.error
         delete client.instances
+        delete client.joiningRooms
+        delete client.ignoringRooms
+        delete client.leavingRooms
         return client
     }
 
@@ -185,6 +193,75 @@ class Client extends BaseMainView {
             this.setState({ clearingCache: false, error: "" })
         } else {
             this.setState({ clearingCache: false, error: resp.error })
+        }
+    }
+
+    joinRoom = async room => {
+        if (this.state.joiningRooms.includes(room)) {
+            return
+        }
+        this.setState({
+            joiningRooms: this.state.joiningRooms.concat([room]),
+        })
+        const resp = await api.joinRoom(this.state.id, room)
+        if (resp.id) {
+            this.setState({
+                joiningRooms: this.state.joiningRooms.filter(jr => jr !== room),
+                invites: resp.invites,
+                rooms: resp.rooms,
+                error: "",
+            })
+        } else {
+            this.setState({
+                joiningRooms: this.state.joiningRooms.filter(jr => jr !== room),
+                error: resp.error,
+            })
+        }
+    }
+
+    leaveRoom = async room => {
+        if (this.state.leavingRooms.includes(room)) {
+            return
+        }
+        this.setState({
+            leavingRooms: this.state.leavingRooms.concat([room]),
+        })
+        const resp = await api.leaveRoom(this.state.id, room)
+        if (resp.id) {
+            this.setState({
+                leavingRooms: this.state.leavingRooms.filter(jr => jr !== room),
+                invites: resp.invites,
+                rooms: resp.rooms,
+                error: "",
+            })
+        } else {
+            this.setState({
+                leavingRooms: this.state.leavingRooms.filter(jr => jr !== room),
+                error: resp.error,
+            })
+        }
+    }
+
+    ignoreInvite = async room => {
+        if (this.state.ignoringRooms.includes(room)) {
+            return
+        }
+        this.setState({
+            ignoringRooms: this.state.ignoringRooms.concat([room]),
+        })
+        const resp = await api.ignoreInvite(this.state.id, room)
+        if (resp.id) {
+            this.setState({
+                ignoringRooms: this.state.ignoringRooms.filter(jr => jr !== room),
+                invites: resp.invites,
+                rooms: resp.rooms,
+                error: "",
+            })
+        } else {
+            this.setState({
+                ignoringRooms: this.state.ignoringRooms.filter(jr => jr !== room),
+                error: resp.error,
+            })
         }
     }
 
@@ -325,6 +402,54 @@ class Client extends BaseMainView {
         <div className="error">{this.state.error}</div>
     </>
 
+    renderRoomsAndInvites = () => <>
+        <div className="rooms">
+            <h3>Joined Rooms</h3>
+            <table class="rooms-list">
+                {this.state.rooms.map((room, i) => 
+                    <tr>
+                        <td>{room}</td>
+                        <td class="right">
+                            <button class="button error-color" onClick={ev => this.leaveRoom(room)}
+                                    disabled={this.state.leavingRooms.includes(room)}
+                                    title={"Leave this room"}>
+                                {this.state.leavingRooms.includes(room) ? <Spinner/> : "✗"}
+                            </button>
+                        </td>
+                    </tr>,
+                )}
+            </table>
+            {this.state.rooms.length === 0 ? <span class="no-rooms">Not in any rooms.</span> : ""}
+            <h3>Pending Invites</h3>
+            <table class="rooms-list">
+                {this.state.invites.map((invite, i) =>
+                    <tr>
+                        <td>{invite.room}</td>
+                        <td class="right">
+                            <button class="button main-color" title={"Accept this invite"}
+                                    onClick={ev => this.joinRoom(invite.room)}
+                                    disabled={this.state.joiningRooms.includes(invite.room)}>
+                                {this.state.joiningRooms.includes(invite.room) ? <Spinner/> : "✓"}
+                            </button>
+                            <button class="button warning-color" title={"Ignore this invite"}
+                                    onClick={ev => this.ignoreInvite(invite.room)}
+                                    disabled={this.state.ignoringRooms.includes(invite.room)}>
+                                {this.state.ignoringRooms.includes(invite.room) ? <Spinner/> : "🗑"}
+                            </button>
+                            <button class="button error-color" title={"Reject this invite"}
+                                    onClick={ev => this.leaveRoom(invite.room)}
+                                    disabled={this.state.leavingRooms.includes(invite.room)}>
+                                {this.state.leavingRooms.includes(invite.room) ? <Spinner/> : "✗"}
+                            </button>
+                        </td>
+                    </tr>,
+                )}
+            </table>
+            {this.state.invites.length === 0 ?
+                <span class="no-rooms">No pending invites.</span> : ""}
+        </div>
+    </>
+
     render() {
         return <>
             <div className="client">
@@ -333,6 +458,7 @@ class Client extends BaseMainView {
                     {this.renderPreferences()}
                     {this.renderPrefButtons()}
                     {this.renderInstances()}
+                    {this.renderRoomsAndInvites()}
                 </div>
             </div>
         </>

@@ -16,12 +16,13 @@
 from typing import Iterable, Optional
 import logging
 import sys
+from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, DateTime
 from sqlalchemy.engine.base import Engine
 import sqlalchemy as sql
 
-from mautrix.types import UserID, FilterID, DeviceID, SyncToken, ContentURI
+from mautrix.types import UserID, RoomID, FilterID, DeviceID, SyncToken, ContentURI
 from mautrix.util.db import Base
 from mautrix.client.state_store.sqlalchemy import RoomState, UserProfile
 
@@ -76,11 +77,42 @@ class DBClient(Base):
         return cls._select_one_or_none(cls.c.id == id)
 
 
+class DBInvite(Base):
+    __tablename__ = "invite"
+
+    client: UserID = Column(String(255), ForeignKey("client.id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    room: RoomID = Column(String(255), nullable=False, primary_key=True)
+    date: datetime = Column(DateTime(), nullable=False)
+    inviter: UserID = Column(String(255), nullable=False)
+
+    @classmethod
+    def all(cls) -> Iterable['DBInvite']:
+        return cls._select_all()
+
+    @classmethod
+    def get(cls, client: UserID, room: RoomID) -> Optional['DBInvite']:
+        return cls._select_one_or_none(cls.c.client == client, cls.c.room == room)
+
+    @classmethod
+    def get(cls, client: UserID) -> Iterable['DBInvite']:
+        return cls._select_all(cls.c.client == client)
+
+    @classmethod
+    def update_tombstone(cls, client: UserID, old: RoomID, new: RoomID) -> Optional['DBInvite']:
+        invite = cls.get(client=client, room=old)
+        if not invite:
+            return None
+        invite.delete()
+        invite.room = new
+        invite.insert()
+        return invite
+
+
 def init(config: Config) -> Engine:
     db = sql.create_engine(config["database"])
     Base.metadata.bind = db
 
-    for table in (DBPlugin, DBClient, RoomState, UserProfile):
+    for table in (DBPlugin, DBClient, RoomState, UserProfile, DBInvite):
         table.bind(db)
 
     if not db.has_table("alembic_version"):

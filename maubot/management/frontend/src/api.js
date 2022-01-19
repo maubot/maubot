@@ -233,6 +233,30 @@ export async function clearClientCache(id) {
     return await resp.json()
 }
 
+export async function joinRoom(id, room) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/room/${room}/join`, {
+        headers: getHeaders(),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
+export async function leaveRoom(id, room) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/room/${room}/leave`, {
+        headers: getHeaders(),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
+export async function ignoreInvite(id, room) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/room/${room}/ignore`, {
+        headers: getHeaders(),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
 export const getClientAuthServers = () => defaultGet("/client/auth/servers")
 
 export async function doClientAuth(server, type, username, password) {
@@ -253,5 +277,5 @@ export default {
     getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient, clearClientCache,
-    getClientAuthServers, doClientAuth,
+    joinRoom, leaveRoom, ignoreInvite, getClientAuthServers, doClientAuth,
 }

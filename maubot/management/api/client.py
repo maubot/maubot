@@ -89,11 +89,7 @@ async def _update_client(client: Client, data: dict, is_login: bool = False) -> 
     except MatrixConnectionError:
         return resp.bad_client_connection_details
     except ValueError as e:
-        str_err = str(e)
-        if str_err.startswith("MXID mismatch"):
-            return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
-        elif str_err.startswith("Device ID mismatch"):
-            return resp.device_id_mismatch(str(e)[len("Device ID mismatch: "):])
+        return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
     with client.db_instance.edit_mode():
         await client.update_avatar_url(data.get("avatar_url", None))
         await client.update_displayname(data.get("displayname", None))
@@ -155,3 +151,30 @@ async def clear_client_cache(request: web.Request) -> web.Response:
         return resp.client_not_found
     client.clear_cache()
     return resp.ok
+
+
+@routes.post("/client/{id}/room/{room}/join")
+async def join_room(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    room_id = request.match_info.get("room", None)
+    client = Client.get(user_id, None)
+    await client.join_room(room_id)
+    return resp.updated(client.to_dict(), is_login=False)
+
+
+@routes.post("/client/{id}/room/{room}/leave")
+async def leave_room(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    room_id = request.match_info.get("room", None)
+    client = Client.get(user_id, None)
+    await client.leave_room(room_id)
+    return resp.updated(client.to_dict(), is_login=False)
+
+
+@routes.post("/client/{id}/room/{room}/ignore")
+async def leave_room(request: web.Request) -> web.Response:
+    user_id = request.match_info.get("id", None)
+    room_id = request.match_info.get("room", None)
+    client = Client.get(user_id, None)
+    await client.ignore_invite(room_id)
+    return resp.updated(client.to_dict(), is_login=False)
