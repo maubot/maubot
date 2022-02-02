@@ -26,6 +26,15 @@ from mautrix.types import MessageType, EventType
 from ..matrix import MaubotMessageEvent
 from . import event
 
+
+class CommandError(Exception):
+    pass
+
+
+class CommandFailure(CommandError):
+    pass
+
+
 PrefixType = Optional[Union[str, Callable[[], str], Callable[[Any], str]]]
 AliasesType = Union[List[str], Tuple[str, ...], Set[str], Callable[[str], bool],
                     Callable[[Any, str], bool]]
@@ -116,9 +125,18 @@ class CommandHandler:
             await evt.reply(self.__mb_full_help__)
             return
 
-        if self.__bound_instance__:
-            return await self.__mb_func__(self.__bound_instance__, evt, **call_args)
-        return await self.__mb_func__(evt, **call_args)
+        try:
+            if self.__bound_instance__:
+                return await self.__mb_func__(self.__bound_instance__, evt, **call_args)
+            return await self.__mb_func__(evt, **call_args)
+        except CommandFailure as e:
+            await evt.reply(f"Error: {e}")
+        except CommandError as e:
+            await evt.reply(f"Error: {e}")
+            raise e
+        except Exception as e:
+            await evt.reply("An error happened while running the command")
+            raise e
 
     async def __call_subcommand__(self, evt: MaubotMessageEvent, call_args: Dict[str, Any],
                                   remaining_val: str) -> Tuple[bool, Any]:
