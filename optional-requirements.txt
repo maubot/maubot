@@ -5,7 +5,7 @@
 psycopg2-binary>=2,<3
 asyncpg>=0.20,<0.26
 
-#/e2be
+#/encryption
 asyncpg>=0.20,<0.26
 aiosqlite>=0.16,<0.18
 python-olm>=3,<4
