@@ -9,4 +9,4 @@ asyncpg>=0.20,<0.26
 aiosqlite>=0.16,<0.18
 python-olm>=3,<4
 pycryptodome>=3,<4
-unpaddedbase64>=1,<2
+unpaddedbase64>=1,<3
