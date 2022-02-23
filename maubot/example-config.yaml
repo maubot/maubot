@@ -6,7 +6,9 @@
 database: sqlite:///maubot.db
 
 # Separate database URL for the crypto database. "default" means use the same database as above.
-crypto_database: default
+# Due to concurrency issues, you should use a separate file when using SQLite rather than the same as above.
+# When using postgres, using the same database for both is safe.
+crypto_database: sqlite:///crypto.db
 
 plugin_directories:
     # The directory where uploaded new plugins should be stored.
