@@ -34,12 +34,16 @@ try:
     from mautrix.crypto import OlmMachine, StateStore as CryptoStateStore, PgCryptoStore
     from mautrix.util.async_db import Database as AsyncDatabase
 
+
     class SQLStateStore(BaseSQLStateStore, CryptoStateStore):
         pass
+
+
+    crypto_import_error = None
 except ImportError as e:
     OlmMachine = CryptoStateStore = PgCryptoStore = AsyncDatabase = None
     SQLStateStore = BaseSQLStateStore
-
+    crypto_import_error = e
 
 if TYPE_CHECKING:
     from .instance import PluginInstance
@@ -96,7 +100,19 @@ class Client:
 
     @property
     def enable_crypto(self) -> bool:
-        return bool(OlmMachine and self.device_id and self.crypto_db)
+        if not self.device_id:
+            return False
+        elif not OlmMachine:
+            global crypto_import_error
+            self.log.warning("Client has device ID, but encryption dependencies not installed",
+                             exc_info=crypto_import_error)
+            # Clear the stack trace after it's logged once to avoid spamming logs
+            crypto_import_error = None
+            return False
+        elif not self.crypto_db:
+            self.log.warning("Client has device ID, but crypto database is not prepared")
+            return False
+        return True
 
     def _prepare_crypto(self) -> None:
         self.crypto_store = PgCryptoStore(account_id=self.id, pickle_key="mau.crypto",
