@@ -39,15 +39,15 @@ class MaubotHTMLParser(MatrixParser[HumanReadableString]):
     fs = HumanReadableString
 
 
-def parse_formatted(message: str, allow_html: bool = False, render_markdown: bool = True
-                    ) -> Tuple[str, str]:
+async def parse_formatted(message: str, allow_html: bool = False, render_markdown: bool = True
+                          ) -> Tuple[str, str]:
     if render_markdown:
         html = markdown.render(message, allow_html=allow_html)
     elif allow_html:
         html = message
     else:
         return message, escape(message)
-    return MaubotHTMLParser.parse(html).text, html
+    return (await MaubotHTMLParser().parse(html)).text, html
 
 
 class MaubotMessageEvent(MessageEvent):
@@ -60,17 +60,17 @@ class MaubotMessageEvent(MessageEvent):
         self.client = client
         self.disable_reply = client.disable_replies
 
-    def respond(self, content: Union[str, MessageEventContent],
-                event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
-                allow_html: bool = False, reply: Union[bool, str] = False,
-                edits: Optional[Union[EventID, MessageEvent]] = None) -> Awaitable[EventID]:
+    async def respond(self, content: Union[str, MessageEventContent],
+                      event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
+                      allow_html: bool = False, reply: Union[bool, str] = False,
+                      edits: Optional[Union[EventID, MessageEvent]] = None) -> EventID:
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
             if allow_html or markdown:
                 content.format = Format.HTML
-                content.body, content.formatted_body = parse_formatted(content.body,
-                                                                       render_markdown=markdown,
-                                                                       allow_html=allow_html)
+                content.body, content.formatted_body = await parse_formatted(
+                    content.body, render_markdown=markdown, allow_html=allow_html
+                )
         if edits:
             content.set_edit(edits)
         elif reply:
@@ -82,7 +82,7 @@ class MaubotMessageEvent(MessageEvent):
                                           f'</a>: {fmt_body}')
             else:
                 content.set_reply(self)
-        return self.client.send_message_event(self.room_id, event_type, content)
+        return await self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(self, content: Union[str, MessageEventContent],
               event_type: EventType = EventType.ROOM_MESSAGE, markdown: bool = True,
@@ -110,20 +110,22 @@ class MaubotMatrixClient(MatrixClient):
         super().__init__(*args, **kwargs)
         self.disable_replies = False
 
-    def send_markdown(self, room_id: RoomID, markdown: str, *, allow_html: bool = False,
-                      msgtype: MessageType = MessageType.TEXT,
-                      edits: Optional[Union[EventID, MessageEvent]] = None,
-                      relates_to: Optional[RelatesTo] = None, **kwargs
-                      ) -> Awaitable[EventID]:
+    async def send_markdown(self, room_id: RoomID, markdown: str, *, allow_html: bool = False,
+                            msgtype: MessageType = MessageType.TEXT,
+                            edits: Optional[Union[EventID, MessageEvent]] = None,
+                            relates_to: Optional[RelatesTo] = None, **kwargs
+                            ) -> EventID:
         content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
-        content.body, content.formatted_body = parse_formatted(markdown, allow_html=allow_html)
+        content.body, content.formatted_body = await parse_formatted(
+            markdown, allow_html=allow_html
+        )
         if relates_to:
             if edits:
                 raise ValueError("Can't use edits and relates_to at the same time.")
             content.relates_to = relates_to
         elif edits:
             content.set_edit(edits)
-        return self.send_message(room_id, content, **kwargs)
+        return await self.send_message(room_id, content, **kwargs)
 
     def dispatch_event(self, event: Event, source: SyncStream) -> List[asyncio.Task]:
         if isinstance(event, MessageEvent) and not isinstance(event, MaubotMessageEvent):

@@ -168,6 +168,7 @@ class Client:
             self.log.warning("Ignoring start() call to started client")
             return
         try:
+            await self.client.versions()
             whoami = await self.client.whoami()
         except MatrixInvalidToken as e:
             self.log.error(f"Invalid token: {e}. Disabling client")
