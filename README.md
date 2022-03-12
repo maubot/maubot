@@ -58,6 +58,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * †[youtube previewer](https://github.com/ggogel/YoutubePreviewMaubot) - A bot that responds to a YouTube link with the video title and thumbnail.
 * †[reddit previewer](https://github.com/ggogel/RedditPreviewMaubot) - A bot that responds to a link of a reddit post with the sub name and title. If available, uploads the image or video.
 * [pocket](https://github.com/jaywink/maubot-pocket) - A bot integrating with Pocket to fetch articles and archive them.
+* [urlpreview](https://github.com/coffeebank/coffee-maubot/tree/master/urlpreview) - A bot that responds to links with a link preview embed, using Matrix API to fetch meta tags
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
