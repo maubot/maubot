@@ -13,21 +13,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Iterable, Optional, Set, Callable, Any, Awaitable, Union, TYPE_CHECKING
+from typing import Dict, Iterable, List, Optional, Set, Callable, Any, Awaitable, Union, TYPE_CHECKING
 import asyncio
 import logging
+from datetime import datetime
 
 from aiohttp import ClientSession
 
 from mautrix.errors import MatrixInvalidToken
 from mautrix.types import (UserID, SyncToken, FilterID, ContentURI, StrippedStateEvent, Membership,
                            StateEvent, EventType, Filter, RoomFilter, RoomEventFilter, EventFilter,
-                           PresenceState, StateFilter, DeviceID)
+                           PresenceState, StateFilter, DeviceID, RoomID)
 from mautrix.client import InternalEventType
 from mautrix.client.state_store.sqlalchemy import SQLStateStore as BaseSQLStateStore
 
 from .lib.store_proxy import SyncStoreProxy
-from .db import DBClient
+from .db import DBClient, DBInvite
 from .matrix import MaubotMatrixClient
 
 try:
@@ -69,9 +70,11 @@ class Client:
 
     remote_displayname: Optional[str]
     remote_avatar_url: Optional[ContentURI]
+    remote_rooms: Optional[List[RoomID]]
 
     def __init__(self, db_instance: DBClient) -> None:
         self.db_instance = db_instance
+        self.db_invites = DBInvite.get(self.id)
         self.cache[self.id] = self
         self.log = log.getChild(self.id)
         self.references = set()
@@ -79,6 +82,7 @@ class Client:
         self.sync_ok = True
         self.remote_displayname = None
         self.remote_avatar_url = None
+        self.remote_rooms = None
         self.client = MaubotMatrixClient(mxid=self.id, base_url=self.homeserver,
                                          token=self.access_token, client_session=self.http_client,
                                          log=self.log, loop=self.loop, device_id=self.device_id,
@@ -92,8 +96,7 @@ class Client:
         self.client.ignore_initial_sync = True
         self.client.ignore_first_sync = True
         self.client.presence = PresenceState.ONLINE if self.online else PresenceState.OFFLINE
-        if self.autojoin:
-            self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
+        self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         self.client.add_event_handler(EventType.ROOM_TOMBSTONE, self._handle_tombstone)
         self.client.add_event_handler(InternalEventType.SYNC_ERRORED, self._set_sync_ok(False))
         self.client.add_event_handler(InternalEventType.SYNC_SUCCESSFUL, self._set_sync_ok(True))
@@ -270,6 +273,13 @@ class Client:
             "avatar_url": self.avatar_url,
             "remote_displayname": self.remote_displayname,
             "remote_avatar_url": self.remote_avatar_url,
+            "invites": [{
+                "client": i.client,
+                "room": i.room,
+                "date": i.date.timestamp(),
+                "inviter": i.inviter
+            } for i in self.invites],
+            "rooms": self.remote_rooms,
             "instances": [instance.to_dict() for instance in self.references],
         }
 
@@ -292,11 +302,23 @@ class Client:
             self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
             return
         _, server = self.client.parse_user_id(evt.sender)
+        DBInvite.update_tombstone(user.id, evt.room_id, evt.content.replacement_room)
         await self.client.join_room(evt.content.replacement_room, servers=[server])
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
-        if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
+        if evt.state_key != self.id or evt.content.membership != Membership.INVITE:
+            return
+        if self.autojoin:
             await self.client.join_room(evt.room_id)
+            await self._update_remote_profile()
+        else:
+            self.log.debug('Inserting invite into database for later handling')
+            DBInvite(
+                client=self.id,
+                room=evt.room_id,
+                date=datetime.fromtimestamp(evt.timestamp//1000),
+                inviter=evt.sender
+            ).upsert()
 
     async def update_started(self, started: bool) -> None:
         if started is None or started == self.started:
@@ -323,6 +345,26 @@ class Client:
             await self.client.set_avatar_url(self.avatar_url)
         else:
             await self._update_remote_profile()
+
+    async def join_room(self, room: RoomID) -> None:
+        if room is None:
+            return
+        await self.client.join_room(room)
+        DBInvite(client=self.id, room=room).delete()
+        await self._update_remote_profile()
+
+    async def leave_room(self, room: RoomID) -> None:
+        if room is None:
+            return
+        await self.client.leave_room(room)
+        DBInvite(client=self.id, room=room).delete()
+        await self._update_remote_profile()
+
+    async def ignore_invite(self, room: RoomID) -> None:
+        if room is None:
+            return
+        DBInvite(client=self.id, room=room).delete()
+        await self._update_remote_profile()
 
     async def update_access_details(self, access_token: Optional[str], homeserver: Optional[str],
                                     device_id: Optional[str] = None) -> None:
@@ -371,6 +413,7 @@ class Client:
     async def _update_remote_profile(self) -> None:
         profile = await self.client.get_profile(self.id)
         self.remote_displayname, self.remote_avatar_url = profile.displayname, profile.avatar_url
+        self.remote_rooms = await self.client.get_joined_rooms()
 
     # region Properties
 
@@ -429,11 +472,11 @@ class Client:
     def autojoin(self, value: bool) -> None:
         if value == self.db_instance.autojoin:
             return
-        if value:
-            self.client.add_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
-        else:
-            self.client.remove_event_handler(EventType.ROOM_MEMBER, self._handle_invite)
         self.db_instance.autojoin = value
+
+    @property
+    def invites(self) -> List[DBInvite]:
+        return DBInvite.get(self.id)
 
     @property
     def online(self) -> bool:

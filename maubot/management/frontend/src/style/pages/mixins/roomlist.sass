@@ -1,0 +1,37 @@
+=roomlist()
+    margin: 1rem 0
+
+    > h3
+        margin: .5rem
+        width: 100%
+
+    > span.no-rooms
+        margin: .5rem
+        font-size: .875rem
+        font-weight: lighter
+
+    > table.rooms-list
+        width: 100%
+        margin: .5rem
+        border-collapse: collapse
+        text-align: left
+
+        td.right
+            display: flex
+            justify-content: flex-end
+            align-content: flex-end
+            flex-direction: row
+            display: flex
+
+        .button
+            margin: .1rem
+            height: 31px
+            width: 48px
+
+            > .spinner
+                +thick-spinner
+                +white-spinner
+                width: 16px
+
+    > tr
+        border-top: 1px solid $border-color

@@ -425,6 +425,93 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/ClientNotFound'
+  '/client/{id}/room/{room}/join':
+    parameters:
+    - name: id
+      in: path
+      description: The Matrix user ID of the client to join a room with
+      required: true
+      schema:
+        type: string
+    - name: room
+      in: path
+      description: The Matrix room to join
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: join_room
+      summary: Join a Matrix room or accept an invite
+      tags: [Clients]
+      responses:
+        200:
+          description: Joined the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/ClientNotFound'
+  '/client/{id}/room/{room}/leave':
+    parameters:
+    - name: id
+      in: path
+      description: The Matrix user ID of the client to leave a room with
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: path
+      description: The Matrix room to leave or reject
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: leave_room
+      summary: Leave a Matrix room or reject an invite
+      tags: [Clients]
+      responses:
+        200:
+          description: Left the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/ClientNotFound'
+  '/client/{id}/room/{room}/ignore':
+    parameters:
+    - name: id
+      in: path
+      description: The Matrix user ID of the client to remove the invite from
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: path
+      description: The Matrix room whose invite to remove
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: ignore_invite
+      summary: Ignore a room invitation (do not answer it, but remove from the database)
+      tags: [Clients]
+      responses:
+        200:
+          description: Removed the invitation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixClient'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/ClientNotFound'
   /client/auth/servers:
     get:
       operationId: get_client_auth_servers
@@ -710,6 +797,36 @@ components:
           type: string
           example: 'mxc://maunium.net/FsPQQTntCCqhJMFtwArmJdaU'
           description: The content URI of the avatar for this client.
+        rooms:
+          type: array
+          readOnly: true
+          description: List of room IDs of currently joined room.
+          items:
+            type: string
+            example: '!foobar:example.org'
+        invites:
+          type: array
+          readOnly: true
+          description: List of pending invites.
+          items:
+            type: object
+            properties:
+              client:
+                type: string
+                example: '@foobar:example.org'
+                description: The client that was invited to a room.
+              room:
+                type: string
+                example: '!foobar:example.org'
+                description: The room the client was invited to.
+              date:
+                type: integer
+                example: 1642546523
+                description: UNIX timestamp when the invite was created.
+              inviter:
+                type: string
+                example: '@bar:example.org'
+                description: The user who invited this client to the room.
         instances:
           type: array
           readOnly: true

@@ -50,11 +50,37 @@
         background-color: $background-dark !important
         color: $text-color
 
+=error-color-button()
+    background-color: $error-light
+    color: $inverted-text-color
+    &:hover:not(:disabled)
+        background-color: $error
+
+    &:disabled.disabled-bg
+        background-color: $background-dark !important
+        color: $text-color
+
+=warning-color-button()
+    background-color: $warning
+    color: $inverted-text-color
+    &:hover:not(:disabled)
+        background-color: $warning-dark
+
+    &:disabled.disabled-bg
+        background-color: $background-dark !important
+        color: $text-color
+
 .button
     +button
 
     &.main-color
         +main-color-button
+
+    &.error-color
+        +error-color-button
+
+    &.warning-color
+        +warning-color-button
 
 =button-group()
     width: 100%
