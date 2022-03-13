@@ -31,10 +31,10 @@ from .config import Config
 class DBPlugin(Base):
     __tablename__ = "plugin"
 
-    id: str = Column(String(255), primary_key=True)
-    type: str = Column(String(255), nullable=False)
+    id: str = Column(Text, primary_key=True)
+    type: str = Column(Text, nullable=False)
     enabled: bool = Column(Boolean, nullable=False, default=False)
-    primary_user: UserID = Column(String(255),
+    primary_user: UserID = Column(Text,
                                   ForeignKey("client.id", onupdate="CASCADE", ondelete="RESTRICT"),
                                   nullable=False)
     config: str = Column(Text, nullable=False, default='')
@@ -51,21 +51,21 @@ class DBPlugin(Base):
 class DBClient(Base):
     __tablename__ = "client"
 
-    id: UserID = Column(String(255), primary_key=True)
-    homeserver: str = Column(String(255), nullable=False)
+    id: UserID = Column(Text, primary_key=True)
+    homeserver: str = Column(Text, nullable=False)
     access_token: str = Column(Text, nullable=False)
-    device_id: DeviceID = Column(String(255), nullable=True)
+    device_id: DeviceID = Column(Text, nullable=True)
     enabled: bool = Column(Boolean, nullable=False, default=False)
 
-    next_batch: SyncToken = Column(String(255), nullable=False, default="")
-    filter_id: FilterID = Column(String(255), nullable=False, default="")
+    next_batch: SyncToken = Column(Text, nullable=False, default="")
+    filter_id: FilterID = Column(Text, nullable=False, default="")
 
     sync: bool = Column(Boolean, nullable=False, default=True)
     autojoin: bool = Column(Boolean, nullable=False, default=True)
     online: bool = Column(Boolean, nullable=False, default=True)
 
-    displayname: str = Column(String(255), nullable=False, default="")
-    avatar_url: ContentURI = Column(String(255), nullable=False, default="")
+    displayname: str = Column(Text, nullable=False, default="")
+    avatar_url: ContentURI = Column(Text, nullable=False, default="")
 
     @classmethod
     def all(cls) -> Iterable['DBClient']:
@@ -90,7 +90,7 @@ def init(config: Config) -> Engine:
             log.warning("alembic_version table not found, but client and plugin tables found. "
                         "Assuming pre-Alembic database and inserting version.")
             db.execute("CREATE TABLE IF NOT EXISTS alembic_version ("
-                       "    version_num VARCHAR(32) PRIMARY KEY"
+                       "    version_num TEXT PRIMARY KEY"
                        ");")
             db.execute("INSERT INTO alembic_version VALUES ('d295f8dcfa64');")
         else:
