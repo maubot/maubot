@@ -13,7 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, NamedTuple, Optional, Tuple
+from __future__ import annotations
+
+from typing import NamedTuple
 from http import HTTPStatus
 from json import JSONDecodeError
 import asyncio
@@ -30,12 +32,12 @@ from mautrix.client import ClientAPI
 from mautrix.errors import MatrixRequestError
 from mautrix.types import LoginResponse, LoginType
 
-from .base import get_config, get_loop, routes
+from .base import get_config, routes
 from .client import _create_client, _create_or_update_client
 from .responses import resp
 
 
-def known_homeservers() -> Dict[str, Dict[str, str]]:
+def known_homeservers() -> dict[str, dict[str, str]]:
     return get_config()["homeservers"]
 
 
@@ -61,7 +63,7 @@ truthy_strings = ("1", "true", "yes")
 
 async def read_client_auth_request(
     request: web.Request,
-) -> Tuple[Optional[AuthRequestInfo], Optional[web.Response]]:
+) -> tuple[AuthRequestInfo | None, web.Response | None]:
     server_name = request.match_info.get("server", None)
     server = known_homeservers().get(server_name, None)
     if not server:
@@ -85,7 +87,7 @@ async def read_client_auth_request(
     return (
         AuthRequestInfo(
             server_name=server_name,
-            client=ClientAPI(base_url=base_url, loop=get_loop()),
+            client=ClientAPI(base_url=base_url),
             secret=server.get("secret"),
             username=username,
             password=password,
@@ -189,11 +191,11 @@ async def _do_sso(req: AuthRequestInfo) -> web.Response:
     sso_url = req.client.api.base_url.with_path(str(Path.login.sso.redirect)).with_query(
         {"redirectUrl": str(public_url)}
     )
-    sso_waiters[waiter_id] = req, get_loop().create_future()
+    sso_waiters[waiter_id] = req, asyncio.get_running_loop().create_future()
     return web.json_response({"sso_url": str(sso_url), "id": waiter_id})
 
 
-async def _do_login(req: AuthRequestInfo, login_token: Optional[str] = None) -> web.Response:
+async def _do_login(req: AuthRequestInfo, login_token: str | None = None) -> web.Response:
     device_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
     device_id = f"maubot_{device_id}"
     try:
@@ -235,7 +237,7 @@ async def _do_login(req: AuthRequestInfo, login_token: Optional[str] = None) -> 
     return web.json_response(res.serialize())
 
 
-sso_waiters: Dict[str, Tuple[AuthRequestInfo, asyncio.Future]] = {}
+sso_waiters: dict[str, tuple[AuthRequestInfo, asyncio.Future]] = {}
 
 
 @routes.post("/client/auth/{server}/sso/{id}/wait")

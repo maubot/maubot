@@ -29,7 +29,8 @@ from mautrix.types import SerializerError
 from ..config import Config
 from ..lib.zipimport import ZipImportError, zipimporter
 from ..plugin_base import Plugin
-from .abc import IDConflictError, PluginClass, PluginLoader, PluginMeta
+from .abc import IDConflictError, PluginClass, PluginLoader
+from .meta import PluginMeta
 
 yaml = YAML()
 

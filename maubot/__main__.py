@@ -13,24 +13,37 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import asyncio
+from __future__ import annotations
 
+import asyncio
+import sys
+
+from mautrix.util.async_db import Database, DatabaseException
 from mautrix.util.program import Program
 
 from .__meta__ import __version__
-from .client import Client, init as init_client_class
+from .client import Client
 from .config import Config
-from .db import init as init_db
-from .instance import init as init_plugin_instance_class
+from .db import init as init_db, upgrade_table
+from .instance import PluginInstance
 from .lib.future_awaitable import FutureAwaitable
+from .lib.state_store import PgStateStore
 from .loader.zip import init as init_zip_loader
 from .management.api import init as init_mgmt_api
 from .server import MaubotServer
+
+try:
+    from mautrix.crypto.store import PgCryptoStore
+except ImportError:
+    PgCryptoStore = None
 
 
 class Maubot(Program):
     config: Config
     server: MaubotServer
+    db: Database
+    crypto_db: Database | None
+    state_store: PgStateStore
 
     config_class = Config
     module = "maubot"
@@ -45,6 +58,19 @@ class Maubot(Program):
         init(self.loop)
         self.add_shutdown_actions(FutureAwaitable(stop_all))
 
+    def prepare_arg_parser(self) -> None:
+        super().prepare_arg_parser()
+        self.parser.add_argument(
+            "--ignore-unsupported-database",
+            action="store_true",
+            help="Run even if the database schema is too new",
+        )
+        self.parser.add_argument(
+            "--ignore-foreign-tables",
+            action="store_true",
+            help="Run even if the database contains tables from other programs (like Synapse)",
+        )
+
     def prepare(self) -> None:
         super().prepare()
 
@@ -52,21 +78,59 @@ class Maubot(Program):
             self.prepare_log_websocket()
 
         init_zip_loader(self.config)
-        init_db(self.config)
-        clients = init_client_class(self.config, self.loop)
-        self.add_startup_actions(*(client.start() for client in clients))
+        self.db = Database.create(
+            self.config["database"],
+            upgrade_table=upgrade_table,
+            db_args=self.config["database_opts"],
+            owner_name=self.name,
+            ignore_foreign_tables=self.args.ignore_foreign_tables,
+        )
+        init_db(self.db)
+        if self.config["crypto_database"] == "default":
+            self.crypto_db = self.db
+        else:
+            self.crypto_db = Database.create(
+                self.config["crypto_database"],
+                upgrade_table=PgCryptoStore.upgrade_table,
+                ignore_foreign_tables=self.args.ignore_foreign_tables,
+            )
+        Client.init_cls(self)
+        PluginInstance.init_cls(self)
         management_api = init_mgmt_api(self.config, self.loop)
         self.server = MaubotServer(management_api, self.config, self.loop)
+        self.state_store = PgStateStore(self.db)
 
-        plugins = init_plugin_instance_class(self.config, self.server, self.loop)
-        for plugin in plugins:
-            plugin.load()
+    async def start_db(self) -> None:
+        self.log.debug("Starting database...")
+        ignore_unsupported = self.args.ignore_unsupported_database
+        self.db.upgrade_table.allow_unsupported = ignore_unsupported
+        self.state_store.upgrade_table.allow_unsupported = ignore_unsupported
+        PgCryptoStore.upgrade_table.allow_unsupported = ignore_unsupported
+        try:
+            await self.db.start()
+            await self.state_store.upgrade_table.upgrade(self.db)
+            if self.crypto_db and self.crypto_db is not self.db:
+                await self.crypto_db.start()
+            else:
+                await PgCryptoStore.upgrade_table.upgrade(self.db)
+        except DatabaseException as e:
+            self.log.critical("Failed to initialize database", exc_info=e)
+            if e.explanation:
+                self.log.info(e.explanation)
+            sys.exit(25)
+
+    async def system_exit(self) -> None:
+        if hasattr(self, "db"):
+            self.log.trace("Stopping database due to SystemExit")
+            await self.db.stop()
 
     async def start(self) -> None:
-        if Client.crypto_db:
-            self.log.debug("Starting client crypto database")
-            await Client.crypto_db.start()
+        await self.start_db()
+        await asyncio.gather(*[plugin.load() async for plugin in PluginInstance.all()])
+        await asyncio.gather(*[client.start() async for client in Client.all()])
         await super().start()
+        async for plugin in PluginInstance.all():
+            await plugin.load()
         await self.server.start()
 
     async def stop(self) -> None:
@@ -77,6 +141,7 @@ class Maubot(Program):
             await asyncio.wait_for(self.server.stop(), 5)
         except asyncio.TimeoutError:
             self.log.warning("Stopping server timed out")
+        await self.db.stop()
 
 
 Maubot().run()

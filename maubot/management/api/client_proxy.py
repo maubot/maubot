@@ -25,7 +25,7 @@ PROXY_CHUNK_SIZE = 32 * 1024
 @routes.view("/proxy/{id}/{path:_matrix/.+}")
 async def proxy(request: web.Request) -> web.StreamResponse:
     user_id = request.match_info.get("id", None)
-    client = Client.get(user_id, None)
+    client = await Client.get(user_id)
     if not client:
         return resp.client_not_found
 

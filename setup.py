@@ -1,5 +1,4 @@
 import setuptools
-import glob
 import os
 
 with open("requirements.txt") as reqs:
@@ -57,9 +56,7 @@ setuptools.setup(
         mbc=maubot.cli:app
     """,
     data_files=[
-        (".", ["maubot/example-config.yaml", "alembic.ini"]),
-        ("alembic", ["alembic/env.py"]),
-        ("alembic/versions", glob.glob("alembic/versions/*.py")),
+        (".", ["maubot/example-config.yaml"]),
     ],
     package_data={
         "maubot": [

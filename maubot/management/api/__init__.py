@@ -20,7 +20,7 @@ from aiohttp import web
 
 from ...config import Config
 from .auth import check_token
-from .base import get_config, routes, set_config, set_loop
+from .base import get_config, routes, set_config
 from .middleware import auth, error
 
 
@@ -40,7 +40,6 @@ def features(request: web.Request) -> web.Response:
 
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:
     set_config(cfg)
-    set_loop(loop)
     for pkg, enabled in cfg["api_features"].items():
         if enabled:
             importlib.import_module(f"maubot.management.api.{pkg}")

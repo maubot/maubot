@@ -13,16 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from mautrix.client import SyncStore
-from mautrix.types import SyncToken
+from mautrix.client.state_store.asyncpg import PgStateStore as BasePgStateStore
 
+try:
+    from mautrix.crypto import StateStore as CryptoStateStore
 
-class SyncStoreProxy(SyncStore):
-    def __init__(self, db_instance) -> None:
-        self.db_instance = db_instance
+    class PgStateStore(BasePgStateStore, CryptoStateStore):
+        pass
 
-    async def put_next_batch(self, next_batch: SyncToken) -> None:
-        self.db_instance.edit(next_batch=next_batch)
+except ImportError as e:
+    PgStateStore = BasePgStateStore
 
-    async def get_next_batch(self) -> SyncToken:
-        return self.db_instance.next_batch
+__all__ = ["PgStateStore"]

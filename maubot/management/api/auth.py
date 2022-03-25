@@ -46,7 +46,7 @@ def create_token(user: UserID) -> str:
 def get_token(request: web.Request) -> str:
     token = request.headers.get("Authorization", "")
     if not token or not token.startswith("Bearer "):
-        token = request.query.get("access_token", None)
+        token = request.query.get("access_token", "")
     else:
         token = token[len("Bearer ") :]
     return token

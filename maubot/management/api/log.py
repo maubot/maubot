@@ -23,7 +23,7 @@ import logging
 from aiohttp import web, web_ws
 
 from .auth import is_valid_token
-from .base import get_loop, routes
+from .base import routes
 
 BUILTIN_ATTRS = {
     "args",
@@ -138,12 +138,12 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
     authenticated = False
 
     async def close_if_not_authenticated():
-        await asyncio.sleep(5, loop=get_loop())
+        await asyncio.sleep(5)
         if not authenticated:
             await ws.close(code=4000)
             log.debug(f"Connection from {request.remote} terminated due to no authentication")
 
-    asyncio.ensure_future(close_if_not_authenticated())
+    asyncio.create_task(close_if_not_authenticated())
 
     try:
         msg: web_ws.WSMessage

@@ -29,8 +29,8 @@ async def get_plugins(_) -> web.Response:
 
 @routes.get("/plugin/{id}")
 async def get_plugin(request: web.Request) -> web.Response:
-    plugin_id = request.match_info.get("id", None)
-    plugin = PluginLoader.id_cache.get(plugin_id, None)
+    plugin_id = request.match_info["id"]
+    plugin = PluginLoader.id_cache.get(plugin_id)
     if not plugin:
         return resp.plugin_not_found
     return resp.found(plugin.to_dict())
@@ -38,8 +38,8 @@ async def get_plugin(request: web.Request) -> web.Response:
 
 @routes.delete("/plugin/{id}")
 async def delete_plugin(request: web.Request) -> web.Response:
-    plugin_id = request.match_info.get("id", None)
-    plugin = PluginLoader.id_cache.get(plugin_id, None)
+    plugin_id = request.match_info["id"]
+    plugin = PluginLoader.id_cache.get(plugin_id)
     if not plugin:
         return resp.plugin_not_found
     elif len(plugin.references) > 0:
@@ -50,8 +50,8 @@ async def delete_plugin(request: web.Request) -> web.Response:
 
 @routes.post("/plugin/{id}/reload")
 async def reload_plugin(request: web.Request) -> web.Response:
-    plugin_id = request.match_info.get("id", None)
-    plugin = PluginLoader.id_cache.get(plugin_id, None)
+    plugin_id = request.match_info["id"]
+    plugin = PluginLoader.id_cache.get(plugin_id)
     if not plugin:
         return resp.plugin_not_found
 

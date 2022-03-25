@@ -1,7 +1,7 @@
 #!/bin/sh
 
 function fixperms {
-	chown -R $UID:$GID /var/log /data /opt/maubot
+	chown -R $UID:$GID /var/log /data
 }
 
 function fixdefault {

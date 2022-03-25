@@ -10,7 +10,6 @@ RUN apk add --no-cache \
         py3-attrs \
         py3-bcrypt \
         py3-cffi \
-        py3-psycopg2 \
         py3-ruamel.yaml \
         py3-jinja2 \
         py3-click \
@@ -43,7 +42,6 @@ COPY requirements.txt /opt/maubot/requirements.txt
 COPY optional-requirements.txt /opt/maubot/optional-requirements.txt
 WORKDIR /opt/maubot
 RUN apk add --virtual .build-deps python3-dev build-base git \
-    && sed -Ei 's/psycopg2-binary.+//' optional-requirements.txt \
     && pip3 install -r requirements.txt -r optional-requirements.txt \
         dateparser langdetect python-gitlab pyquery cchardet semver tzlocal cssselect \
     && apk del .build-deps

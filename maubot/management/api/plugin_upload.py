@@ -29,7 +29,7 @@ from .responses import resp
 
 @routes.put("/plugin/{id}")
 async def put_plugin(request: web.Request) -> web.Response:
-    plugin_id = request.match_info.get("id", None)
+    plugin_id = request.match_info["id"]
     content = await request.read()
     file = BytesIO(content)
     try:

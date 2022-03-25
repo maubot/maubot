@@ -24,7 +24,6 @@ from ...config import Config
 
 routes: web.RouteTableDef = web.RouteTableDef()
 _config: Config | None = None
-_loop: asyncio.AbstractEventLoop | None = None
 
 
 def set_config(config: Config) -> None:
@@ -34,15 +33,6 @@ def set_config(config: Config) -> None:
 
 def get_config() -> Config:
     return _config
-
-
-def set_loop(loop: asyncio.AbstractEventLoop) -> None:
-    global _loop
-    _loop = loop
-
-
-def get_loop() -> asyncio.AbstractEventLoop:
-    return _loop
 
 
 @routes.get("/version")

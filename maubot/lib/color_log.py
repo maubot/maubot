@@ -28,14 +28,19 @@ LOADER_COLOR = PREFIX + "36m"  # blue
 class ColorFormatter(BaseColorFormatter):
     def _color_name(self, module: str) -> str:
         client = "maubot.client"
-        if module.startswith(client):
-            return f"{MAU_COLOR}{client}{RESET}.{MXID_COLOR}{module[len(client) + 1:]}{RESET}"
+        if module.startswith(client + "."):
+            suffix = ""
+            if module.endswith(".crypto"):
+                suffix = f".{MAU_COLOR}crypto{RESET}"
+                module = module[: -len(".crypto")]
+            module = module[len(client) + 1 :]
+            return f"{MAU_COLOR}{client}{RESET}.{MXID_COLOR}{module}{RESET}{suffix}"
         instance = "maubot.instance"
-        if module.startswith(instance):
+        if module.startswith(instance + "."):
             return f"{MAU_COLOR}{instance}{RESET}.{INST_COLOR}{module[len(instance) + 1:]}{RESET}"
         loader = "maubot.loader"
-        if module.startswith(loader):
+        if module.startswith(loader + "."):
             return f"{MAU_COLOR}{instance}{RESET}.{LOADER_COLOR}{module[len(loader) + 1:]}{RESET}"
-        if module.startswith("maubot"):
+        if module.startswith("maubot."):
             return f"{MAU_COLOR}{module}{RESET}"
         return super()._color_name(module)

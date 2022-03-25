@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable
 from abc import ABC
 from asyncio import AbstractEventLoop
 
@@ -124,6 +124,7 @@ class Plugin(ABC):
     def get_config_class(cls) -> type[BaseProxyConfig] | None:
         return None
 
-    def on_external_config_update(self) -> None:
+    def on_external_config_update(self) -> Awaitable[None] | None:
         if self.config:
             self.config.load_and_update()
+        return None

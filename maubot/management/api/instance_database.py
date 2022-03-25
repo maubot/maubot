@@ -29,8 +29,8 @@ from .responses import resp
 
 @routes.get("/instance/{id}/database")
 async def get_database(request: web.Request) -> web.Response:
-    instance_id = request.match_info.get("id", "")
-    instance = PluginInstance.get(instance_id, None)
+    instance_id = request.match_info["id"].lower()
+    instance = await PluginInstance.get(instance_id)
     if not instance:
         return resp.instance_not_found
     elif not instance.inst_db:
@@ -65,8 +65,8 @@ def check_type(val):
 
 @routes.get("/instance/{id}/database/{table}")
 async def get_table(request: web.Request) -> web.Response:
-    instance_id = request.match_info.get("id", "")
-    instance = PluginInstance.get(instance_id, None)
+    instance_id = request.match_info["id"].lower()
+    instance = await PluginInstance.get(instance_id)
     if not instance:
         return resp.instance_not_found
     elif not instance.inst_db:
@@ -86,14 +86,14 @@ async def get_table(request: web.Request) -> web.Response:
         ]
     except KeyError:
         order = []
-    limit = int(request.query.get("limit", 100))
+    limit = int(request.query.get("limit", "100"))
     return execute_query(instance, table.select().order_by(*order).limit(limit))
 
 
 @routes.post("/instance/{id}/database/query")
 async def query(request: web.Request) -> web.Response:
-    instance_id = request.match_info.get("id", "")
-    instance = PluginInstance.get(instance_id, None)
+    instance_id = request.match_info["id"].lower()
+    instance = await PluginInstance.get(instance_id)
     if not instance:
         return resp.instance_not_found
     elif not instance.inst_db:

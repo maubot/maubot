@@ -13,17 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TYPE_CHECKING, Dict, List, Set, Type, TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
 from abc import ABC, abstractmethod
 import asyncio
 
-from attr import dataclass
-from packaging.version import InvalidVersion, Version
-
-from mautrix.types import SerializableAttrs, SerializerError, deserializer, serializer
-
-from ..__meta__ import __version__
 from ..plugin_base import Plugin
+from .meta import PluginMeta
 
 if TYPE_CHECKING:
     from ..instance import PluginInstance
@@ -33,36 +30,6 @@ PluginClass = TypeVar("PluginClass", bound=Plugin)
 
 class IDConflictError(Exception):
     pass
-
-
-@serializer(Version)
-def serialize_version(version: Version) -> str:
-    return str(version)
-
-
-@deserializer(Version)
-def deserialize_version(version: str) -> Version:
-    try:
-        return Version(version)
-    except InvalidVersion as e:
-        raise SerializerError("Invalid version") from e
-
-
-@dataclass
-class PluginMeta(SerializableAttrs):
-    id: str
-    version: Version
-    modules: List[str]
-    main_class: str
-
-    maubot: Version = Version(__version__)
-    database: bool = False
-    config: bool = False
-    webapp: bool = False
-    license: str = ""
-    extra_files: List[str] = []
-    dependencies: List[str] = []
-    soft_dependencies: List[str] = []
 
 
 class BasePluginLoader(ABC):
@@ -80,25 +47,25 @@ class BasePluginLoader(ABC):
     async def read_file(self, path: str) -> bytes:
         pass
 
-    def sync_list_files(self, directory: str) -> List[str]:
+    def sync_list_files(self, directory: str) -> list[str]:
         raise NotImplementedError("This loader doesn't support synchronous operations")
 
     @abstractmethod
-    async def list_files(self, directory: str) -> List[str]:
+    async def list_files(self, directory: str) -> list[str]:
         pass
 
 
 class PluginLoader(BasePluginLoader, ABC):
-    id_cache: Dict[str, "PluginLoader"] = {}
+    id_cache: dict[str, PluginLoader] = {}
 
     meta: PluginMeta
-    references: Set["PluginInstance"]
+    references: set[PluginInstance]
 
     def __init__(self):
         self.references = set()
 
     @classmethod
-    def find(cls, plugin_id: str) -> "PluginLoader":
+    def find(cls, plugin_id: str) -> PluginLoader:
         return cls.id_cache[plugin_id]
 
     def to_dict(self) -> dict:
@@ -119,11 +86,11 @@ class PluginLoader(BasePluginLoader, ABC):
         )
 
     @abstractmethod
-    async def load(self) -> Type[PluginClass]:
+    async def load(self) -> type[PluginClass]:
         pass
 
     @abstractmethod
-    async def reload(self) -> Type[PluginClass]:
+    async def reload(self) -> type[PluginClass]:
         pass
 
     @abstractmethod
