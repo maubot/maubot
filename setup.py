@@ -26,6 +26,9 @@ setuptools.setup(
     name="maubot",
     version=__version__,
     url="https://github.com/maubot/maubot",
+    project_urls={
+        "Changelog": "https://github.com/maubot/maubot/blob/master/CHANGELOG.md",
+    },
 
     author="Tulir Asokan",
     author_email="tulir@maunium.net",
