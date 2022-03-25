@@ -109,19 +109,18 @@ class LogCollector(logging.Handler):
 
 
 handler = LogCollector()
-log_root = logging.getLogger("maubot")
 log = logging.getLogger("maubot.server.websocket")
 sockets = []
 
 
 def init(loop: asyncio.AbstractEventLoop) -> None:
-    log_root.addHandler(handler)
+    logging.root.addHandler(handler)
     handler.loop = loop
 
 
 async def stop_all() -> None:
     log.debug("Closing log listener websockets")
-    log_root.removeHandler(handler)
+    logging.root.removeHandler(handler)
     for socket in sockets:
         try:
             await socket.close(code=1012)
