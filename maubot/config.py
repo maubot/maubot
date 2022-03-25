@@ -33,6 +33,7 @@ class Config(BaseFileConfig):
         base = helper.base
         copy = helper.copy
         copy("database")
+        copy("database_opts")
         if isinstance(self["crypto_database"], dict):
             if self["crypto_database.type"] == "postgres":
                 base["crypto_database"] = self["crypto_database.postgres_uri"]

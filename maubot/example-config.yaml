@@ -8,6 +8,14 @@ database: sqlite:///maubot.db
 # Separate database URL for the crypto database. "default" means use the same database as above.
 crypto_database: default
 
+# Additional arguments for asyncpg.create_pool() or sqlite3.connect()
+# https://magicstack.github.io/asyncpg/current/api/index.html#asyncpg.pool.create_pool
+# https://docs.python.org/3/library/sqlite3.html#sqlite3.connect
+# For sqlite, min_size is used as the connection thread pool size and max_size is ignored.
+database_opts:
+    min_size: 1
+    max_size: 10
+
 plugin_directories:
     # The directory where uploaded new plugins should be stored.
     upload: ./plugins
