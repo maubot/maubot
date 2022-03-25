@@ -10,6 +10,7 @@ __pycache__
 *.db
 /*.yaml
 !example-config.yaml
+!.pre-commit-config.yaml
 
 logs/
 plugins/
