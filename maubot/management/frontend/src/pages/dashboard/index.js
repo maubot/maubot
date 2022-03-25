@@ -94,10 +94,15 @@ class Dashboard extends Component {
 
         const processEntry = (entry) => {
             entry.time = new Date(entry.time)
+            entry.nameSuffix = ""
             if (entry.name.startsWith("maubot.")) {
                 entry.name = entry.name.substr("maubot.".length)
             }
             if (entry.name.startsWith("client.")) {
+                if (entry.name.endsWith(".crypto")) {
+                    entry.name = entry.name.slice(0, -".crypto".length)
+                    entry.nameSuffix = "/crypto"
+                }
                 entry.name = entry.name.substr("client.".length)
                 entry.nameLink = `/client/${entry.name}`
             } else if (entry.name.startsWith("instance.")) {

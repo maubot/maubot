@@ -26,11 +26,12 @@ class LogEntry extends PureComponent {
         const line = this.props.line
         if (line.nameLink) {
             const modal = this.context
-            return (
+            return <>
                 <Link to={line.nameLink} onClick={modal.close}>
                     {line.name}
                 </Link>
-            )
+                {line.nameSuffix}
+            </>
         }
         return line.name
     }
