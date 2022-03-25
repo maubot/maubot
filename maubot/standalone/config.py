@@ -41,8 +41,8 @@ class Config(BaseFileConfig):
             copy("server.port")
             copy("server.base_path")
             copy("server.public_url")
-        if "database" in base:
-            copy("database")
+        copy("database")
+        copy("database_opts")
         if "plugin_config" in base:
             copy("plugin_config")
         copy("logging")

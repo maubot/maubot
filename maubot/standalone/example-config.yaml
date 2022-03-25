@@ -37,6 +37,14 @@ server:
 # SQLite and Postgres are supported.
 database: sqlite:///bot.db
 
+# Additional arguments for asyncpg.create_pool() or sqlite3.connect()
+# https://magicstack.github.io/asyncpg/current/api/index.html#asyncpg.pool.create_pool
+# https://docs.python.org/3/library/sqlite3.html#sqlite3.connect
+# For sqlite, min_size is used as the connection thread pool size and max_size is ignored.
+database_opts:
+    min_size: 1
+    max_size: 10
+
 # Config for the plugin. Refer to the plugin's base-config.yaml to find what (if anything) to put here.
 plugin_config: {}
 
