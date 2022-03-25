@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import React, { PureComponent } from "react"
 import { Link } from "react-router-dom"
-import JSONTree from "react-json-tree"
+import { JSONTree } from "react-json-tree"
 import api from "../../api"
 import Modal from "./Modal"
 
