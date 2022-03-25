@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.14
+FROM docker.io/alpine:3.15
 
 RUN apk add --no-cache \
       python3 py3-pip py3-setuptools py3-wheel \
