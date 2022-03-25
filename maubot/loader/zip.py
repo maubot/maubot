@@ -26,12 +26,14 @@ from ruamel.yaml import YAML, YAMLError
 
 from mautrix.types import SerializerError
 
+from ..__meta__ import __version__
 from ..config import Config
 from ..lib.zipimport import ZipImportError, zipimporter
 from ..plugin_base import Plugin
 from .abc import IDConflictError, PluginClass, PluginLoader
 from .meta import PluginMeta
 
+current_version = Version(__version__)
 yaml = YAML()
 
 
@@ -146,6 +148,10 @@ class ZippedPluginLoader(PluginLoader):
             meta = PluginMeta.deserialize(meta_dict)
         except SerializerError as e:
             raise MaubotZipMetaError("Maubot plugin definition in file is invalid") from e
+        if meta.maubot > current_version:
+            raise MaubotZipMetaError(
+                f"Plugin requires maubot {meta.maubot}, but this instance is {current_version}"
+            )
         return file, meta
 
     @classmethod
