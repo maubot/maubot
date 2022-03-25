@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,31 +13,60 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Deque, List
-from datetime import datetime
+from __future__ import annotations
+
 from collections import deque
-import logging
+from datetime import datetime
 import asyncio
+import logging
 
-from aiohttp import web
+from aiohttp import web, web_ws
 
-from .base import routes, get_loop
 from .auth import is_valid_token
+from .base import get_loop, routes
 
-BUILTIN_ATTRS = {"args", "asctime", "created", "exc_info", "exc_text", "filename", "funcName",
-                 "levelname", "levelno", "lineno", "module", "msecs", "message", "msg", "name",
-                 "pathname", "process", "processName", "relativeCreated", "stack_info", "thread",
-                 "threadName"}
-INCLUDE_ATTRS = {"filename", "funcName", "levelname", "levelno", "lineno", "module", "name",
-                 "pathname"}
+BUILTIN_ATTRS = {
+    "args",
+    "asctime",
+    "created",
+    "exc_info",
+    "exc_text",
+    "filename",
+    "funcName",
+    "levelname",
+    "levelno",
+    "lineno",
+    "module",
+    "msecs",
+    "message",
+    "msg",
+    "name",
+    "pathname",
+    "process",
+    "processName",
+    "relativeCreated",
+    "stack_info",
+    "thread",
+    "threadName",
+}
+INCLUDE_ATTRS = {
+    "filename",
+    "funcName",
+    "levelname",
+    "levelno",
+    "lineno",
+    "module",
+    "name",
+    "pathname",
+}
 EXCLUDE_ATTRS = BUILTIN_ATTRS - INCLUDE_ATTRS
 MAX_LINES = 2048
 
 
 class LogCollector(logging.Handler):
-    lines: Deque[dict]
+    lines: deque[dict]
     formatter: logging.Formatter
-    listeners: List[web.WebSocketResponse]
+    listeners: list[web.WebSocketResponse]
     loop: asyncio.AbstractEventLoop
 
     def __init__(self, level=logging.NOTSET) -> None:
@@ -56,9 +85,7 @@ class LogCollector(logging.Handler):
         # JSON conversion based on Marsel Mavletkulov's json-log-formatter (MIT license)
         # https://github.com/marselester/json-log-formatter
         content = {
-            name: value
-            for name, value in record.__dict__.items()
-            if name not in EXCLUDE_ATTRS
+            name: value for name, value in record.__dict__.items() if name not in EXCLUDE_ATTRS
         }
         content["id"] = str(record.relativeCreated)
         content["msg"] = record.getMessage()
@@ -119,6 +146,7 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
     asyncio.ensure_future(close_if_not_authenticated())
 
     try:
+        msg: web_ws.WSMessage
         async for msg in ws:
             if msg.type != web.WSMsgType.TEXT:
                 continue

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,8 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from __future__ import annotations
+
 from time import time
 
 from aiohttp import web
@@ -21,7 +22,7 @@ from aiohttp import web
 from mautrix.types import UserID
 from mautrix.util.signed_token import sign_token, verify_token
 
-from .base import routes, get_config
+from .base import get_config, routes
 from .responses import resp
 
 
@@ -33,10 +34,13 @@ def is_valid_token(token: str) -> bool:
 
 
 def create_token(user: UserID) -> str:
-    return sign_token(get_config()["server.unshared_secret"], {
-        "user_id": user,
-        "created_at": int(time()),
-    })
+    return sign_token(
+        get_config()["server.unshared_secret"],
+        {
+            "user_id": user,
+            "created_at": int(time()),
+        },
+    )
 
 
 def get_token(request: web.Request) -> str:
@@ -44,11 +48,11 @@ def get_token(request: web.Request) -> str:
     if not token or not token.startswith("Bearer "):
         token = request.query.get("access_token", None)
     else:
-        token = token[len("Bearer "):]
+        token = token[len("Bearer ") :]
     return token
 
 
-def check_token(request: web.Request) -> Optional[web.Response]:
+def check_token(request: web.Request) -> web.Response | None:
     token = get_token(request)
     if not token:
         return resp.no_token

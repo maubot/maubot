@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from io import BytesIO
 from time import time
-import traceback
 import os.path
 import re
+import traceback
 
 from aiohttp import web
 from packaging.version import Version
 
-from ...loader import PluginLoader, ZippedPluginLoader, MaubotZipImportError
+from ...loader import MaubotZipImportError, PluginLoader, ZippedPluginLoader
+from .base import get_config, routes
 from .responses import resp
-from .base import routes, get_config
 
 
 @routes.put("/plugin/{id}")
@@ -78,15 +78,20 @@ async def upload_new_plugin(content: bytes, pid: str, version: Version) -> web.R
     return resp.created(plugin.to_dict())
 
 
-async def upload_replacement_plugin(plugin: ZippedPluginLoader, content: bytes,
-                                    new_version: Version) -> web.Response:
+async def upload_replacement_plugin(
+    plugin: ZippedPluginLoader, content: bytes, new_version: Version
+) -> web.Response:
     dirname = os.path.dirname(plugin.path)
     old_filename = os.path.basename(plugin.path)
     if str(plugin.meta.version) in old_filename:
-        replacement = (str(new_version) if plugin.meta.version != new_version
-                       else f"{new_version}-ts{int(time())}")
-        filename = re.sub(f"{re.escape(str(plugin.meta.version))}(-ts[0-9]+)?",
-                          replacement, old_filename)
+        replacement = (
+            str(new_version)
+            if plugin.meta.version != new_version
+            else f"{new_version}-ts{int(time())}"
+        )
+        filename = re.sub(
+            f"{re.escape(str(plugin.meta.version))}(-ts[0-9]+)?", replacement, old_filename
+        )
     else:
         filename = old_filename.rstrip(".mbp")
         filename = f"{filename}-v{new_version}.mbp"

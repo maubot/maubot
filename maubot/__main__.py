@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -17,15 +17,15 @@ import asyncio
 
 from mautrix.util.program import Program
 
+from .__meta__ import __version__
+from .client import Client, init as init_client_class
 from .config import Config
 from .db import init as init_db
-from .server import MaubotServer
-from .client import Client, init as init_client_class
-from .loader.zip import init as init_zip_loader
 from .instance import init as init_plugin_instance_class
-from .management.api import init as init_mgmt_api
 from .lib.future_awaitable import FutureAwaitable
-from .__meta__ import __version__
+from .loader.zip import init as init_zip_loader
+from .management.api import init as init_mgmt_api
+from .server import MaubotServer
 
 
 class Maubot(Program):
@@ -41,6 +41,7 @@ class Maubot(Program):
 
     def prepare_log_websocket(self) -> None:
         from .management.api.log import init, stop_all
+
         init(self.loop)
         self.add_shutdown_actions(FutureAwaitable(stop_all))
 

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,22 +13,24 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Optional, Iterable, TYPE_CHECKING
-from asyncio import AbstractEventLoop
-import os.path
-import logging
-import io
+from __future__ import annotations
 
-from ruamel.yaml.comments import CommentedMap
+from typing import TYPE_CHECKING, Iterable
+from asyncio import AbstractEventLoop
+import io
+import logging
+import os.path
+
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
 
-from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.types import UserID
+from mautrix.util.config import BaseProxyConfig, RecursiveDict
 
-from .db import DBPlugin
-from .config import Config
 from .client import Client
+from .config import Config
+from .db import DBPlugin
 from .loader import PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
 
@@ -43,23 +45,23 @@ yaml.width = 200
 
 
 class PluginInstance:
-    webserver: 'MaubotServer' = None
+    webserver: MaubotServer = None
     mb_config: Config = None
     loop: AbstractEventLoop = None
-    cache: Dict[str, 'PluginInstance'] = {}
-    plugin_directories: List[str] = []
+    cache: dict[str, PluginInstance] = {}
+    plugin_directories: list[str] = []
 
     log: logging.Logger
     loader: PluginLoader
     client: Client
     plugin: Plugin
     config: BaseProxyConfig
-    base_cfg: Optional[RecursiveDict[CommentedMap]]
-    base_cfg_str: Optional[str]
+    base_cfg: RecursiveDict[CommentedMap] | None
+    base_cfg_str: str | None
     inst_db: sql.engine.Engine
-    inst_db_tables: Dict[str, sql.Table]
-    inst_webapp: Optional['PluginWebApp']
-    inst_webapp_url: Optional[str]
+    inst_db_tables: dict[str, sql.Table]
+    inst_webapp: PluginWebApp | None
+    inst_webapp_url: str | None
     started: bool
 
     def __init__(self, db_instance: DBPlugin):
@@ -87,11 +89,12 @@ class PluginInstance:
             "primary_user": self.primary_user,
             "config": self.db_instance.config,
             "base_config": self.base_cfg_str,
-            "database": (self.inst_db is not None
-                         and self.mb_config["api_features.instance_database"]),
+            "database": (
+                self.inst_db is not None and self.mb_config["api_features.instance_database"]
+            ),
         }
 
-    def get_db_tables(self) -> Dict[str, sql.Table]:
+    def get_db_tables(self) -> dict[str, sql.Table]:
         if not self.inst_db_tables:
             metadata = sql.MetaData()
             metadata.reflect(self.inst_db)
@@ -147,7 +150,8 @@ class PluginInstance:
             self.inst_db.dispose()
             ZippedPluginLoader.trash(
                 os.path.join(self.mb_config["plugin_directories.db"], f"{self.id}.db"),
-                reason="deleted")
+                reason="deleted",
+            )
         if self.inst_webapp:
             self.disable_webapp()
 
@@ -194,13 +198,23 @@ class PluginInstance:
             if self.base_cfg:
                 base_cfg_func = self.base_cfg.clone
             else:
+
                 def base_cfg_func() -> None:
                     return None
+
             self.config = config_class(self.load_config, base_cfg_func, self.save_config)
-        self.plugin = cls(client=self.client.client, loop=self.loop, http=self.client.http_client,
-                          instance_id=self.id, log=self.log, config=self.config,
-                          database=self.inst_db, loader=self.loader, webapp=self.inst_webapp,
-                          webapp_url=self.inst_webapp_url)
+        self.plugin = cls(
+            client=self.client.client,
+            loop=self.loop,
+            http=self.client.http_client,
+            instance_id=self.id,
+            log=self.log,
+            config=self.config,
+            database=self.inst_db,
+            loader=self.loader,
+            webapp=self.inst_webapp,
+            webapp_url=self.inst_webapp_url,
+        )
         try:
             await self.plugin.internal_start()
         except Exception:
@@ -209,8 +223,10 @@ class PluginInstance:
             return
         self.started = True
         self.inst_db_tables = None
-        self.log.info(f"Started instance of {self.loader.meta.id} v{self.loader.meta.version} "
-                      f"with user {self.client.id}")
+        self.log.info(
+            f"Started instance of {self.loader.meta.id} v{self.loader.meta.version} "
+            f"with user {self.client.id}"
+        )
 
     async def stop(self) -> None:
         if not self.started:
@@ -226,8 +242,7 @@ class PluginInstance:
         self.inst_db_tables = None
 
     @classmethod
-    def get(cls, instance_id: str, db_instance: Optional[DBPlugin] = None
-            ) -> Optional['PluginInstance']:
+    def get(cls, instance_id: str, db_instance: DBPlugin | None = None) -> PluginInstance | None:
         try:
             return cls.cache[instance_id]
         except KeyError:
@@ -237,7 +252,7 @@ class PluginInstance:
             return PluginInstance(db_instance)
 
     @classmethod
-    def all(cls) -> Iterable['PluginInstance']:
+    def all(cls) -> Iterable[PluginInstance]:
         return (cls.get(plugin.id, plugin) for plugin in DBPlugin.all())
 
     def update_id(self, new_id: str) -> None:
@@ -317,8 +332,9 @@ class PluginInstance:
     # endregion
 
 
-def init(config: Config, webserver: 'MaubotServer', loop: AbstractEventLoop
-         ) -> Iterable[PluginInstance]:
+def init(
+    config: Config, webserver: MaubotServer, loop: AbstractEventLoop
+) -> Iterable[PluginInstance]:
     PluginInstance.mb_config = config
     PluginInstance.loop = loop
     PluginInstance.webserver = webserver

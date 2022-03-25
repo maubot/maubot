@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,15 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Callable, Awaitable
-import logging
+from typing import Awaitable, Callable
 import base64
+import logging
 
 from aiohttp import web
 
-from .responses import resp
 from .auth import check_token
 from .base import get_config
+from .responses import resp
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
 log = logging.getLogger("maubot.server")
@@ -29,7 +29,7 @@ log = logging.getLogger("maubot.server")
 
 @web.middleware
 async def auth(request: web.Request, handler: Handler) -> web.Response:
-    subpath = request.path[len(get_config()["server.base_path"]):]
+    subpath = request.path[len(get_config()["server.base_path"]) :]
     if (
         subpath.startswith("/auth/")
         or subpath.startswith("/client/auth_external_sso/complete/")
@@ -52,15 +52,18 @@ async def error(request: web.Request, handler: Handler) -> web.Response:
             return resp.path_not_found
         elif ex.status_code == 405:
             return resp.method_not_allowed
-        return web.json_response({
-            "httpexception": {
-                "headers": {key: value for key, value in ex.headers.items()},
-                "class": type(ex).__name__,
-                "body": ex.text or base64.b64encode(ex.body)
+        return web.json_response(
+            {
+                "httpexception": {
+                    "headers": {key: value for key, value in ex.headers.items()},
+                    "class": type(ex).__name__,
+                    "body": ex.text or base64.b64encode(ex.body),
+                },
+                "error": f"Unhandled HTTP {ex.status}: {ex.text[:128] or 'non-text response'}",
+                "errcode": f"unhandled_http_{ex.status}",
             },
-            "error": f"Unhandled HTTP {ex.status}: {ex.text[:128] or 'non-text response'}",
-            "errcode": f"unhandled_http_{ex.status}",
-        }, status=ex.status)
+            status=ex.status,
+        )
     except Exception:
         log.exception("Error in handler")
         return resp.internal_server_error

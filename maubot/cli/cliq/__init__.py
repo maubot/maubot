@@ -1,2 +1,2 @@
 from .cliq import command, option
-from .validators import SPDXValidator, VersionValidator, PathValidator
+from .validators import PathValidator, SPDXValidator, VersionValidator

@@ -1,2 +1,2 @@
-from .abc import BasePluginLoader, PluginLoader, PluginClass, IDConflictError, PluginMeta
-from .zip import ZippedPluginLoader, MaubotZipImportError
+from .abc import BasePluginLoader, IDConflictError, PluginClass, PluginLoader, PluginMeta
+from .zip import MaubotZipImportError, ZippedPluginLoader

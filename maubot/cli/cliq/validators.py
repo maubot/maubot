@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -16,9 +16,9 @@
 from typing import Callable
 import os
 
-from packaging.version import Version, InvalidVersion
-from prompt_toolkit.validation import Validator, ValidationError
+from packaging.version import InvalidVersion, Version
 from prompt_toolkit.document import Document
+from prompt_toolkit.validation import ValidationError, Validator
 import click
 
 from ..util import spdx as spdxlib

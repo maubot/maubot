@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -20,17 +20,39 @@ from colorama import Fore
 from yarl import URL
 import aiohttp
 
-from ..config import save_config, config
 from ..cliq import cliq
+from ..config import config, save_config
 
 
 @cliq.command(help="Log in to a Maubot instance")
-@cliq.option("-u", "--username", help="The username of your account", default=os.environ.get("USER", None), required=True)
-@cliq.option("-p", "--password", help="The password to your account", inq_type="password", required=True)
-@cliq.option("-s", "--server", help="The server to log in to", default="http://localhost:29316", required=True)
-@cliq.option("-a", "--alias", help="Alias to reference the server without typing the full URL", default="", required=False)
+@cliq.option(
+    "-u",
+    "--username",
+    help="The username of your account",
+    default=os.environ.get("USER", None),
+    required=True,
+)
+@cliq.option(
+    "-p", "--password", help="The password to your account", inq_type="password", required=True
+)
+@cliq.option(
+    "-s",
+    "--server",
+    help="The server to log in to",
+    default="http://localhost:29316",
+    required=True,
+)
+@cliq.option(
+    "-a",
+    "--alias",
+    help="Alias to reference the server without typing the full URL",
+    default="",
+    required=False,
+)
 @cliq.with_http
-async def login(server: str, username: str, password: str, alias: str, sess: aiohttp.ClientSession) -> None:
+async def login(
+    server: str, username: str, password: str, alias: str, sess: aiohttp.ClientSession
+) -> None:
     data = {
         "username": username,
         "password": password,

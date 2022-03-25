@@ -1,0 +1,26 @@
+name: Python lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - uses: isort/isort-action@master
+      with:
+        sortPaths: "./maubot"
+    - uses: psf/black@stable
+      with:
+        src: "./maubot"
+        version: "22.1.0"
+    - name: pre-commit
+      run: |
+        pip install pre-commit
+        pre-commit run -av trailing-whitespace
+        pre-commit run -av end-of-file-fixer
+        pre-commit run -av check-yaml
+        pre-commit run -av check-added-large-files

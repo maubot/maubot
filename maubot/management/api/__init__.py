@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,13 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
 from asyncio import AbstractEventLoop
 import importlib
 
+from aiohttp import web
+
 from ...config import Config
-from .base import routes, get_config, set_config, set_loop
 from .auth import check_token
+from .base import get_config, routes, set_config, set_loop
 from .middleware import auth, error
 
 
@@ -30,9 +31,11 @@ def features(request: web.Request) -> web.Response:
     if err is None:
         return web.json_response(data)
     else:
-        return web.json_response({
-            "login": data["login"],
-        })
+        return web.json_response(
+            {
+                "login": data["login"],
+            }
+        )
 
 
 def init(cfg: Config, loop: AbstractEventLoop) -> web.Application:

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,11 +13,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import List
-import os.path
+from __future__ import annotations
+
 import os
+import os.path
 
 from ..loader import BasePluginLoader
+
 
 class FileSystemLoader(BasePluginLoader):
     def __init__(self, path: str) -> None:
@@ -34,8 +36,8 @@ class FileSystemLoader(BasePluginLoader):
     async def read_file(self, path: str) -> bytes:
         return self.sync_read_file(path)
 
-    def sync_list_files(self, directory: str) -> List[str]:
+    def sync_list_files(self, directory: str) -> list[str]:
         return os.listdir(os.path.join(self.path, directory))
 
-    async def list_files(self, directory: str) -> List[str]:
+    async def list_files(self, directory: str) -> list[str]:
         return self.sync_list_files(directory)

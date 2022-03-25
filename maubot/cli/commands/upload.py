@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -43,8 +43,10 @@ async def upload_file(sess: aiohttp.ClientSession, file: IO, server: str) -> Non
     async with sess.post(url, data=file, headers=headers) as resp:
         if resp.status in (200, 201):
             data = await resp.json()
-            print(f"{Fore.GREEN}Plugin {Fore.CYAN}{data['id']} v{data['version']}{Fore.GREEN} "
-                  f"uploaded to {Fore.CYAN}{server}{Fore.GREEN} successfully.{Fore.RESET}")
+            print(
+                f"{Fore.GREEN}Plugin {Fore.CYAN}{data['id']} v{data['version']}{Fore.GREEN} "
+                f"uploaded to {Fore.CYAN}{server}{Fore.GREEN} successfully.{Fore.RESET}"
+            )
         else:
             try:
                 err = await resp.json()

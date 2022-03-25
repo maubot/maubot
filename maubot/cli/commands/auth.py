@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import webbrowser
 import json
+import webbrowser
 
 from colorama import Fore
 from yarl import URL
@@ -26,12 +26,16 @@ from ..cliq import cliq
 history_count: int = 10
 
 friendly_errors = {
-    "server_not_found": "Registration target server not found.\n\n"
-                        "To log in or register through maubot, you must add the server to the\n"
-                        "homeservers section in the config. If you only want to log in,\n"
-                        "leave the `secret` field empty.",
-    "registration_no_sso": "The register operation is only for registering with a password.\n\n"
-                           "To register with SSO, simply leave out the --register flag.",
+    "server_not_found": (
+        "Registration target server not found.\n\n"
+        "To log in or register through maubot, you must add the server to the\n"
+        "homeservers section in the config. If you only want to log in,\n"
+        "leave the `secret` field empty."
+    ),
+    "registration_no_sso": (
+        "The register operation is only for registering with a password.\n\n"
+        "To register with SSO, simply leave out the --register flag."
+    ),
 }
 
 
@@ -46,26 +50,58 @@ async def list_servers(server: str, sess: aiohttp.ClientSession) -> None:
 
 @cliq.command(help="Log into a Matrix account via the Maubot server")
 @cliq.option("-h", "--homeserver", help="The homeserver to log into", required_unless="list")
-@cliq.option("-u", "--username", help="The username to log in with",
-             required_unless=["list", "sso"])
-@cliq.option("-p", "--password", help="The password to log in with", inq_type="password",
-             required_unless=["list", "sso"])
-@cliq.option("-s", "--server", help="The maubot instance to log in through", default="",
-             required=False, prompt=False)
-@click.option("-r", "--register", help="Register instead of logging in", is_flag=True,
-              default=False)
-@click.option("-c", "--update-client", help="Instead of returning the access token, "
-                                            "create or update a client in maubot using it",
-              is_flag=True, default=False)
+@cliq.option(
+    "-u", "--username", help="The username to log in with", required_unless=["list", "sso"]
+)
+@cliq.option(
+    "-p",
+    "--password",
+    help="The password to log in with",
+    inq_type="password",
+    required_unless=["list", "sso"],
+)
+@cliq.option(
+    "-s",
+    "--server",
+    help="The maubot instance to log in through",
+    default="",
+    required=False,
+    prompt=False,
+)
+@click.option(
+    "-r", "--register", help="Register instead of logging in", is_flag=True, default=False
+)
+@click.option(
+    "-c",
+    "--update-client",
+    help="Instead of returning the access token, " "create or update a client in maubot using it",
+    is_flag=True,
+    default=False,
+)
 @click.option("-l", "--list", help="List available homeservers", is_flag=True, default=False)
-@click.option("-o", "--sso", help="Use single sign-on instead of password login",
-              is_flag=True, default=False)
-@click.option("-n", "--device-name", help="The initial e2ee device displayname (only for login)",
-              default="Maubot", required=False)
+@click.option(
+    "-o", "--sso", help="Use single sign-on instead of password login", is_flag=True, default=False
+)
+@click.option(
+    "-n",
+    "--device-name",
+    help="The initial e2ee device displayname (only for login)",
+    default="Maubot",
+    required=False,
+)
 @cliq.with_authenticated_http
-async def auth(homeserver: str, username: str, password: str, server: str, register: bool,
-               list: bool, update_client: bool, device_name: str, sso: bool,
-               sess: aiohttp.ClientSession) -> None:
+async def auth(
+    homeserver: str,
+    username: str,
+    password: str,
+    server: str,
+    register: bool,
+    list: bool,
+    update_client: bool,
+    device_name: str,
+    sso: bool,
+    sess: aiohttp.ClientSession,
+) -> None:
     if list:
         await list_servers(server, sess)
         return
@@ -88,8 +124,9 @@ async def auth(homeserver: str, username: str, password: str, server: str, regis
             await print_response(resp, is_register=register)
 
 
-async def wait_sso(resp: aiohttp.ClientResponse, sess: aiohttp.ClientSession,
-                   server: str, homeserver: str) -> None:
+async def wait_sso(
+    resp: aiohttp.ClientResponse, sess: aiohttp.ClientSession, server: str, homeserver: str
+) -> None:
     data = await resp.json()
     sso_url, reg_id = data["sso_url"], data["id"]
     print(f"{Fore.GREEN}Opening {Fore.CYAN}{sso_url}{Fore.RESET}")
@@ -110,9 +147,11 @@ async def print_response(resp: aiohttp.ClientResponse, is_register: bool) -> Non
     elif resp.status in (201, 202):
         data = await resp.json()
         action = "created" if resp.status == 201 else "updated"
-        print(f"{Fore.GREEN}Successfully {action} client for "
-              f"{Fore.CYAN}{data['id']}{Fore.GREEN} / "
-              f"{Fore.CYAN}{data['device_id']}{Fore.GREEN}.{Fore.RESET}")
+        print(
+            f"{Fore.GREEN}Successfully {action} client for "
+            f"{Fore.CYAN}{data['id']}{Fore.GREEN} / "
+            f"{Fore.CYAN}{data['device_id']}{Fore.GREEN}.{Fore.RESET}"
+        )
     else:
         await print_error(resp, is_register)
 

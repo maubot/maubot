@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,13 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Union, TYPE_CHECKING
+from __future__ import annotations
+
 from datetime import datetime
 
 from aiohttp import web
-from sqlalchemy import Table, Column, asc, desc, exc
-from sqlalchemy.orm import Query
+from sqlalchemy import Column, Table, asc, desc, exc
 from sqlalchemy.engine.result import ResultProxy, RowProxy
+from sqlalchemy.orm import Query
 
 from ...instance import PluginInstance
 from .base import routes
@@ -34,23 +35,26 @@ async def get_database(request: web.Request) -> web.Response:
         return resp.instance_not_found
     elif not instance.inst_db:
         return resp.plugin_has_no_database
-    if TYPE_CHECKING:
-        table: Table
-        column: Column
-    return web.json_response({
-        table.name: {
-            "columns": {
-                column.name: {
-                    "type": str(column.type),
-                    "unique": column.unique or False,
-                    "default": column.default,
-                    "nullable": column.nullable,
-                    "primary": column.primary_key,
-                    "autoincrement": column.autoincrement,
-                } for column in table.columns
-            },
-        } for table in instance.get_db_tables().values()
-    })
+    table: Table
+    column: Column
+    return web.json_response(
+        {
+            table.name: {
+                "columns": {
+                    column.name: {
+                        "type": str(column.type),
+                        "unique": column.unique or False,
+                        "default": column.default,
+                        "nullable": column.nullable,
+                        "primary": column.primary_key,
+                        "autoincrement": column.autoincrement,
+                    }
+                    for column in table.columns
+                },
+            }
+            for table in instance.get_db_tables().values()
+        }
+    )
 
 
 def check_type(val):
@@ -74,9 +78,12 @@ async def get_table(request: web.Request) -> web.Response:
         return resp.table_not_found
     try:
         order = [tuple(order.split(":")) for order in request.query.getall("order")]
-        order = [(asc if sort.lower() == "asc" else desc)(table.columns[column])
-                 if sort else table.columns[column]
-                 for column, sort in order]
+        order = [
+            (asc if sort.lower() == "asc" else desc)(table.columns[column])
+            if sort
+            else table.columns[column]
+            for column, sort in order
+        ]
     except KeyError:
         order = []
     limit = int(request.query.get("limit", 100))
@@ -96,12 +103,12 @@ async def query(request: web.Request) -> web.Response:
         sql_query = data["query"]
     except KeyError:
         return resp.query_missing
-    return execute_query(instance, sql_query,
-                         rows_as_dict=data.get("rows_as_dict", False))
+    return execute_query(instance, sql_query, rows_as_dict=data.get("rows_as_dict", False))
 
 
-def execute_query(instance: PluginInstance, sql_query: Union[str, Query],
-                  rows_as_dict: bool = False) -> web.Response:
+def execute_query(
+    instance: PluginInstance, sql_query: str | Query, rows_as_dict: bool = False
+) -> web.Response:
     try:
         res: ResultProxy = instance.inst_db.execute(sql_query)
     except exc.IntegrityError as e:
@@ -114,10 +121,14 @@ def execute_query(instance: PluginInstance, sql_query: Union[str, Query],
     }
     if res.returns_rows:
         row: RowProxy
-        data["rows"] = [({key: check_type(value) for key, value in row.items()}
-                         if rows_as_dict
-                         else [check_type(value) for value in row])
-                        for row in res]
+        data["rows"] = [
+            (
+                {key: check_type(value) for key, value in row.items()}
+                if rows_as_dict
+                else [check_type(value) for value in row]
+            )
+            for row in res
+        ]
         data["columns"] = res.keys()
     else:
         data["rowcount"] = res.rowcount

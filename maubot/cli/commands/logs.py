@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -16,14 +16,14 @@
 from datetime import datetime
 import asyncio
 
+from aiohttp import ClientSession, WSMessage, WSMsgType
 from colorama import Fore
-from aiohttp import WSMsgType, WSMessage, ClientSession
 import click
 
 from mautrix.types import Obj
 
-from ..config import get_token
 from ..base import app
+from ..config import get_token
 
 history_count: int = 10
 
@@ -50,7 +50,7 @@ def logs(server: str, tail: int) -> None:
 def parsedate(entry: Obj) -> None:
     i = entry.time.index("+")
     i = entry.time.index(":", i)
-    entry.time = entry.time[:i] + entry.time[i + 1:]
+    entry.time = entry.time[:i] + entry.time[i + 1 :]
     entry.time = datetime.strptime(entry.time, "%Y-%m-%dT%H:%M:%S.%f%z")
 
 
@@ -66,13 +66,16 @@ levelcolors = {
 def print_entry(entry: dict) -> None:
     entry = Obj(**entry)
     parsedate(entry)
-    print("{levelcolor}[{date}] [{level}@{logger}] {message}{resetcolor}"
-          .format(date=entry.time.strftime("%Y-%m-%d %H:%M:%S"),
-                  level=entry.levelname,
-                  levelcolor=levelcolors.get(entry.levelname, ""),
-                  resetcolor=Fore.RESET,
-                  logger=entry.name,
-                  message=entry.msg))
+    print(
+        "{levelcolor}[{date}] [{level}@{logger}] {message}{resetcolor}".format(
+            date=entry.time.strftime("%Y-%m-%d %H:%M:%S"),
+            level=entry.levelname,
+            levelcolor=levelcolors.get(entry.levelname, ""),
+            resetcolor=Fore.RESET,
+            logger=entry.name,
+            message=entry.msg,
+        )
+    )
     if entry.exc_info:
         print(entry.exc_info)
 

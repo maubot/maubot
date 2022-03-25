@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from __future__ import annotations
 
 import sqlalchemy as sql
 
+from mautrix.types import FilterID, SyncToken, UserID
 from mautrix.util.db import Base
-from mautrix.types import UserID, SyncToken, FilterID
 
 
 class NextBatch(Base):
@@ -29,5 +29,5 @@ class NextBatch(Base):
     filter_id: FilterID = sql.Column(sql.String(255))
 
     @classmethod
-    def get(cls, user_id: UserID) -> Optional['NextBatch']:
+    def get(cls, user_id: UserID) -> NextBatch | None:
         return cls._select_one_or_none(cls.c.user_id == user_id)

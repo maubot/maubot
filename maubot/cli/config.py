@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,13 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Tuple, Optional, Dict, Any
+from __future__ import annotations
+
+from typing import Any
 import json
 import os
 
 from colorama import Fore
 
-config: Dict[str, Any] = {
+config: dict[str, Any] = {
     "servers": {},
     "aliases": {},
     "default_server": None,
@@ -27,9 +29,9 @@ config: Dict[str, Any] = {
 configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ.get("HOME"), ".config"))
 
 
-def get_default_server() -> Tuple[Optional[str], Optional[str]]:
+def get_default_server() -> tuple[str | None, str | None]:
     try:
-        server: Optional[str] = config["default_server"]
+        server: str < None = config["default_server"]
     except KeyError:
         server = None
     if server is None:
@@ -38,7 +40,7 @@ def get_default_server() -> Tuple[Optional[str], Optional[str]]:
     return server, _get_token(server)
 
 
-def get_token(server: str) -> Tuple[Optional[str], Optional[str]]:
+def get_token(server: str) -> tuple[str | None, str | None]:
     if not server:
         return get_default_server()
     if server in config["aliases"]:
@@ -46,14 +48,14 @@ def get_token(server: str) -> Tuple[Optional[str], Optional[str]]:
     return server, _get_token(server)
 
 
-def _resolve_alias(alias: str) -> Optional[str]:
+def _resolve_alias(alias: str) -> str | None:
     try:
         return config["aliases"][alias]
     except KeyError:
         return None
 
 
-def _get_token(server: str) -> Optional[str]:
+def _get_token(server: str) -> str | None:
     try:
         return config["servers"][server]
     except KeyError:

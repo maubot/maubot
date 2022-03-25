@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,12 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Optional
-import zipfile
-import pkg_resources
-import json
+from __future__ import annotations
 
-spdx_list: Optional[Dict[str, Dict[str, str]]] = None
+import json
+import zipfile
+
+import pkg_resources
+
+spdx_list: dict[str, dict[str, str]] | None = None
 
 
 def load() -> None:
@@ -31,7 +33,7 @@ def load() -> None:
                 spdx_list = json.load(file)
 
 
-def get(id: str) -> Dict[str, str]:
+def get(id: str) -> dict[str, str]:
     if not spdx_list:
         load()
     return spdx_list[id.lower()]

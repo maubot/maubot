@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web, client as http
+from aiohttp import client as http, web
 
 from ...client import Client
 from .base import routes
@@ -45,8 +45,9 @@ async def proxy(request: web.Request) -> web.StreamResponse:
             headers["X-Forwarded-For"] = f"{host}:{port}"
 
     data = await request.read()
-    async with http.request(request.method, f"{client.homeserver}/{path}", headers=headers,
-                            params=query, data=data) as proxy_resp:
+    async with http.request(
+        request.method, f"{client.homeserver}/{path}", headers=headers, params=query, data=data
+    ) as proxy_resp:
         response = web.StreamResponse(status=proxy_resp.status, headers=proxy_resp.headers)
         await response.prepare(request)
         async for chunk in proxy_resp.content.iter_chunked(PROXY_CHUNK_SIZE):

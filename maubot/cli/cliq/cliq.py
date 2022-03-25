@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,22 +13,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Any, Callable, Union, Optional, Type
-import functools
-import traceback
-import inspect
+from __future__ import annotations
+
+from typing import Any, Callable
 import asyncio
+import functools
+import inspect
+import traceback
 
-import aiohttp
-
+from colorama import Fore
 from prompt_toolkit.validation import Validator
 from questionary import prompt
-from colorama import Fore
+import aiohttp
 import click
 
 from ..base import app
 from ..config import get_token
-from .validators import Required, ClickValidator
+from .validators import ClickValidator, Required
 
 
 def with_http(func):
@@ -105,7 +106,7 @@ def command(help: str) -> Callable[[Callable], Callable]:
     return decorator
 
 
-def yesno(val: str) -> Optional[bool]:
+def yesno(val: str) -> bool | None:
     if not val:
         return None
     elif isinstance(val, bool):
@@ -119,11 +120,20 @@ def yesno(val: str) -> Optional[bool]:
 yesno.__name__ = "yes/no"
 
 
-def option(short: str, long: str, message: str = None, help: str = None,
-           click_type: Union[str, Callable[[str], Any]] = None, inq_type: str = None,
-           validator: Type[Validator] = None, required: bool = False,
-           default: Union[str, bool, None] = None, is_flag: bool = False, prompt: bool = True,
-           required_unless: Union[str, list, dict] = None) -> Callable[[Callable], Callable]:
+def option(
+    short: str,
+    long: str,
+    message: str = None,
+    help: str = None,
+    click_type: str | Callable[[str], Any] = None,
+    inq_type: str = None,
+    validator: type[Validator] = None,
+    required: bool = False,
+    default: str | bool | None = None,
+    is_flag: bool = False,
+    prompt: bool = True,
+    required_unless: str | list | dict = None,
+) -> Callable[[Callable], Callable]:
     if not message:
         message = long[2].upper() + long[3:]
 
@@ -139,9 +149,9 @@ def option(short: str, long: str, message: str = None, help: str = None,
         if not hasattr(func, "__inquirer_questions__"):
             func.__inquirer_questions__ = {}
         q = {
-            "type": (inq_type if isinstance(inq_type, str)
-                     else ("input" if not is_flag
-                           else "confirm")),
+            "type": (
+                inq_type if isinstance(inq_type, str) else ("input" if not is_flag else "confirm")
+            ),
             "name": long[2:],
             "message": message,
         }

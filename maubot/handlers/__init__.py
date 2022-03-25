@@ -1,1 +1,1 @@
-from . import event, command, web
+from . import command, event, web

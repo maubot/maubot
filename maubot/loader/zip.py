@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,22 +13,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, List, Type, Tuple, Optional
-from zipfile import ZipFile, BadZipFile
-from time import time
-import logging
-import sys
-import os
+from __future__ import annotations
 
-from ruamel.yaml import YAML, YAMLError
+from time import time
+from zipfile import BadZipFile, ZipFile
+import logging
+import os
+import sys
+
 from packaging.version import Version
+from ruamel.yaml import YAML, YAMLError
 
 from mautrix.types import SerializerError
 
-from ..lib.zipimport import zipimporter, ZipImportError
-from ..plugin_base import Plugin
 from ..config import Config
-from .abc import PluginLoader, PluginClass, PluginMeta, IDConflictError
+from ..lib.zipimport import ZipImportError, zipimporter
+from ..plugin_base import Plugin
+from .abc import IDConflictError, PluginClass, PluginLoader, PluginMeta
 
 yaml = YAML()
 
@@ -50,23 +51,25 @@ class MaubotZipLoadError(MaubotZipImportError):
 
 
 class ZippedPluginLoader(PluginLoader):
-    path_cache: Dict[str, 'ZippedPluginLoader'] = {}
+    path_cache: dict[str, ZippedPluginLoader] = {}
     log: logging.Logger = logging.getLogger("maubot.loader.zip")
     trash_path: str = "delete"
-    directories: List[str] = []
+    directories: list[str] = []
 
-    path: str
-    meta: PluginMeta
-    main_class: str
-    main_module: str
-    _loaded: Type[PluginClass]
-    _importer: zipimporter
-    _file: ZipFile
+    path: str | None
+    meta: PluginMeta | None
+    main_class: str | None
+    main_module: str | None
+    _loaded: type[PluginClass] | None
+    _importer: zipimporter | None
+    _file: ZipFile | None
 
     def __init__(self, path: str) -> None:
         super().__init__()
         self.path = path
         self.meta = None
+        self.main_class = None
+        self.main_module = None
         self._loaded = None
         self._importer = None
         self._file = None
@@ -75,7 +78,8 @@ class ZippedPluginLoader(PluginLoader):
         try:
             existing = self.id_cache[self.meta.id]
             raise IDConflictError(
-                f"Plugin with id {self.meta.id} already loaded from {existing.source}")
+                f"Plugin with id {self.meta.id} already loaded from {existing.source}"
+            )
         except KeyError:
             pass
         self.path_cache[self.path] = self
@@ -83,13 +87,10 @@ class ZippedPluginLoader(PluginLoader):
         self.log.debug(f"Preloaded plugin {self.meta.id} from {self.path}")
 
     def to_dict(self) -> dict:
-        return {
-            **super().to_dict(),
-            "path": self.path
-        }
+        return {**super().to_dict(), "path": self.path}
 
     @classmethod
-    def get(cls, path: str) -> 'ZippedPluginLoader':
+    def get(cls, path: str) -> ZippedPluginLoader:
         path = os.path.abspath(path)
         try:
             return cls.path_cache[path]
@@ -101,10 +102,12 @@ class ZippedPluginLoader(PluginLoader):
         return self.path
 
     def __repr__(self) -> str:
-        return ("<ZippedPlugin "
-                f"path='{self.path}' "
-                f"meta={self.meta} "
-                f"loaded={self._loaded is not None}>")
+        return (
+            "<ZippedPlugin "
+            f"path='{self.path}' "
+            f"meta={self.meta} "
+            f"loaded={self._loaded is not None}>"
+        )
 
     def sync_read_file(self, path: str) -> bytes:
         return self._file.read(path)
@@ -112,16 +115,19 @@ class ZippedPluginLoader(PluginLoader):
     async def read_file(self, path: str) -> bytes:
         return self.sync_read_file(path)
 
-    def sync_list_files(self, directory: str) -> List[str]:
+    def sync_list_files(self, directory: str) -> list[str]:
         directory = directory.rstrip("/")
-        return [file.filename for file in self._file.filelist
-                if os.path.dirname(file.filename) == directory]
+        return [
+            file.filename
+            for file in self._file.filelist
+            if os.path.dirname(file.filename) == directory
+        ]
 
-    async def list_files(self, directory: str) -> List[str]:
+    async def list_files(self, directory: str) -> list[str]:
         return self.sync_list_files(directory)
 
     @staticmethod
-    def _read_meta(source) -> Tuple[ZipFile, PluginMeta]:
+    def _read_meta(source) -> tuple[ZipFile, PluginMeta]:
         try:
             file = ZipFile(source)
             data = file.read("maubot.yaml")
@@ -142,7 +148,7 @@ class ZippedPluginLoader(PluginLoader):
         return file, meta
 
     @classmethod
-    def verify_meta(cls, source) -> Tuple[str, Version]:
+    def verify_meta(cls, source) -> tuple[str, Version]:
         _, meta = cls._read_meta(source)
         return meta.id, meta.version
 
@@ -173,24 +179,24 @@ class ZippedPluginLoader(PluginLoader):
             code = importer.get_code(self.main_module.replace(".", "/"))
             if self.main_class not in code.co_names:
                 raise MaubotZipPreLoadError(
-                    f"Main class {self.main_class} not in {self.main_module}")
+                    f"Main class {self.main_class} not in {self.main_module}"
+                )
         except ZipImportError as e:
-            raise MaubotZipPreLoadError(
-                f"Main module {self.main_module} not found in file") from e
+            raise MaubotZipPreLoadError(f"Main module {self.main_module} not found in file") from e
         for module in self.meta.modules:
             try:
                 importer.find_module(module)
             except ZipImportError as e:
                 raise MaubotZipPreLoadError(f"Module {module} not found in file") from e
 
-    async def load(self, reset_cache: bool = False) -> Type[PluginClass]:
+    async def load(self, reset_cache: bool = False) -> type[PluginClass]:
         try:
             return self._load(reset_cache)
         except MaubotZipImportError:
             self.log.exception(f"Failed to load {self.meta.id} v{self.meta.version}")
             raise
 
-    def _load(self, reset_cache: bool = False) -> Type[PluginClass]:
+    def _load(self, reset_cache: bool = False) -> type[PluginClass]:
         if self._loaded is not None and not reset_cache:
             return self._loaded
         self._load_meta()
@@ -219,7 +225,7 @@ class ZippedPluginLoader(PluginLoader):
         self.log.debug(f"Loaded and imported plugin {self.meta.id} from {self.path}")
         return plugin
 
-    async def reload(self, new_path: Optional[str] = None) -> Type[PluginClass]:
+    async def reload(self, new_path: str | None = None) -> type[PluginClass]:
         await self.unload()
         if new_path is not None:
             self.path = new_path
@@ -251,7 +257,7 @@ class ZippedPluginLoader(PluginLoader):
         self.path = None
 
     @classmethod
-    def trash(cls, file_path: str, new_name: Optional[str] = None, reason: str = "error") -> None:
+    def trash(cls, file_path: str, new_name: str | None = None, reason: str = "error") -> None:
         if cls.trash_path == "delete":
             os.remove(file_path)
         else:

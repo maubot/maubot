@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,38 +13,50 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Type, Optional, TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from abc import ABC
 from asyncio import AbstractEventLoop
 
-from sqlalchemy.engine.base import Engine
 from aiohttp import ClientSession
+from sqlalchemy.engine.base import Engine
 from yarl import URL
 
 if TYPE_CHECKING:
-    from mautrix.util.logging import TraceLogger
     from mautrix.util.config import BaseProxyConfig
+    from mautrix.util.logging import TraceLogger
+
     from .client import MaubotMatrixClient
-    from .plugin_server import PluginWebApp
     from .loader import BasePluginLoader
+    from .plugin_server import PluginWebApp
 
 
 class Plugin(ABC):
-    client: 'MaubotMatrixClient'
+    client: MaubotMatrixClient
     http: ClientSession
     id: str
-    log: 'TraceLogger'
+    log: TraceLogger
     loop: AbstractEventLoop
-    loader: 'BasePluginLoader'
-    config: Optional['BaseProxyConfig']
-    database: Optional[Engine]
-    webapp: Optional['PluginWebApp']
-    webapp_url: Optional[URL]
+    loader: BasePluginLoader
+    config: BaseProxyConfig | None
+    database: Engine | None
+    webapp: PluginWebApp | None
+    webapp_url: URL | None
 
-    def __init__(self, client: 'MaubotMatrixClient', loop: AbstractEventLoop, http: ClientSession,
-                 instance_id: str, log: 'TraceLogger', config: Optional['BaseProxyConfig'],
-                 database: Optional[Engine], webapp: Optional['PluginWebApp'],
-                 webapp_url: Optional[str], loader: 'BasePluginLoader') -> None:
+    def __init__(
+        self,
+        client: MaubotMatrixClient,
+        loop: AbstractEventLoop,
+        http: ClientSession,
+        instance_id: str,
+        log: TraceLogger,
+        config: BaseProxyConfig | None,
+        database: Engine | None,
+        webapp: PluginWebApp | None,
+        webapp_url: str | None,
+        loader: BasePluginLoader,
+    ) -> None:
         self.client = client
         self.loop = loop
         self.http = http
@@ -74,8 +86,10 @@ class Plugin(ABC):
             else:
                 if len(web_handlers) > 0 and self.webapp is None:
                     if not warned_webapp:
-                        self.log.warning(f"{type(obj).__name__} has web handlers, but the webapp"
-                                         " feature isn't enabled in the plugin's maubot.yaml")
+                        self.log.warning(
+                            f"{type(obj).__name__} has web handlers, but the webapp"
+                            " feature isn't enabled in the plugin's maubot.yaml"
+                        )
                     warned_webapp = True
                     continue
                 for method, path, kwargs in web_handlers:
@@ -107,7 +121,7 @@ class Plugin(ABC):
         pass
 
     @classmethod
-    def get_config_class(cls) -> Optional[Type['BaseProxyConfig']]:
+    def get_config_class(cls) -> type[BaseProxyConfig] | None:
         return None
 
     def on_external_config_update(self) -> None:

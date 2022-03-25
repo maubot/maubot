@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,36 +13,40 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Tuple, Dict
-import logging
+from __future__ import annotations
+
 import asyncio
 import json
-from yarl import URL
+import logging
 
-from aiohttp import web, hdrs
+from aiohttp import hdrs, web
 from aiohttp.abc import AbstractAccessLogger
+from yarl import URL
 import pkg_resources
 
-from mautrix.api import PathBuilder, Method
+from mautrix.api import Method, PathBuilder
 
-from .config import Config
-from .plugin_server import PrefixResource, PluginWebApp
 from .__meta__ import __version__
+from .config import Config
+from .plugin_server import PluginWebApp, PrefixResource
 
 
 class AccessLogger(AbstractAccessLogger):
     def log(self, request: web.Request, response: web.Response, time: int):
-        self.logger.info(f'{request.remote} "{request.method} {request.path} '
-                         f'{response.status} {response.body_length} '
-                         f'in {round(time, 4)}s"')
+        self.logger.info(
+            f'{request.remote} "{request.method} {request.path} '
+            f"{response.status} {response.body_length} "
+            f'in {round(time, 4)}s"'
+        )
 
 
 class MaubotServer:
     log: logging.Logger = logging.getLogger("maubot.server")
-    plugin_routes: Dict[str, PluginWebApp]
+    plugin_routes: dict[str, PluginWebApp]
 
-    def __init__(self, management_api: web.Application, config: Config,
-                 loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(
+        self, management_api: web.Application, config: Config, loop: asyncio.AbstractEventLoop
+    ) -> None:
         self.loop = loop or asyncio.get_event_loop()
         self.app = web.Application(loop=self.loop, client_max_size=100 * 1024 * 1024)
         self.config = config
@@ -57,13 +61,15 @@ class MaubotServer:
     async def handle_plugin_path(self, request: web.Request) -> web.StreamResponse:
         for path, app in self.plugin_routes.items():
             if request.path.startswith(path):
-                request = request.clone(rel_url=request.rel_url
-                                        .with_path(request.rel_url.path[len(path):])
-                                        .with_query(request.query_string))
+                request = request.clone(
+                    rel_url=request.rel_url.with_path(
+                        request.rel_url.path[len(path) :]
+                    ).with_query(request.query_string)
+                )
                 return await app.handle(request)
         return web.Response(status=404)
 
-    def get_instance_subapp(self, instance_id: str) -> Tuple[PluginWebApp, str]:
+    def get_instance_subapp(self, instance_id: str) -> tuple[PluginWebApp, str]:
         subpath = self.config["server.plugin_base_path"] + instance_id
         url = self.config["server.public_url"] + subpath
         try:
@@ -94,8 +100,9 @@ class MaubotServer:
         ui_base = self.config["server.ui_base_path"]
         if ui_base == "/":
             ui_base = ""
-        directory = (self.config["server.override_resource_path"]
-                     or pkg_resources.resource_filename("maubot", "management/frontend/build"))
+        directory = self.config[
+            "server.override_resource_path"
+        ] or pkg_resources.resource_filename("maubot", "management/frontend/build")
         self.app.router.add_static(f"{ui_base}/static", f"{directory}/static")
         self.setup_static_root_files(directory, ui_base)
 
@@ -115,8 +122,9 @@ class MaubotServer:
             raise web.HTTPFound(f"{ui_base}/")
 
         self.app.middlewares.append(frontend_404_middleware)
-        self.app.router.add_get(f"{ui_base}/", lambda _: web.Response(body=index_html,
-                                                                      content_type="text/html"))
+        self.app.router.add_get(
+            f"{ui_base}/", lambda _: web.Response(body=index_html, content_type="text/html")
+        )
         self.app.router.add_get(ui_base, ui_base_redirect)
 
     def setup_static_root_files(self, directory: str, ui_base: str) -> None:
@@ -128,8 +136,9 @@ class MaubotServer:
         for file, mime in files.items():
             with open(f"{directory}/{file}", "rb") as stream:
                 data = stream.read()
-            self.app.router.add_get(f"{ui_base}/{file}", lambda _: web.Response(body=data,
-                                                                                content_type=mime))
+            self.app.router.add_get(
+                f"{ui_base}/{file}", lambda _: web.Response(body=data, content_type=mime)
+            )
 
         # also set up a resource path for the public url path prefix config
         # cut the prefix path from public_url
@@ -143,8 +152,12 @@ class MaubotServer:
         api_path = f"{public_url_path}{base_path}"
 
         path_prefix_response_body = json.dumps({"api_path": api_path.rstrip("/")})
-        self.app.router.add_get(f"{ui_base}/paths.json", lambda _: web.Response(body=path_prefix_response_body,
-                                                                                content_type="application/json"))
+        self.app.router.add_get(
+            f"{ui_base}/paths.json",
+            lambda _: web.Response(
+                body=path_prefix_response_body, content_type="application/json"
+            ),
+        )
 
     def add_route(self, method: Method, path: PathBuilder, handler) -> None:
         self.app.router.add_route(method.value, str(path), handler)
@@ -161,9 +174,7 @@ class MaubotServer:
 
     @staticmethod
     async def version(_: web.Request) -> web.Response:
-        return web.json_response({
-            "version": __version__
-        })
+        return web.json_response({"version": __version__})
 
     async def handle_transaction(self, request: web.Request) -> web.Response:
         return web.Response(status=501)

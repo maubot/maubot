@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,43 +13,53 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional, Type, cast
-import logging.config
-import importlib
+from __future__ import annotations
+
+from typing import cast
 import argparse
 import asyncio
+import copy
+import importlib
+import logging.config
 import os.path
 import signal
-import copy
 import sys
 
+from aiohttp import ClientSession, hdrs, web
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
-import sqlalchemy as sql
-from aiohttp import web, hdrs, ClientSession
 from yarl import URL
+import sqlalchemy as sql
 
-from mautrix.util.config import RecursiveDict, BaseMissingError
+from mautrix.types import (
+    EventType,
+    Filter,
+    FilterID,
+    Membership,
+    RoomEventFilter,
+    RoomFilter,
+    StrippedStateEvent,
+    SyncToken,
+)
+from mautrix.util.config import BaseMissingError, RecursiveDict
 from mautrix.util.db import Base
 from mautrix.util.logging import TraceLogger
-from mautrix.types import (Filter, RoomFilter, RoomEventFilter, StrippedStateEvent,
-                           EventType, Membership, FilterID, SyncToken)
 
+from ..__meta__ import __version__
+from ..lib.store_proxy import SyncStoreProxy
+from ..loader import PluginMeta
+from ..matrix import MaubotMatrixClient
 from ..plugin_base import Plugin
 from ..plugin_server import PluginWebApp, PrefixResource
-from ..loader import PluginMeta
 from ..server import AccessLogger
-from ..matrix import MaubotMatrixClient
-from ..lib.store_proxy import SyncStoreProxy
-from ..__meta__ import __version__
 from .config import Config
-from .loader import FileSystemLoader
 from .database import NextBatch
+from .loader import FileSystemLoader
 
 crypto_import_error = None
 
 try:
-    from mautrix.crypto import OlmMachine, PgCryptoStore, PgCryptoStateStore
+    from mautrix.crypto import OlmMachine, PgCryptoStateStore, PgCryptoStore
     from mautrix.util.async_db import Database as AsyncDatabase
 except ImportError as err:
     crypto_import_error = err
@@ -57,15 +67,32 @@ except ImportError as err:
 
 parser = argparse.ArgumentParser(
     description="A plugin-based Matrix bot system -- standalone mode.",
-    prog="python -m maubot.standalone")
-parser.add_argument("-c", "--config", type=str, default="config.yaml",
-                    metavar="<path>", help="the path to your config file")
-parser.add_argument("-b", "--base-config", type=str,
-                    default="pkg://maubot.standalone/example-config.yaml",
-                    metavar="<path>", help="the path to the example config "
-                                           "(for automatic config updates)")
-parser.add_argument("-m", "--meta", type=str, default="maubot.yaml",
-                    metavar="<path>", help="the path to your plugin metadata file")
+    prog="python -m maubot.standalone",
+)
+parser.add_argument(
+    "-c",
+    "--config",
+    type=str,
+    default="config.yaml",
+    metavar="<path>",
+    help="the path to your config file",
+)
+parser.add_argument(
+    "-b",
+    "--base-config",
+    type=str,
+    default="pkg://maubot.standalone/example-config.yaml",
+    metavar="<path>",
+    help="the path to the example config " "(for automatic config updates)",
+)
+parser.add_argument(
+    "-m",
+    "--meta",
+    type=str,
+    default="maubot.yaml",
+    metavar="<path>",
+    help="the path to your plugin metadata file",
+)
 args = parser.parse_args()
 
 config = Config(args.config, args.base_config)
@@ -92,7 +119,7 @@ else:
     module = meta.modules[0]
     main_class = meta.main_class
 bot_module = importlib.import_module(module)
-plugin: Type[Plugin] = getattr(bot_module, main_class)
+plugin: type[Plugin] = getattr(bot_module, main_class)
 loader = FileSystemLoader(os.path.dirname(args.meta))
 
 log.info(f"Initializing standalone {meta.id} v{meta.version} on maubot {__version__}")
@@ -110,8 +137,10 @@ access_token = config["user.credentials.access_token"]
 
 crypto_store = crypto_db = state_store = None
 if device_id and not OlmMachine:
-    log.warning("device_id set in config, but encryption dependencies not installed",
-                exc_info=crypto_import_error)
+    log.warning(
+        "device_id set in config, but encryption dependencies not installed",
+        exc_info=crypto_import_error,
+    )
 elif device_id:
     crypto_db = AsyncDatabase.create(config["database"], upgrade_table=PgCryptoStore.upgrade_table)
     crypto_store = PgCryptoStore(account_id=user_id, pickle_key="mau.crypto", db=crypto_db)
@@ -124,26 +153,24 @@ if not nb:
 
 bot_config = None
 if not meta.config and "base-config.yaml" in meta.extra_files:
-    log.warning("base-config.yaml in extra files, but config is not set to true. "
-                "Assuming legacy plugin and loading config.")
+    log.warning(
+        "base-config.yaml in extra files, but config is not set to true. "
+        "Assuming legacy plugin and loading config."
+    )
     meta.config = True
 if meta.config:
     log.debug("Loading config")
     config_class = plugin.get_config_class()
 
-
     def load() -> CommentedMap:
         return config["plugin_config"]
-
 
     def load_base() -> RecursiveDict[CommentedMap]:
         return RecursiveDict(config.load_base()["plugin_config"], CommentedMap)
 
-
     def save(data: RecursiveDict[CommentedMap]) -> None:
         config["plugin_config"] = data
         config.save()
-
 
     try:
         bot_config = config_class(load=load, load_base=load_base, save=save)
@@ -161,9 +188,11 @@ if meta.webapp:
 
     async def _handle_plugin_request(req: web.Request) -> web.StreamResponse:
         if req.path.startswith(web_base_path):
-            req = req.clone(rel_url=req.rel_url
-                            .with_path(req.rel_url.path[len(web_base_path):])
-                            .with_query(req.query_string))
+            req = req.clone(
+                rel_url=req.rel_url.with_path(req.rel_url.path[len(web_base_path) :]).with_query(
+                    req.query_string
+                )
+            )
             return await plugin_webapp.handle(req)
         return web.Response(status=404)
 
@@ -175,8 +204,8 @@ else:
 
 loop = asyncio.get_event_loop()
 
-client: Optional[MaubotMatrixClient] = None
-bot: Optional[Plugin] = None
+client: MaubotMatrixClient | None = None
+bot: Plugin | None = None
 
 
 async def main():
@@ -185,10 +214,17 @@ async def main():
     global client, bot
 
     client_log = logging.getLogger("maubot.client").getChild(user_id)
-    client = MaubotMatrixClient(mxid=user_id, base_url=homeserver, token=access_token,
-                                client_session=http_client, loop=loop, log=client_log,
-                                sync_store=SyncStoreProxy(nb), state_store=state_store,
-                                device_id=device_id)
+    client = MaubotMatrixClient(
+        mxid=user_id,
+        base_url=homeserver,
+        token=access_token,
+        client_session=http_client,
+        loop=loop,
+        log=client_log,
+        sync_store=SyncStoreProxy(nb),
+        state_store=state_store,
+        device_id=device_id,
+    )
     client.ignore_first_sync = config["user.ignore_first_sync"]
     client.ignore_initial_sync = config["user.ignore_initial_sync"]
     if crypto_store:
@@ -199,8 +235,10 @@ async def main():
         client.crypto = OlmMachine(client, crypto_store, state_store)
         crypto_device_id = await crypto_store.get_device_id()
         if crypto_device_id and crypto_device_id != device_id:
-            log.fatal("Mismatching device ID in crypto store and config "
-                      f"(store: {crypto_device_id}, config: {device_id})")
+            log.fatal(
+                "Mismatching device ID in crypto store and config "
+                f"(store: {crypto_device_id}, config: {device_id})"
+            )
             sys.exit(10)
         await client.crypto.load()
         if not crypto_device_id:
@@ -224,17 +262,23 @@ async def main():
             log.fatal(f"User ID mismatch: configured {user_id}, but server said {whoami.user_id}")
             sys.exit(11)
         elif whoami.device_id and device_id and whoami.device_id != device_id:
-            log.fatal(f"Device ID mismatch: configured {device_id}, "
-                      f"but server said {whoami.device_id}")
+            log.fatal(
+                f"Device ID mismatch: configured {device_id}, "
+                f"but server said {whoami.device_id}"
+            )
             sys.exit(12)
         log.debug(f"Confirmed connection as {whoami.user_id} / {whoami.device_id}")
         break
 
     if config["user.sync"]:
         if not nb.filter_id:
-            nb.edit(filter_id=await client.create_filter(Filter(
-                room=RoomFilter(timeline=RoomEventFilter(limit=50)),
-            )))
+            nb.edit(
+                filter_id=await client.create_filter(
+                    Filter(
+                        room=RoomFilter(timeline=RoomEventFilter(limit=50)),
+                    )
+                )
+            )
         client.start(nb.filter_id)
 
     if config["user.autojoin"]:
@@ -252,9 +296,18 @@ async def main():
         await client.set_displayname(displayname)
 
     plugin_log = cast(TraceLogger, logging.getLogger("maubot.instance.__main__"))
-    bot = plugin(client=client, loop=loop, http=http_client, instance_id="__main__",
-                 log=plugin_log, config=bot_config, database=db if meta.database else None,
-                 webapp=plugin_webapp, webapp_url=public_url, loader=loader)
+    bot = plugin(
+        client=client,
+        loop=loop,
+        http=http_client,
+        instance_id="__main__",
+        log=plugin_log,
+        config=bot_config,
+        database=db if meta.database else None,
+        webapp=plugin_webapp,
+        webapp_url=public_url,
+        loader=loader,
+    )
 
     await bot.internal_start()
 

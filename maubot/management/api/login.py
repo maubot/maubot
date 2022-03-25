@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -17,9 +17,10 @@ import json
 
 from aiohttp import web
 
-from .base import routes, get_config
-from .responses import resp
 from .auth import create_token
+from .base import get_config, routes
+from .responses import resp
+
 
 @routes.post("/auth/login")
 async def login(request: web.Request) -> web.Response:

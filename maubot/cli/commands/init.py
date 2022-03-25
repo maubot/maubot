@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from pkg_resources import resource_string
 import os
 
-from packaging.version import Version
 from jinja2 import Template
+from packaging.version import Version
+from pkg_resources import resource_string
 
 from .. import cliq
 from ..cliq import SPDXValidator, VersionValidator
@@ -40,26 +40,55 @@ def load_templates():
 
 
 @cliq.command(help="Initialize a new maubot plugin")
-@cliq.option("-n", "--name", help="The name of the project", required=True,
-             default=os.path.basename(os.getcwd()))
-@cliq.option("-i", "--id", message="ID", required=True,
-             help="The maubot plugin ID (Java package name format)")
-@cliq.option("-v", "--version", help="Initial version for project (PEP-440 format)",
-             default="0.1.0", validator=VersionValidator, required=True)
-@cliq.option("-l", "--license", validator=SPDXValidator, default="AGPL-3.0-or-later",
-             help="The license for the project (SPDX identifier)", required=False)
-@cliq.option("-c", "--config", message="Should the plugin include a config?",
-             help="Include a config in the plugin stub", default=False, is_flag=True)
+@cliq.option(
+    "-n",
+    "--name",
+    help="The name of the project",
+    required=True,
+    default=os.path.basename(os.getcwd()),
+)
+@cliq.option(
+    "-i",
+    "--id",
+    message="ID",
+    required=True,
+    help="The maubot plugin ID (Java package name format)",
+)
+@cliq.option(
+    "-v",
+    "--version",
+    help="Initial version for project (PEP-440 format)",
+    default="0.1.0",
+    validator=VersionValidator,
+    required=True,
+)
+@cliq.option(
+    "-l",
+    "--license",
+    validator=SPDXValidator,
+    default="AGPL-3.0-or-later",
+    help="The license for the project (SPDX identifier)",
+    required=False,
+)
+@cliq.option(
+    "-c",
+    "--config",
+    message="Should the plugin include a config?",
+    help="Include a config in the plugin stub",
+    default=False,
+    is_flag=True,
+)
 def init(name: str, id: str, version: Version, license: str, config: bool) -> None:
     load_templates()
     main_class = name[0].upper() + name[1:]
-    meta = meta_template.render(id=id, version=str(version), license=license, config=config,
-                                main_class=main_class)
+    meta = meta_template.render(
+        id=id, version=str(version), license=license, config=config, main_class=main_class
+    )
     with open("maubot.yaml", "w") as file:
         file.write(meta)
     if license:
         with open("LICENSE", "w") as file:
-            file.write(spdx.get(license)["text"])
+            file.write(spdx.get(license)["licenseText"])
     if not os.path.isdir(name):
         os.mkdir(name)
     mod = mod_template.render(config=config, name=main_class)

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,15 +13,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from aiohttp import web
+from __future__ import annotations
+
 import asyncio
+
+from aiohttp import web
 
 from ...__meta__ import __version__
 from ...config import Config
 
 routes: web.RouteTableDef = web.RouteTableDef()
-_config: Config = None
-_loop: asyncio.AbstractEventLoop = None
+_config: Config | None = None
+_loop: asyncio.AbstractEventLoop | None = None
 
 
 def set_config(config: Config) -> None:
@@ -44,6 +47,4 @@ def get_loop() -> asyncio.AbstractEventLoop:
 
 @routes.get("/version")
 async def version(_: web.Request) -> web.Response:
-    return web.json_response({
-        "version": __version__
-    })
+    return web.json_response({"version": __version__})

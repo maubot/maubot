@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,26 +13,26 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Tuple, NamedTuple, Optional
-from json import JSONDecodeError
+from typing import Dict, NamedTuple, Optional, Tuple
 from http import HTTPStatus
-import hashlib
+from json import JSONDecodeError
 import asyncio
+import hashlib
+import hmac
 import random
 import string
-import hmac
 
 from aiohttp import web
 from yarl import URL
 
-from mautrix.api import SynapseAdminPath, Method, Path
-from mautrix.errors import MatrixRequestError
+from mautrix.api import Method, Path, SynapseAdminPath
 from mautrix.client import ClientAPI
-from mautrix.types import LoginType, LoginResponse
+from mautrix.errors import MatrixRequestError
+from mautrix.types import LoginResponse, LoginType
 
-from .base import routes, get_config, get_loop
+from .base import get_config, get_loop, routes
+from .client import _create_client, _create_or_update_client
 from .responses import resp
-from .client import _create_or_update_client, _create_client
 
 
 def known_homeservers() -> Dict[str, Dict[str, str]]:
@@ -59,8 +59,9 @@ class AuthRequestInfo(NamedTuple):
 truthy_strings = ("1", "true", "yes")
 
 
-async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthRequestInfo],
-                                                                  Optional[web.Response]]:
+async def read_client_auth_request(
+    request: web.Request,
+) -> Tuple[Optional[AuthRequestInfo], Optional[web.Response]]:
     server_name = request.match_info.get("server", None)
     server = known_homeservers().get(server_name, None)
     if not server:
@@ -81,21 +82,30 @@ async def read_client_auth_request(request: web.Request) -> Tuple[Optional[AuthR
         base_url = server["url"]
     except KeyError:
         return None, resp.invalid_server
-    return AuthRequestInfo(
-        server_name=server_name,
-        client=ClientAPI(base_url=base_url, loop=get_loop()),
-        secret=server.get("secret"),
-        username=username,
-        password=password,
-        user_type=body.get("user_type", "bot"),
-        device_name=body.get("device_name", "Maubot"),
-        update_client=request.query.get("update_client", "").lower() in truthy_strings,
-        sso=sso,
-    ), None
+    return (
+        AuthRequestInfo(
+            server_name=server_name,
+            client=ClientAPI(base_url=base_url, loop=get_loop()),
+            secret=server.get("secret"),
+            username=username,
+            password=password,
+            user_type=body.get("user_type", "bot"),
+            device_name=body.get("device_name", "Maubot"),
+            update_client=request.query.get("update_client", "").lower() in truthy_strings,
+            sso=sso,
+        ),
+        None,
+    )
 
 
-def generate_mac(secret: str, nonce: str, username: str, password: str, admin: bool = False,
-                 user_type: str = None) -> str:
+def generate_mac(
+    secret: str,
+    nonce: str,
+    username: str,
+    password: str,
+    admin: bool = False,
+    user_type: str = None,
+) -> str:
     mac = hmac.new(key=secret.encode("utf-8"), digestmod=hashlib.sha1)
     mac.update(nonce.encode("utf-8"))
     mac.update(b"\x00")
@@ -132,18 +142,24 @@ async def register(request: web.Request) -> web.Response:
     try:
         raw_res = await req.client.api.request(Method.POST, path, content=content)
     except MatrixRequestError as e:
-        return web.json_response({
-            "errcode": e.errcode,
-            "error": e.message,
-            "http_status": e.http_status,
-        }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return web.json_response(
+            {
+                "errcode": e.errcode,
+                "error": e.message,
+                "http_status": e.http_status,
+            },
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
     login_res = LoginResponse.deserialize(raw_res)
     if req.update_client:
-        return await _create_client(login_res.user_id, {
-            "homeserver": str(req.client.api.base_url),
-            "access_token": login_res.access_token,
-            "device_id": login_res.device_id,
-        })
+        return await _create_client(
+            login_res.user_id,
+            {
+                "homeserver": str(req.client.api.base_url),
+                "access_token": login_res.access_token,
+                "device_id": login_res.device_id,
+            },
+        )
     return web.json_response(login_res.serialize())
 
 
@@ -162,13 +178,17 @@ async def _do_sso(req: AuthRequestInfo) -> web.Response:
     flows = await req.client.get_login_flows()
     if not flows.supports_type(LoginType.SSO):
         return resp.sso_not_supported
-    waiter_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+    waiter_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=16))
     cfg = get_config()
-    public_url = (URL(cfg["server.public_url"]) / cfg["server.base_path"].lstrip("/")
-                  / "client/auth_external_sso/complete" / waiter_id)
-    sso_url = (req.client.api.base_url
-               .with_path(str(Path.login.sso.redirect))
-               .with_query({"redirectUrl": str(public_url)}))
+    public_url = (
+        URL(cfg["server.public_url"])
+        / cfg["server.base_path"].lstrip("/")
+        / "client/auth_external_sso/complete"
+        / waiter_id
+    )
+    sso_url = req.client.api.base_url.with_path(str(Path.login.sso.redirect)).with_query(
+        {"redirectUrl": str(public_url)}
+    )
     sso_waiters[waiter_id] = req, get_loop().create_future()
     return web.json_response({"sso_url": str(sso_url), "id": waiter_id})
 
@@ -178,25 +198,40 @@ async def _do_login(req: AuthRequestInfo, login_token: Optional[str] = None) -> 
     device_id = f"maubot_{device_id}"
     try:
         if req.sso:
-            res = await req.client.login(token=login_token, login_type=LoginType.TOKEN,
-                                         device_id=device_id, store_access_token=False,
-                                         initial_device_display_name=req.device_name)
+            res = await req.client.login(
+                token=login_token,
+                login_type=LoginType.TOKEN,
+                device_id=device_id,
+                store_access_token=False,
+                initial_device_display_name=req.device_name,
+            )
         else:
-            res = await req.client.login(identifier=req.username, login_type=LoginType.PASSWORD,
-                                         password=req.password, device_id=device_id,
-                                         initial_device_display_name=req.device_name,
-                                         store_access_token=False)
+            res = await req.client.login(
+                identifier=req.username,
+                login_type=LoginType.PASSWORD,
+                password=req.password,
+                device_id=device_id,
+                initial_device_display_name=req.device_name,
+                store_access_token=False,
+            )
     except MatrixRequestError as e:
-        return web.json_response({
-            "errcode": e.errcode,
-            "error": e.message,
-        }, status=e.http_status)
+        return web.json_response(
+            {
+                "errcode": e.errcode,
+                "error": e.message,
+            },
+            status=e.http_status,
+        )
     if req.update_client:
-        return await _create_or_update_client(res.user_id, {
-            "homeserver": str(req.client.api.base_url),
-            "access_token": res.access_token,
-            "device_id": res.device_id,
-        }, is_login=True)
+        return await _create_or_update_client(
+            res.user_id,
+            {
+                "homeserver": str(req.client.api.base_url),
+                "access_token": res.access_token,
+                "device_id": res.device_id,
+            },
+            is_login=True,
+        )
     return web.json_response(res.serialize())
 
 
@@ -230,6 +265,8 @@ async def complete_sso(request: web.Request) -> web.Response:
         return web.Response(status=400, text="Missing loginToken query parameter\n")
     except asyncio.InvalidStateError:
         return web.Response(status=500, text="Invalid state\n")
-    return web.Response(status=200,
-                        text="Login token received, please return to your Maubot client. "
-                             "This tab can be closed.\n")
+    return web.Response(
+        status=200,
+        text="Login token received, please return to your Maubot client. "
+        "This tab can be closed.\n",
+    )

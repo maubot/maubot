@@ -1,4 +1,11 @@
 # maubot
+![Languages](https://img.shields.io/github/languages/top/maubot/maubot.svg)
+[![License](https://img.shields.io/github/license/maubot/maubot.svg)](LICENSE)
+[![Release](https://img.shields.io/github/release/maubot/maubot/all.svg)](https://github.com/maubot/maubot/releases)
+[![GitLab CI](https://mau.dev/maubot/maubot/badges/master/pipeline.svg)](https://mau.dev/maubot/maubot/container_registry)
+[![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Imports](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
+
 A plugin-based [Matrix](https://matrix.org) bot system written in Python.
 
 ## Documentation

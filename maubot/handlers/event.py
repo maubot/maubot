@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,16 +13,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Callable, Union, NewType
+from __future__ import annotations
 
-from mautrix.types import EventType
+from typing import Callable, NewType
+
 from mautrix.client import EventHandler, InternalEventType
+from mautrix.types import EventType
 
 EventHandlerDecorator = NewType("EventHandlerDecorator", Callable[[EventHandler], EventHandler])
 
 
-def on(var: Union[EventType, InternalEventType, EventHandler]
-       ) -> Union[EventHandlerDecorator, EventHandler]:
+def on(var: EventType | InternalEventType | EventHandler) -> EventHandlerDecorator | EventHandler:
     def decorator(func: EventHandler) -> EventHandler:
         func.__mb_event_handler__ = True
         if isinstance(var, (EventType, InternalEventType)):

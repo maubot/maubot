@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,17 +13,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from __future__ import annotations
+
 from json import JSONDecodeError
 
 from aiohttp import web
 
-from mautrix.types import UserID, SyncToken, FilterID
-from mautrix.errors import MatrixRequestError, MatrixConnectionError, MatrixInvalidToken
 from mautrix.client import Client as MatrixClient
+from mautrix.errors import MatrixConnectionError, MatrixInvalidToken, MatrixRequestError
+from mautrix.types import FilterID, SyncToken, UserID
 
-from ...db import DBClient
 from ...client import Client
+from ...db import DBClient
 from .base import routes
 from .responses import resp
 
@@ -42,12 +43,17 @@ async def get_client(request: web.Request) -> web.Response:
     return resp.found(client.to_dict())
 
 
-async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
+async def _create_client(user_id: UserID | None, data: dict) -> web.Response:
     homeserver = data.get("homeserver", None)
     access_token = data.get("access_token", None)
     device_id = data.get("device_id", None)
-    new_client = MatrixClient(mxid="@not:a.mxid", base_url=homeserver, token=access_token,
-                              loop=Client.loop, client_session=Client.http_client)
+    new_client = MatrixClient(
+        mxid="@not:a.mxid",
+        base_url=homeserver,
+        token=access_token,
+        loop=Client.loop,
+        client_session=Client.http_client,
+    )
     try:
         whoami = await new_client.whoami()
     except MatrixInvalidToken:
@@ -64,13 +70,20 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
         return resp.mxid_mismatch(whoami.user_id)
     elif whoami.device_id and device_id and whoami.device_id != device_id:
         return resp.device_id_mismatch(whoami.device_id)
-    db_instance = DBClient(id=whoami.user_id, homeserver=homeserver, access_token=access_token,
-                           enabled=data.get("enabled", True), next_batch=SyncToken(""),
-                           filter_id=FilterID(""), sync=data.get("sync", True),
-                           autojoin=data.get("autojoin", True), online=data.get("online", True),
-                           displayname=data.get("displayname", "disable"),
-                           avatar_url=data.get("avatar_url", "disable"),
-                           device_id=device_id)
+    db_instance = DBClient(
+        id=whoami.user_id,
+        homeserver=homeserver,
+        access_token=access_token,
+        enabled=data.get("enabled", True),
+        next_batch=SyncToken(""),
+        filter_id=FilterID(""),
+        sync=data.get("sync", True),
+        autojoin=data.get("autojoin", True),
+        online=data.get("online", True),
+        displayname=data.get("displayname", "disable"),
+        avatar_url=data.get("avatar_url", "disable"),
+        device_id=device_id,
+    )
     client = Client(db_instance)
     client.db_instance.insert()
     await client.start()
@@ -79,9 +92,11 @@ async def _create_client(user_id: Optional[UserID], data: dict) -> web.Response:
 
 async def _update_client(client: Client, data: dict, is_login: bool = False) -> web.Response:
     try:
-        await client.update_access_details(data.get("access_token", None),
-                                           data.get("homeserver", None),
-                                           data.get("device_id", None))
+        await client.update_access_details(
+            data.get("access_token", None),
+            data.get("homeserver", None),
+            data.get("device_id", None),
+        )
     except MatrixInvalidToken:
         return resp.bad_client_access_token
     except MatrixRequestError:
@@ -91,9 +106,9 @@ async def _update_client(client: Client, data: dict, is_login: bool = False) -> 
     except ValueError as e:
         str_err = str(e)
         if str_err.startswith("MXID mismatch"):
-            return resp.mxid_mismatch(str(e)[len("MXID mismatch: "):])
+            return resp.mxid_mismatch(str(e)[len("MXID mismatch: ") :])
         elif str_err.startswith("Device ID mismatch"):
-            return resp.device_id_mismatch(str(e)[len("Device ID mismatch: "):])
+            return resp.device_id_mismatch(str(e)[len("Device ID mismatch: ") :])
     with client.db_instance.edit_mode():
         await client.update_avatar_url(data.get("avatar_url", None))
         await client.update_displayname(data.get("displayname", None))
@@ -105,8 +120,9 @@ async def _update_client(client: Client, data: dict, is_login: bool = False) -> 
         return resp.updated(client.to_dict(), is_login=is_login)
 
 
-async def _create_or_update_client(user_id: UserID, data: dict, is_login: bool = False
-                                   ) -> web.Response:
+async def _create_or_update_client(
+    user_id: UserID, data: dict, is_login: bool = False
+) -> web.Response:
     client = Client.get(user_id, None)
     if not client:
         return await _create_client(user_id, data)

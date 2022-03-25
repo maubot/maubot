@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,10 +13,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import List, Callable, Awaitable
+from __future__ import annotations
+
+from typing import Awaitable, Callable
 from functools import partial
 
-from aiohttp import web, hdrs
+from aiohttp import hdrs, web
 from yarl import URL
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
@@ -26,7 +28,7 @@ Middleware = Callable[[web.Request, Handler], Awaitable[web.Response]]
 class PluginWebApp(web.UrlDispatcher):
     def __init__(self):
         super().__init__()
-        self._middleware: List[Middleware] = []
+        self._middleware: list[Middleware] = []
 
     def add_middleware(self, middleware: Middleware) -> None:
         self._middleware.append(middleware)
@@ -58,8 +60,8 @@ class PluginWebApp(web.UrlDispatcher):
 
 class PrefixResource(web.Resource):
     def __init__(self, prefix, *, name=None):
-        assert not prefix or prefix.startswith('/'), prefix
-        assert prefix in ('', '/') or not prefix.endswith('/'), prefix
+        assert not prefix or prefix.startswith("/"), prefix
+        assert prefix in ("", "/") or not prefix.endswith("/"), prefix
         super().__init__(name=name)
         self._prefix = URL.build(path=prefix).raw_path
 
@@ -68,14 +70,14 @@ class PrefixResource(web.Resource):
         return self._prefix
 
     def get_info(self):
-        return {'path': self._prefix}
+        return {"path": self._prefix}
 
     def url_for(self):
         return URL.build(path=self._prefix, encoded=True)
 
     def add_prefix(self, prefix):
-        assert prefix.startswith('/')
-        assert not prefix.endswith('/')
+        assert prefix.startswith("/")
+        assert not prefix.endswith("/")
         assert len(prefix) > 1
         self._prefix = prefix + self._prefix
 
@@ -84,4 +86,3 @@ class PrefixResource(web.Resource):
 
     def raw_match(self, path: str) -> bool:
         return path and path.startswith(self._prefix)
-

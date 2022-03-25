@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -17,9 +17,9 @@ import traceback
 
 from aiohttp import web
 
-from ...loader import PluginLoader, MaubotZipImportError
-from .responses import resp
+from ...loader import MaubotZipImportError, PluginLoader
 from .base import routes
+from .responses import resp
 
 
 @routes.get("/plugins")

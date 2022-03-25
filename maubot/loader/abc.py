@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2021 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,14 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TypeVar, Type, Dict, Set, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Set, Type, TypeVar
 from abc import ABC, abstractmethod
 import asyncio
 
 from attr import dataclass
-from packaging.version import Version, InvalidVersion
+from packaging.version import InvalidVersion, Version
 
-from mautrix.types import SerializableAttrs, SerializerError, serializer, deserializer
+from mautrix.types import SerializableAttrs, SerializerError, deserializer, serializer
 
 from ..__meta__ import __version__
 from ..plugin_base import Plugin
@@ -89,16 +89,16 @@ class BasePluginLoader(ABC):
 
 
 class PluginLoader(BasePluginLoader, ABC):
-    id_cache: Dict[str, 'PluginLoader'] = {}
+    id_cache: Dict[str, "PluginLoader"] = {}
 
     meta: PluginMeta
-    references: Set['PluginInstance']
+    references: Set["PluginInstance"]
 
     def __init__(self):
         self.references = set()
 
     @classmethod
-    def find(cls, plugin_id: str) -> 'PluginLoader':
+    def find(cls, plugin_id: str) -> "PluginLoader":
         return cls.id_cache[plugin_id]
 
     def to_dict(self) -> dict:
@@ -109,12 +109,14 @@ class PluginLoader(BasePluginLoader, ABC):
         }
 
     async def stop_instances(self) -> None:
-        await asyncio.gather(*[instance.stop() for instance
-                               in self.references if instance.started])
+        await asyncio.gather(
+            *[instance.stop() for instance in self.references if instance.started]
+        )
 
     async def start_instances(self) -> None:
-        await asyncio.gather(*[instance.start() for instance
-                               in self.references if instance.enabled])
+        await asyncio.gather(
+            *[instance.start() for instance in self.references if instance.enabled]
+        )
 
     @abstractmethod
     async def load(self) -> Type[PluginClass]:

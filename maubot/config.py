@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import random
-import string
-import bcrypt
 import re
+import string
+
+import bcrypt
 
 from mautrix.util.config import BaseFileConfig, ConfigUpdateHelper
 
@@ -64,8 +65,9 @@ class Config(BaseFileConfig):
             if password and not bcrypt_regex.match(password):
                 if password == "password":
                     password = self._new_token()
-                base["admins"][username] = bcrypt.hashpw(password.encode("utf-8"),
-                                                         bcrypt.gensalt()).decode("utf-8")
+                base["admins"][username] = bcrypt.hashpw(
+                    password.encode("utf-8"), bcrypt.gensalt()
+                ).decode("utf-8")
         copy("api_features.login")
         copy("api_features.plugin")
         copy("api_features.plugin_upload")

@@ -1,5 +1,5 @@
 # maubot - A plugin-based Matrix bot system.
-# Copyright (C) 2019 Tulir Asokan
+# Copyright (C) 2022 Tulir Asokan
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -17,10 +17,10 @@ from json import JSONDecodeError
 
 from aiohttp import web
 
+from ...client import Client
 from ...db import DBPlugin
 from ...instance import PluginInstance
 from ...loader import PluginLoader
-from ...client import Client
 from .base import routes
 from .responses import resp
 
@@ -52,8 +52,13 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
         PluginLoader.find(plugin_type)
     except KeyError:
         return resp.plugin_type_not_found
-    db_instance = DBPlugin(id=instance_id, type=plugin_type, enabled=data.get("enabled", True),
-                           primary_user=primary_user, config=data.get("config", ""))
+    db_instance = DBPlugin(
+        id=instance_id,
+        type=plugin_type,
+        enabled=data.get("enabled", True),
+        primary_user=primary_user,
+        config=data.get("config", ""),
+    )
     instance = PluginInstance(db_instance)
     instance.load()
     instance.db_instance.insert()
