@@ -38,6 +38,9 @@ class ColorFormatter(BaseColorFormatter):
         instance = "maubot.instance"
         if module.startswith(instance + "."):
             return f"{MAU_COLOR}{instance}{RESET}.{INST_COLOR}{module[len(instance) + 1:]}{RESET}"
+        instance_db = "maubot.instance_db"
+        if module.startswith(instance_db + "."):
+            return f"{MAU_COLOR}{instance_db}{RESET}.{INST_COLOR}{module[len(instance_db) + 1:]}{RESET}"
         loader = "maubot.loader"
         if module.startswith(loader + "."):
             return f"{MAU_COLOR}{instance}{RESET}.{LOADER_COLOR}{module[len(loader) + 1:]}{RESET}"

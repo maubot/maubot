@@ -95,18 +95,20 @@ class Dashboard extends Component {
         const processEntry = (entry) => {
             entry.time = new Date(entry.time)
             entry.nameSuffix = ""
-            if (entry.name.startsWith("maubot.")) {
-                entry.name = entry.name.substr("maubot.".length)
-            }
-            if (entry.name.startsWith("client.")) {
+            if (entry.name.startsWith("maubot.client.")) {
                 if (entry.name.endsWith(".crypto")) {
                     entry.name = entry.name.slice(0, -".crypto".length)
                     entry.nameSuffix = "/crypto"
                 }
-                entry.name = entry.name.substr("client.".length)
-                entry.nameLink = `/client/${entry.name}`
-            } else if (entry.name.startsWith("instance.")) {
-                entry.nameLink = `/instance/${entry.name.substr("instance.".length)}`
+                entry.name = `client/${entry.name.slice("maubot.client.".length)}`
+                entry.nameLink = `/${entry.name}`
+            } else if (entry.name.startsWith("maubot.instance.")) {
+                entry.name = `instance/${entry.name.slice("maubot.instance.".length)}`
+                entry.nameLink = `/${entry.name}`
+            } else if (entry.name.startsWith("maubot.instance_db.")) {
+                entry.nameSuffix = "/db"
+                entry.name = `instance/${entry.name.slice("maubot.instance_db.".length)}`
+                entry.nameLink = `/${entry.name}`
             }
         }
 
