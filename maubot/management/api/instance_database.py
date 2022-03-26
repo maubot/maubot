@@ -18,6 +18,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from aiohttp import web
+from asyncpg import PostgresError
 from sqlalchemy import asc, desc, engine, exc
 from sqlalchemy.engine.result import ResultProxy, RowProxy
 import aiosqlite
@@ -85,7 +86,10 @@ async def query(request: web.Request) -> web.Response:
     if isinstance(instance.inst_db, engine.Engine):
         return _execute_query_sqlalchemy(instance, sql_query, rows_as_dict)
     elif isinstance(instance.inst_db, Database):
-        return await _execute_query_asyncpg(instance, sql_query, rows_as_dict)
+        try:
+            return await _execute_query_asyncpg(instance, sql_query, rows_as_dict)
+        except (PostgresError, aiosqlite.Error) as e:
+            return resp.sql_error(e, sql_query)
     else:
         return resp.unsupported_plugin_database
 
