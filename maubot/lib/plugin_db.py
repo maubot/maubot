@@ -28,7 +28,8 @@ remove_double_quotes = str.maketrans({'"': "_"})
 class ProxyPostgresDatabase(Database):
     scheme = Scheme.POSTGRES
     _underlying_pool: PostgresDatabase
-    _schema: str
+    schema_name: str
+    _quoted_schema: str
     _default_search_path: str
     _conn_sema: asyncio.Semaphore
 
@@ -44,7 +45,8 @@ class ProxyPostgresDatabase(Database):
         self._underlying_pool = pool
         # Simple accidental SQL injection prevention.
         # Doesn't have to be perfect, since plugin instance IDs can only be set by admins anyway.
-        self._schema = f'"mbp_{instance_id.translate(remove_double_quotes)}"'
+        self.schema_name = f"mbp_{instance_id.translate(remove_double_quotes)}"
+        self._quoted_schema = f'"{self.schema_name}"'
         self._default_search_path = '"$user", public'
         self._conn_sema = asyncio.BoundedSemaphore(max_conns)
 
@@ -52,7 +54,7 @@ class ProxyPostgresDatabase(Database):
         async with self._underlying_pool.acquire() as conn:
             self._default_search_path = await conn.fetchval("SHOW search_path")
             self.log.debug(f"Found default search path: {self._default_search_path}")
-            await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self._schema}")
+            await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self._quoted_schema}")
         await super().start()
 
     async def stop(self) -> None:
@@ -67,9 +69,11 @@ class ProxyPostgresDatabase(Database):
                 break
 
     async def delete(self) -> None:
-        self.log.debug(f"Deleting schema {self._schema} and all data in it")
+        self.log.debug(f"Deleting schema {self._quoted_schema} and all data in it")
         try:
-            await self._underlying_pool.execute(f"DROP SCHEMA IF EXISTS {self._schema} CASCADE")
+            await self._underlying_pool.execute(
+                f"DROP SCHEMA IF EXISTS {self._quoted_schema} CASCADE"
+            )
         except Exception:
             self.log.warning("Failed to delete schema", exc_info=True)
 
@@ -77,7 +81,7 @@ class ProxyPostgresDatabase(Database):
     async def acquire(self) -> LoggingConnection:
         conn: LoggingConnection
         async with self._conn_sema, self._underlying_pool.acquire() as conn:
-            await conn.execute(f"SET search_path = {self._default_search_path}")
+            await conn.execute(f"SET search_path = {self._quoted_schema}")
             try:
                 yield conn
             finally:

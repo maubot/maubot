@@ -28,7 +28,7 @@ from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
 
 from mautrix.types import UserID
-from mautrix.util.async_db import Database, SQLiteDatabase, UpgradeTable
+from mautrix.util.async_db import Database, Scheme, UpgradeTable
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.util.logging import TraceLogger
@@ -65,7 +65,7 @@ class PluginInstance(DBInstance):
     base_cfg: RecursiveDict[CommentedMap] | None
     base_cfg_str: str | None
     inst_db: sql.engine.Engine | Database | None
-    inst_db_tables: dict[str, sql.Table] | None
+    inst_db_tables: dict | None
     inst_webapp: PluginWebApp | None
     inst_webapp_url: str | None
     started: bool
@@ -113,11 +113,99 @@ class PluginInstance(DBInstance):
             ),
         }
 
-    def get_db_tables(self) -> dict[str, sql.Table]:
-        if not self.inst_db_tables:
-            metadata = sql.MetaData()
-            metadata.reflect(self.inst_db)
-            self.inst_db_tables = metadata.tables
+    def _introspect_sqlalchemy(self) -> dict:
+        metadata = sql.MetaData()
+        metadata.reflect(self.inst_db)
+        return {
+            table.name: {
+                "columns": {
+                    column.name: {
+                        "type": str(column.type),
+                        "unique": column.unique or False,
+                        "default": column.default,
+                        "nullable": column.nullable,
+                        "primary": column.primary_key,
+                    }
+                    for column in table.columns
+                },
+            }
+            for table in metadata.tables.values()
+        }
+
+    async def _introspect_sqlite(self) -> dict:
+        q = """
+        SELECT
+            m.name AS table_name,
+            p.cid AS col_id,
+            p.name AS column_name,
+            p.type AS data_type,
+            p.pk AS is_primary,
+            p.dflt_value AS column_default,
+            p.[notnull] AS is_nullable
+        FROM sqlite_master m
+        LEFT JOIN pragma_table_info((m.name)) p
+        WHERE m.type = 'table'
+        ORDER BY table_name, col_id
+        """
+        data = await self.inst_db.fetch(q)
+        tables = defaultdict(lambda: {"columns": {}})
+        for column in data:
+            table_name = column["table_name"]
+            col_name = column["column_name"]
+            tables[table_name]["columns"][col_name] = {
+                "type": column["data_type"],
+                "nullable": bool(column["is_nullable"]),
+                "default": column["column_default"],
+                "primary": bool(column["is_primary"]),
+                # TODO uniqueness?
+            }
+        return tables
+
+    async def _introspect_postgres(self) -> dict:
+        assert isinstance(self.inst_db, ProxyPostgresDatabase)
+        q = """
+        SELECT col.table_name, col.column_name, col.data_type, col.is_nullable, col.column_default,
+               tc.constraint_type
+        FROM information_schema.columns col
+        LEFT JOIN information_schema.constraint_column_usage ccu
+               ON ccu.column_name=col.column_name
+        LEFT JOIN information_schema.table_constraints tc
+               ON col.table_name=tc.table_name
+              AND col.table_schema=tc.table_schema
+              AND ccu.constraint_name=tc.constraint_name
+              AND ccu.constraint_schema=tc.constraint_schema
+              AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+        WHERE col.table_schema=$1
+        """
+        data = await self.inst_db.fetch(q, self.inst_db.schema_name)
+        tables = defaultdict(lambda: {"columns": {}})
+        for column in data:
+            table_name = column["table_name"]
+            col_name = column["column_name"]
+            tables[table_name]["columns"].setdefault(
+                col_name,
+                {
+                    "type": column["data_type"],
+                    "nullable": column["is_nullable"],
+                    "default": column["column_default"],
+                    "primary": False,
+                    "unique": False,
+                },
+            )
+            if column["constraint_type"] == "PRIMARY KEY":
+                tables[table_name]["columns"][col_name]["primary"] = True
+            elif column["constraint_type"] == "UNIQUE":
+                tables[table_name]["columns"][col_name]["unique"] = True
+        return tables
+
+    async def get_db_tables(self) -> dict:
+        if self.inst_db_tables is None:
+            if isinstance(self.inst_db, sql.engine.Engine):
+                self.inst_db_tables = self._introspect_sqlalchemy()
+            elif self.inst_db.scheme == Scheme.SQLITE:
+                self.inst_db_tables = await self._introspect_sqlite()
+            else:
+                self.inst_db_tables = await self._introspect_postgres()
         return self.inst_db_tables
 
     async def load(self) -> bool:

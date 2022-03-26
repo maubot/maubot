@@ -18,9 +18,11 @@ from __future__ import annotations
 from datetime import datetime
 
 from aiohttp import web
-from sqlalchemy import Column, Table, asc, desc, exc
+from sqlalchemy import asc, desc, engine, exc
 from sqlalchemy.engine.result import ResultProxy, RowProxy
-from sqlalchemy.orm import Query
+import aiosqlite
+
+from mautrix.util.async_db import Database
 
 from ...instance import PluginInstance
 from .base import routes
@@ -35,32 +37,7 @@ async def get_database(request: web.Request) -> web.Response:
         return resp.instance_not_found
     elif not instance.inst_db:
         return resp.plugin_has_no_database
-    table: Table
-    column: Column
-    return web.json_response(
-        {
-            table.name: {
-                "columns": {
-                    column.name: {
-                        "type": str(column.type),
-                        "unique": column.unique or False,
-                        "default": column.default,
-                        "nullable": column.nullable,
-                        "primary": column.primary_key,
-                        "autoincrement": column.autoincrement,
-                    }
-                    for column in table.columns
-                },
-            }
-            for table in instance.get_db_tables().values()
-        }
-    )
-
-
-def check_type(val):
-    if isinstance(val, datetime):
-        return val.isoformat()
-    return val
+    return web.json_response(await instance.get_db_tables())
 
 
 @routes.get("/instance/{id}/database/{table}")
@@ -71,7 +48,7 @@ async def get_table(request: web.Request) -> web.Response:
         return resp.instance_not_found
     elif not instance.inst_db:
         return resp.plugin_has_no_database
-    tables = instance.get_db_tables()
+    tables = await instance.get_db_tables()
     try:
         table = tables[request.match_info.get("table", "")]
     except KeyError:
@@ -87,7 +64,8 @@ async def get_table(request: web.Request) -> web.Response:
     except KeyError:
         order = []
     limit = int(request.query.get("limit", "100"))
-    return execute_query(instance, table.select().order_by(*order).limit(limit))
+    if isinstance(instance.inst_db, engine.Engine):
+        return _execute_query_sqlalchemy(instance, table.select().order_by(*order).limit(limit))
 
 
 @routes.post("/instance/{id}/database/query")
@@ -103,12 +81,54 @@ async def query(request: web.Request) -> web.Response:
         sql_query = data["query"]
     except KeyError:
         return resp.query_missing
-    return execute_query(instance, sql_query, rows_as_dict=data.get("rows_as_dict", False))
+    rows_as_dict = data.get("rows_as_dict", False)
+    if isinstance(instance.inst_db, engine.Engine):
+        return _execute_query_sqlalchemy(instance, sql_query, rows_as_dict)
+    elif isinstance(instance.inst_db, Database):
+        return await _execute_query_asyncpg(instance, sql_query, rows_as_dict)
+    else:
+        return resp.unsupported_plugin_database
 
 
-def execute_query(
-    instance: PluginInstance, sql_query: str | Query, rows_as_dict: bool = False
+def check_type(val):
+    if isinstance(val, datetime):
+        return val.isoformat()
+    return val
+
+
+async def _execute_query_asyncpg(
+    instance: PluginInstance, sql_query: str, rows_as_dict: bool = False
 ) -> web.Response:
+    data = {"ok": True, "query": sql_query}
+    if sql_query.upper().startswith("SELECT"):
+        res = await instance.inst_db.fetch(sql_query)
+        data["rows"] = [
+            (
+                {key: check_type(value) for key, value in row.items()}
+                if rows_as_dict
+                else [check_type(value) for value in row]
+            )
+            for row in res
+        ]
+        if len(res) > 0:
+            # TODO can we find column names when there are no rows?
+            data["columns"] = list(res[0].keys())
+    else:
+        res = await instance.inst_db.execute(sql_query)
+        if isinstance(res, str):
+            data["status_msg"] = res
+        elif isinstance(res, aiosqlite.Cursor):
+            data["rowcount"] = res.rowcount
+            # data["inserted_primary_key"] = res.lastrowid
+        else:
+            data["status_msg"] = "unknown status"
+    return web.json_response(data)
+
+
+def _execute_query_sqlalchemy(
+    instance: PluginInstance, sql_query: str, rows_as_dict: bool = False
+) -> web.Response:
+    assert isinstance(instance.inst_db, engine.Engine)
     try:
         res: ResultProxy = instance.inst_db.execute(sql_query)
     except exc.IntegrityError as e:

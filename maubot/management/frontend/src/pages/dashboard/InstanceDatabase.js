@@ -44,6 +44,7 @@ class InstanceDatabase extends Component {
             error: null,
 
             prevQuery: null,
+            statusMsg: null,
             rowCount: null,
             insertedPrimaryKey: null,
         }
@@ -111,6 +112,7 @@ class InstanceDatabase extends Component {
                 prevQuery: null,
                 rowCount: null,
                 insertedPrimaryKey: null,
+                statusMsg: null,
                 error: null,
             })
         }
@@ -127,7 +129,8 @@ class InstanceDatabase extends Component {
             this.setState({
                 prevQuery: res.query,
                 rowCount: res.rowcount,
-                insertedPrimaryKey: res.insertedPrimaryKey,
+                insertedPrimaryKey: res.inserted_primary_key,
+                statusMsg: res.status_msg,
             })
             this.buildSQLQuery(this.state.selectedTable, false)
         }
@@ -298,8 +301,10 @@ class InstanceDatabase extends Component {
             </div>}
             {this.state.prevQuery && <div className="prev-query">
                 <p>
-                    Executed <span className="query">{this.state.prevQuery}</span> -
-                    affected <strong>{this.state.rowCount} rows</strong>.
+                    Executed <span className="query">{this.state.prevQuery}</span> - {
+                        this.state.statusMsg
+                        || <>affected <strong>{this.state.rowCount} rows</strong>.</>
+                    }
                 </p>
                 {this.state.insertedPrimaryKey && <p className="inserted-primary-key">
                     Inserted primary key: {this.state.insertedPrimaryKey}

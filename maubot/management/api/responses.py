@@ -300,6 +300,15 @@ class _Response:
         )
 
     @property
+    def unsupported_plugin_database(self) -> web.Response:
+        return web.json_response(
+            {
+                "error": "The database type is not supported by this API",
+                "errcode": "unsupported_plugin_database",
+            }
+        )
+
+    @property
     def table_not_found(self) -> web.Response:
         return web.json_response(
             {
