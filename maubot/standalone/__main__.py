@@ -38,12 +38,12 @@ from mautrix.types import (
     RoomFilter,
     StrippedStateEvent,
 )
-from mautrix.util.async_db import Database
+from mautrix.util.async_db import Database, Scheme
 from mautrix.util.config import BaseMissingError, RecursiveDict
 from mautrix.util.logging import TraceLogger
 
 from ..__meta__ import __version__
-from ..loader import PluginMeta
+from ..loader import DatabaseType, PluginMeta
 from ..matrix import MaubotMatrixClient
 from ..plugin_base import Plugin
 from ..plugin_server import PluginWebApp, PrefixResource
@@ -123,6 +123,7 @@ db = Database.create(
     config["database"],
     db_args=config.get("database_opts", {}),
     ignore_foreign_tables=True,
+    log=logging.getLogger("maubot.db"),
 )
 
 user_id = config["user.credentials.id"]
@@ -286,6 +287,27 @@ async def main():
         await client.set_displayname(displayname)
 
     plugin_log = cast(TraceLogger, logging.getLogger("maubot.instance.__main__"))
+    if meta.database:
+        if meta.database_type == DatabaseType.SQLALCHEMY:
+            import sqlalchemy as sql
+
+            plugin_db = sql.create_engine(config["database"])
+            if db.scheme == Scheme.SQLITE:
+                log.warning(
+                    "Using SQLite with legacy plugins in standalone mode can cause database "
+                    "locking issues. Switching to Postgres or updating the plugin to use the "
+                    "new asyncpg/aiosqlite database interface is recommended."
+                )
+        elif meta.database_type == DatabaseType.ASYNCPG:
+            plugin_db = db
+            upgrade_table = plugin.get_db_upgrade_table()
+            if upgrade_table:
+                await upgrade_table.upgrade(plugin_db)
+        else:
+            log.fatal(f"Unsupported database type {meta.database_type}")
+            sys.exit(13)
+    else:
+        plugin_db = None
     bot = plugin(
         client=client,
         loop=loop,
@@ -293,7 +315,7 @@ async def main():
         instance_id="__main__",
         log=plugin_log,
         config=bot_config,
-        database=db if meta.database else None,
+        database=plugin_db,
         webapp=plugin_webapp,
         webapp_url=public_url,
         loader=loader,
