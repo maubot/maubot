@@ -53,7 +53,7 @@ class ProxyPostgresDatabase(Database):
     async def start(self) -> None:
         async with self._underlying_pool.acquire() as conn:
             self._default_search_path = await conn.fetchval("SHOW search_path")
-            self.log.debug(f"Found default search path: {self._default_search_path}")
+            self.log.trace(f"Found default search path: {self._default_search_path}")
             await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self._quoted_schema}")
         await super().start()
 
@@ -69,7 +69,7 @@ class ProxyPostgresDatabase(Database):
                 break
 
     async def delete(self) -> None:
-        self.log.debug(f"Deleting schema {self._quoted_schema} and all data in it")
+        self.log.info(f"Deleting schema {self.schema_name} and all data in it")
         try:
             await self._underlying_pool.execute(
                 f"DROP SCHEMA IF EXISTS {self._quoted_schema} CASCADE"
