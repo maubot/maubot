@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from io import BytesIO
 from time import time
+import logging
 import os.path
 import re
 import traceback
@@ -25,6 +26,8 @@ from packaging.version import Version
 from ...loader import MaubotZipImportError, PluginLoader, ZippedPluginLoader
 from .base import get_config, routes
 from .responses import resp
+
+log = logging.getLogger("maubot.server.upload")
 
 
 @routes.put("/plugin/{id}")
@@ -103,12 +106,29 @@ async def upload_replacement_plugin(
     try:
         await plugin.reload(new_path=path)
     except MaubotZipImportError as e:
+        log.exception(f"Error loading updated version of {plugin.meta.id}, rolling back")
         try:
             await plugin.reload(new_path=old_path)
             await plugin.start_instances()
         except MaubotZipImportError:
-            pass
+            log.warning(f"Failed to roll back update of {plugin.meta.id}", exc_info=True)
+        finally:
+            ZippedPluginLoader.trash(path, reason="failed_update")
         return resp.plugin_import_error(str(e), traceback.format_exc())
-    await plugin.start_instances()
+    try:
+        await plugin.start_instances()
+    except Exception as e:
+        log.exception(f"Error starting {plugin.meta.id} instances after update, rolling back")
+        try:
+            await plugin.stop_instances()
+            await plugin.reload(new_path=old_path)
+            await plugin.start_instances()
+        except Exception:
+            log.warning(f"Failed to roll back update of {plugin.meta.id}", exc_info=True)
+        finally:
+            ZippedPluginLoader.trash(path, reason="failed_update")
+        return resp.plugin_reload_error(str(e), traceback.format_exc())
+
+    log.debug(f"Successfully updated {plugin.meta.id}, moving old version to trash")
     ZippedPluginLoader.trash(old_path, reason="update")
     return resp.updated(plugin.to_dict())
