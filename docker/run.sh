@@ -17,8 +17,8 @@ function fixconfig {
 	fixdefault '.plugin_directories.upload' './plugins' '/data/plugins'
 	fixdefault '.plugin_directories.load[0]' './plugins' '/data/plugins'
 	fixdefault '.plugin_directories.trash' './trash' '/data/trash'
-	fixdefault '.plugin_directories.db' './plugins' '/data/dbs'
-	fixdefault '.plugin_directories.db' './dbs' '/data/dbs'
+	fixdefault '.plugin_databases.sqlite' './plugins' '/data/dbs'
+	fixdefault '.plugin_databases.sqlite' './dbs' '/data/dbs'
 	fixdefault '.logging.handlers.file.filename' './maubot.log' '/var/log/maubot.log'
 	# This doesn't need to be configurable
 	yq e -i '.server.override_resource_path = "/opt/maubot/frontend"' /data/config.yaml

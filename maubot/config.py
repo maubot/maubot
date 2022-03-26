@@ -42,7 +42,12 @@ class Config(BaseFileConfig):
         copy("plugin_directories.upload")
         copy("plugin_directories.load")
         copy("plugin_directories.trash")
-        copy("plugin_directories.db")
+        if "plugin_directories.db" in self:
+            base["plugin_databases.sqlite"] = self["plugin_directories.db"]
+        else:
+            copy("plugin_databases.sqlite")
+        copy("plugin_databases.postgres")
+        copy("plugin_databases.postgres_opts")
         copy("server.hostname")
         copy("server.port")
         copy("server.public_url")

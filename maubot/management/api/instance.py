@@ -55,6 +55,7 @@ async def _create_instance(instance_id: str, data: dict) -> web.Response:
     instance.enabled = data.get("enabled", True)
     instance.config_str = data.get("config") or ""
     await instance.update()
+    await instance.load()
     await instance.start()
     return resp.created(instance.to_dict())
 

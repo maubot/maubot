@@ -1,9 +1,6 @@
 # Format: #/name defines a new extras_require group called name
 # Uncommented lines after the group definition insert things into that group.
 
-#/sqlite
-aiosqlite>=0.16,<0.18
-
 #/encryption
 python-olm>=3,<4
 pycryptodome>=3,<4

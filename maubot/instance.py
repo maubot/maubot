@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterable, Awaitable, cast
+from typing import TYPE_CHECKING, Any, AsyncGenerator, cast
 from collections import defaultdict
 import asyncio
 import inspect
@@ -28,19 +28,23 @@ from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
 
 from mautrix.types import UserID
+from mautrix.util.async_db import Database, SQLiteDatabase, UpgradeTable
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
+from mautrix.util.logging import TraceLogger
 
 from .client import Client
 from .db import Instance as DBInstance
-from .loader import PluginLoader, ZippedPluginLoader
+from .lib.plugin_db import ProxyPostgresDatabase
+from .loader import DatabaseType, PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
 
 if TYPE_CHECKING:
     from .__main__ import Maubot
     from .server import PluginWebApp
 
-log = logging.getLogger("maubot.instance")
+log: TraceLogger = cast(TraceLogger, logging.getLogger("maubot.instance"))
+db_log: TraceLogger = cast(TraceLogger, logging.getLogger("maubot.instance_db"))
 
 yaml = YAML()
 yaml.indent(4)
@@ -60,7 +64,7 @@ class PluginInstance(DBInstance):
     config: BaseProxyConfig | None
     base_cfg: RecursiveDict[CommentedMap] | None
     base_cfg_str: str | None
-    inst_db: sql.engine.Engine | None
+    inst_db: sql.engine.Engine | Database | None
     inst_db_tables: dict[str, sql.Table] | None
     inst_webapp: PluginWebApp | None
     inst_webapp_url: str | None
@@ -130,8 +134,6 @@ class PluginInstance(DBInstance):
                 self.log.error(f"Failed to get client for user {self.primary_user}")
                 await self.update_enabled(False)
                 return False
-        if self.loader.meta.database:
-            self.enable_database()
         if self.loader.meta.webapp:
             self.enable_webapp()
         self.log.debug("Plugin instance dependencies loaded")
@@ -147,9 +149,9 @@ class PluginInstance(DBInstance):
         self.inst_webapp = None
         self.inst_webapp_url = None
 
-    def enable_database(self) -> None:
-        db_path = os.path.join(self.maubot.config["plugin_directories.db"], self.id)
-        self.inst_db = sql.create_engine(f"sqlite:///{db_path}.db")
+    @property
+    def _sqlite_db_path(self) -> str:
+        return os.path.join(self.maubot.config["plugin_databases.sqlite"], f"{self.id}.db")
 
     async def delete(self) -> None:
         if self.loader is not None:
@@ -162,11 +164,8 @@ class PluginInstance(DBInstance):
             pass
         await super().delete()
         if self.inst_db:
-            self.inst_db.dispose()
-            ZippedPluginLoader.trash(
-                os.path.join(self.maubot.config["plugin_directories.db"], f"{self.id}.db"),
-                reason="deleted",
-            )
+            await self.stop_database()
+            await self.delete_database()
         if self.inst_webapp:
             self.disable_webapp()
 
@@ -177,6 +176,56 @@ class PluginInstance(DBInstance):
         buf = io.StringIO()
         yaml.dump(data, buf)
         self.config_str = buf.getvalue()
+
+    async def start_database(
+        self, upgrade_table: UpgradeTable | None = None, actually_start: bool = True
+    ) -> None:
+        if self.loader.meta.database_type == DatabaseType.SQLALCHEMY:
+            self.inst_db = sql.create_engine(f"sqlite:///{self._sqlite_db_path}")
+        elif self.loader.meta.database_type == DatabaseType.ASYNCPG:
+            instance_db_log = db_log.getChild(self.id)
+            # TODO should there be a way to choose between SQLite and Postgres
+            #      for individual instances? Maybe checking the existence of the SQLite file.
+            if self.maubot.plugin_postgres_db:
+                self.inst_db = ProxyPostgresDatabase(
+                    pool=self.maubot.plugin_postgres_db,
+                    instance_id=self.id,
+                    max_conns=self.maubot.config["plugin_databases.postgres_max_conns_per_plugin"],
+                    upgrade_table=upgrade_table,
+                    log=instance_db_log,
+                )
+            else:
+                self.inst_db = Database.create(
+                    f"sqlite:///{self._sqlite_db_path}",
+                    upgrade_table=upgrade_table,
+                    log=instance_db_log,
+                )
+            if actually_start:
+                await self.inst_db.start()
+        else:
+            raise RuntimeError(f"Unrecognized database type {self.loader.meta.database_type}")
+
+    async def stop_database(self) -> None:
+        if isinstance(self.inst_db, Database):
+            await self.inst_db.stop()
+        elif isinstance(self.inst_db, sql.engine.Engine):
+            self.inst_db.dispose()
+        else:
+            raise RuntimeError(f"Unknown database type {type(self.inst_db).__name__}")
+
+    async def delete_database(self) -> None:
+        if self.loader.meta.database_type == DatabaseType.SQLALCHEMY:
+            ZippedPluginLoader.trash(self._sqlite_db_path, reason="deleted")
+        elif self.loader.meta.database_type == DatabaseType.ASYNCPG:
+            if self.inst_db is None:
+                await self.start_database(None, actually_start=False)
+            if isinstance(self.inst_db, ProxyPostgresDatabase):
+                await self.inst_db.delete()
+            else:
+                ZippedPluginLoader.trash(self._sqlite_db_path, reason="deleted")
+        else:
+            raise RuntimeError(f"Unrecognized database type {self.loader.meta.database_type}")
+        self.inst_db = None
 
     async def start(self) -> None:
         if self.started:
@@ -196,9 +245,8 @@ class PluginInstance(DBInstance):
         elif not self.loader.meta.webapp and self.inst_webapp is not None:
             self.log.debug("Disabling webapp after plugin meta reload")
             self.disable_webapp()
-        if self.loader.meta.database and self.inst_db is None:
-            self.log.debug("Enabling database after plugin meta reload")
-            self.enable_database()
+        if self.loader.meta.database:
+            await self.start_database(cls.get_db_upgrade_table())
         config_class = cls.get_config_class()
         if config_class:
             try:
@@ -254,6 +302,11 @@ class PluginInstance(DBInstance):
         except Exception:
             self.log.exception("Failed to stop instance")
         self.plugin = None
+        if self.inst_db:
+            try:
+                await self.stop_database()
+            except Exception:
+                self.log.exception("Failed to stop instance database")
         self.inst_db_tables = None
 
     async def update_id(self, new_id: str | None) -> None:

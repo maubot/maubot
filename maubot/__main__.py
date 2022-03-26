@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import sys
 
-from mautrix.util.async_db import Database, DatabaseException
+from mautrix.util.async_db import Database, DatabaseException, PostgresDatabase, Scheme
 from mautrix.util.program import Program
 
 from .__meta__ import __version__
@@ -43,6 +43,7 @@ class Maubot(Program):
     server: MaubotServer
     db: Database
     crypto_db: Database | None
+    plugin_postgres_db: PostgresDatabase | None
     state_store: PgStateStore
 
     config_class = Config
@@ -71,13 +72,7 @@ class Maubot(Program):
             help="Run even if the database contains tables from other programs (like Synapse)",
         )
 
-    def prepare(self) -> None:
-        super().prepare()
-
-        if self.config["api_features.log"]:
-            self.prepare_log_websocket()
-
-        init_zip_loader(self.config)
+    def prepare_db(self) -> None:
         self.db = Database.create(
             self.config["database"],
             upgrade_table=upgrade_table,
@@ -86,6 +81,7 @@ class Maubot(Program):
             ignore_foreign_tables=self.args.ignore_foreign_tables,
         )
         init_db(self.db)
+
         if self.config["crypto_database"] == "default":
             self.crypto_db = self.db
         else:
@@ -94,6 +90,40 @@ class Maubot(Program):
                 upgrade_table=PgCryptoStore.upgrade_table,
                 ignore_foreign_tables=self.args.ignore_foreign_tables,
             )
+
+        if self.config["plugin_databases.postgres"] == "default":
+            if self.db.scheme != Scheme.POSTGRES:
+                self.log.critical(
+                    'Using "default" as the postgres plugin database URL is only allowed if '
+                    "the default database is postgres."
+                )
+                sys.exit(24)
+            assert isinstance(self.db, PostgresDatabase)
+            self.plugin_postgres_db = self.db
+        elif self.config["plugin_databases.postgres"]:
+            plugin_db = Database.create(
+                self.config["plugin_databases.postgres"],
+                db_args={
+                    **self.config["database_opts"],
+                    **self.config["plugin_databases.postgres_opts"],
+                },
+            )
+            if plugin_db.scheme != Scheme.POSTGRES:
+                self.log.critical("The plugin postgres database URL must be a postgres database")
+                sys.exit(24)
+            assert isinstance(plugin_db, PostgresDatabase)
+            self.plugin_postgres_db = plugin_db
+        else:
+            self.plugin_postgres_db = None
+
+    def prepare(self) -> None:
+        super().prepare()
+
+        if self.config["api_features.log"]:
+            self.prepare_log_websocket()
+
+        init_zip_loader(self.config)
+        self.prepare_db()
         Client.init_cls(self)
         PluginInstance.init_cls(self)
         management_api = init_mgmt_api(self.config, self.loop)

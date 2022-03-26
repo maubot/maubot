@@ -23,10 +23,11 @@ from aiohttp import ClientSession
 from sqlalchemy.engine.base import Engine
 from yarl import URL
 
-if TYPE_CHECKING:
-    from mautrix.util.config import BaseProxyConfig
-    from mautrix.util.logging import TraceLogger
+from mautrix.util.async_db import Database, UpgradeTable
+from mautrix.util.config import BaseProxyConfig
+from mautrix.util.logging import TraceLogger
 
+if TYPE_CHECKING:
     from .client import MaubotMatrixClient
     from .loader import BasePluginLoader
     from .plugin_server import PluginWebApp
@@ -40,7 +41,7 @@ class Plugin(ABC):
     loop: AbstractEventLoop
     loader: BasePluginLoader
     config: BaseProxyConfig | None
-    database: Engine | None
+    database: Engine | Database | None
     webapp: PluginWebApp | None
     webapp_url: URL | None
 
@@ -122,6 +123,10 @@ class Plugin(ABC):
 
     @classmethod
     def get_config_class(cls) -> type[BaseProxyConfig] | None:
+        return None
+
+    @classmethod
+    def get_db_upgrade_table(cls) -> UpgradeTable | None:
         return None
 
     def on_external_config_update(self) -> Awaitable[None] | None:

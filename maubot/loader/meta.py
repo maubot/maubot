@@ -18,7 +18,13 @@ from typing import List
 from attr import dataclass
 from packaging.version import InvalidVersion, Version
 
-from mautrix.types import SerializableAttrs, SerializerError, deserializer, serializer
+from mautrix.types import (
+    ExtensibleEnum,
+    SerializableAttrs,
+    SerializerError,
+    deserializer,
+    serializer,
+)
 
 from ..__meta__ import __version__
 
@@ -36,6 +42,11 @@ def deserialize_version(version: str) -> Version:
         raise SerializerError("Invalid version") from e
 
 
+class DatabaseType(ExtensibleEnum):
+    SQLALCHEMY = "sqlalchemy"
+    ASYNCPG = "asyncpg"
+
+
 @dataclass
 class PluginMeta(SerializableAttrs):
     id: str
@@ -45,6 +56,7 @@ class PluginMeta(SerializableAttrs):
 
     maubot: Version = Version(__version__)
     database: bool = False
+    database_type: DatabaseType = DatabaseType.SQLALCHEMY
     config: bool = False
     webapp: bool = False
     license: str = ""

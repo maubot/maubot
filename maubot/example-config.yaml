@@ -16,6 +16,7 @@ database_opts:
     min_size: 1
     max_size: 10
 
+# Configuration for storing plugin .mbp files
 plugin_directories:
     # The directory where uploaded new plugins should be stored.
     upload: ./plugins
@@ -26,8 +27,27 @@ plugin_directories:
     # The directory where old plugin versions and conflicting plugins should be moved.
     # Set to "delete" to delete files immediately.
     trash: ./trash
-    # The directory where plugin databases should be stored.
-    db: ./plugins
+
+# Configuration for storing plugin databases
+plugin_databases:
+    # The directory where SQLite plugin databases should be stored.
+    sqlite: ./plugins
+    # The connection URL for plugin databases. If null, all plugins will get SQLite databases.
+    # If set, plugins using the new asyncpg interface will get a Postgres connection instead.
+    # Plugins using the legacy SQLAlchemy interface will always get a SQLite connection.
+    #
+    # To use the same connection pool as the default database, set to "default"
+    # (the default database above must be postgres to do this).
+    #
+    # When enabled, maubot will create separate Postgres schemas in the database for each plugin.
+    # To view schemas in psql, use `\dn`. To view enter and interact with a specific schema,
+    # use `SET search_path = name` (where `name` is the name found with `\dn`) and then use normal
+    # SQL queries/psql commands.
+    postgres: null
+    # Maximum number of connections per plugin instance.
+    postgres_max_conns_per_plugin: 3
+    # Overrides for the default database_opts when using a non-"default" postgres connection string.
+    postgres_opts: {}
 
 server:
     # The IP and port to listen to.
