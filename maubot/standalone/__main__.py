@@ -123,7 +123,7 @@ db = Database.create(
     config["database"],
     db_args=config.get("database_opts", {}),
     ignore_foreign_tables=True,
-    log=logging.getLogger("maubot.db"),
+    log=logging.getLogger("maubot.db.standalone.upgrade"),
     upgrade_table=upgrade_table,
 )
 

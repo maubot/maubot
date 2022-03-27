@@ -32,10 +32,9 @@ upgrade_table = UpgradeTable(
 async def upgrade_v1(conn: Connection) -> None:
     await conn.execute(
         """CREATE TABLE IF NOT EXISTS standalone_next_batch (
-            user_id    TEXT NOT NULL,
+            user_id    TEXT PRIMARY KEY,
             next_batch TEXT,
-            filter_id  TEXT,
-            PRIMARY KEY (user_id)
+            filter_id  TEXT
         )"""
     )
 
