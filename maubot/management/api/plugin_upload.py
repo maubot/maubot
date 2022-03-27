@@ -90,7 +90,7 @@ async def upload_replacement_plugin(
         replacement = (
             str(new_version)
             if plugin.meta.version != new_version
-            else f"{new_version}-ts{int(time())}"
+            else f"{new_version}-ts{int(time() * 1000)}"
         )
         filename = re.sub(
             f"{re.escape(str(plugin.meta.version))}(-ts[0-9]+)?", replacement, old_filename

@@ -271,10 +271,20 @@ class ZippedPluginLoader(PluginLoader):
     @classmethod
     def trash(cls, file_path: str, new_name: str | None = None, reason: str = "error") -> None:
         if cls.trash_path == "delete":
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except FileNotFoundError:
+                pass
         else:
             new_name = new_name or f"{int(time())}-{reason}-{os.path.basename(file_path)}"
-            os.rename(file_path, os.path.abspath(os.path.join(cls.trash_path, new_name)))
+            try:
+                os.rename(file_path, os.path.abspath(os.path.join(cls.trash_path, new_name)))
+            except OSError as e:
+                cls.log.warning(f"Failed to rename {file_path}: {e} - trying to delete")
+                try:
+                    os.remove(file_path)
+                except FileNotFoundError:
+                    pass
 
     @classmethod
     def load_all(cls):
