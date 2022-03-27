@@ -233,12 +233,17 @@ class ZippedPluginLoader(PluginLoader):
         return plugin
 
     async def reload(self, new_path: str | None = None) -> type[PluginClass]:
-        await self.unload()
-        if new_path is not None:
+        self._unload()
+        if new_path is not None and new_path != self.path:
+            try:
+                del self.path_cache[self.path]
+            except KeyError:
+                pass
             self.path = new_path
+            self.path_cache[self.path] = self
         return await self.load(reset_cache=True)
 
-    async def unload(self) -> None:
+    def _unload(self) -> None:
         for name, mod in list(sys.modules.items()):
             if (getattr(mod, "__file__", "") or "").startswith(self.path):
                 del sys.modules[name]
@@ -246,7 +251,7 @@ class ZippedPluginLoader(PluginLoader):
         self.log.debug(f"Unloaded plugin {self.meta.id} at {self.path}")
 
     async def delete(self) -> None:
-        await self.unload()
+        self._unload()
         try:
             del self.path_cache[self.path]
         except KeyError:

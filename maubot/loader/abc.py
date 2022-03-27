@@ -94,9 +94,5 @@ class PluginLoader(BasePluginLoader, ABC):
         pass
 
     @abstractmethod
-    async def unload(self) -> None:
-        pass
-
-    @abstractmethod
     async def delete(self) -> None:
         pass
