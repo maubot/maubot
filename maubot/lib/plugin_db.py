@@ -32,6 +32,7 @@ class ProxyPostgresDatabase(Database):
     _quoted_schema: str
     _default_search_path: str
     _conn_sema: asyncio.Semaphore
+    _max_conns: int
 
     def __init__(
         self,
@@ -49,6 +50,7 @@ class ProxyPostgresDatabase(Database):
         self._quoted_schema = f'"{self.schema_name}"'
         self._default_search_path = '"$user", public'
         self._conn_sema = asyncio.BoundedSemaphore(max_conns)
+        self._max_conns = max_conns
 
     async def start(self) -> None:
         async with self._underlying_pool.acquire() as conn:
@@ -58,7 +60,7 @@ class ProxyPostgresDatabase(Database):
         await super().start()
 
     async def stop(self) -> None:
-        while not self._conn_sema.locked():
+        for _ in range(self._max_conns):
             try:
                 await asyncio.wait_for(self._conn_sema.acquire(), timeout=3)
             except asyncio.TimeoutError:
