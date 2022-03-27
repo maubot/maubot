@@ -1,0 +1,10 @@
+maubot: 0.1.0
+id: xyz.maubot.storagebot
+version: 2.0.0
+license: MIT
+modules:
+- storagebot
+main_class: StorageBot
+database: true
+database_type: asyncpg
+config: false
