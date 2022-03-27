@@ -49,7 +49,7 @@ from ..plugin_base import Plugin
 from ..plugin_server import PluginWebApp, PrefixResource
 from ..server import AccessLogger
 from .config import Config
-from .database import NextBatch
+from .database import NextBatch, upgrade_table
 from .loader import FileSystemLoader
 
 crypto_import_error = None
@@ -124,6 +124,7 @@ db = Database.create(
     db_args=config.get("database_opts", {}),
     ignore_foreign_tables=True,
     log=logging.getLogger("maubot.db"),
+    upgrade_table=upgrade_table,
 )
 
 user_id = config["user.credentials.id"]

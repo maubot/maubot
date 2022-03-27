@@ -15,11 +15,30 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import logging
+
 from attr import dataclass
 
 from mautrix.client import SyncStore
 from mautrix.types import FilterID, SyncToken, UserID
-from mautrix.util.async_db import Database
+from mautrix.util.async_db import Connection, Database, UpgradeTable
+
+upgrade_table = UpgradeTable(
+    version_table_name="standalone_version", log=logging.getLogger("maubot.db")
+)
+
+
+@upgrade_table.register(description="Initial revision")
+async def upgrade_v1(conn: Connection) -> None:
+    await conn.execute(
+        """CREATE TABLE IF NOT EXISTS standalone_next_batch (
+            user_id    TEXT NOT NULL,
+            next_batch TEXT,
+            filter_id  TEXT,
+            PRIMARY KEY (user_id)
+        )"""
+    )
+
 
 find_q = "SELECT next_batch, filter_id FROM standalone_next_batch WHERE user_id=$1"
 insert_q = "INSERT INTO standalone_next_batch (user_id, next_batch, filter_id) VALUES ($1, $2, $3)"
