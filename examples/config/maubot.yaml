@@ -1,5 +1,5 @@
 maubot: 0.1.0
-id: xyz.maubot.databasebot
+id: xyz.maubot.configurablebot
 version: 2.0.0
 license: MIT
 modules:
