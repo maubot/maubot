@@ -74,7 +74,7 @@ async def list_servers(server: str, sess: aiohttp.ClientSession) -> None:
 @click.option(
     "-c",
     "--update-client",
-    help="Instead of returning the access token, " "create or update a client in maubot using it",
+    help="Instead of returning the access token, create or update a client in maubot using it",
     is_flag=True,
     default=False,
 )

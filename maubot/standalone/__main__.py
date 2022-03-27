@@ -78,7 +78,7 @@ parser.add_argument(
     type=str,
     default="pkg://maubot.standalone/example-config.yaml",
     metavar="<path>",
-    help="the path to the example config " "(for automatic config updates)",
+    help="the path to the example config (for automatic config updates)",
 )
 parser.add_argument(
     "-m",

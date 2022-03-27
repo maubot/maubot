@@ -222,7 +222,7 @@ class Client(DBClient):
         crypto_device_id = await self.crypto_store.get_device_id()
         if crypto_device_id and crypto_device_id != self.device_id:
             self.log.warning(
-                "Mismatching device ID in crypto store and main database, " "resetting encryption"
+                "Mismatching device ID in crypto store and main database, resetting encryption"
             )
             await self.crypto_store.delete()
             crypto_device_id = None
@@ -263,7 +263,7 @@ class Client(DBClient):
             return
         elif whoami.device_id and self.device_id and whoami.device_id != self.device_id:
             self.log.error(
-                f"Device ID mismatch: expected {self.device_id}, " f"but got {whoami.device_id}"
+                f"Device ID mismatch: expected {self.device_id}, but got {whoami.device_id}"
             )
             self.enabled = False
             await self.update()
