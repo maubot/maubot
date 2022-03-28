@@ -1,15 +1,17 @@
-# v0.3.0 (unreleased)
+# v0.3.0 (2022-03-28)
 
 * Switched main maubot database to asyncpg/aiosqlite.
   * Using the same SQLite database for crypto is now safe again.
 * Added support for asyncpg/aiosqlite for plugin databases.
   * There are some [basic docs](https://docs.mau.fi/maubot/dev/database/index.html)
-    for the new system.
+    and [a simple example](./examples/database) for the new system.
   * The old SQLAlchemy system is now deprecated, but will be preserved for
     backwards-compatibility until most plugins have updated.
 * Started enforcing minimum maubot version in plugins.
   * Trying to upload a plugin where the specified version is higher than the
     running maubot version will fail.
+* Fixed bug where uploading a plugin twice, deleting it and trying to upload
+  again would fail.
 * Updated Docker image to Alpine 3.15.
 * Formatted all code using [black](https://github.com/psf/black)
   and [isort](https://github.com/PyCQA/isort).
