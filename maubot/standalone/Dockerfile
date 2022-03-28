@@ -20,6 +20,7 @@ RUN apk add --no-cache \
       py3-unpaddedbase64
 
 COPY requirements.txt /opt/maubot/requirements.txt
+COPY optional-requirements.txt /opt/maubot/optional-requirements.txt
 RUN cd /opt/maubot \
   && apk add --no-cache --virtual .build-deps \
       python3-dev \
