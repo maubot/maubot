@@ -20,7 +20,6 @@ from datetime import datetime
 from aiohttp import web
 from asyncpg import PostgresError
 from sqlalchemy import asc, desc, engine, exc
-from sqlalchemy.engine.result import ResultProxy, RowProxy
 import aiosqlite
 
 from mautrix.util.async_db import Database
@@ -134,7 +133,7 @@ def _execute_query_sqlalchemy(
 ) -> web.Response:
     assert isinstance(instance.inst_db, engine.Engine)
     try:
-        res: ResultProxy = instance.inst_db.execute(sql_query)
+        res = instance.inst_db.execute(sql_query)
     except exc.IntegrityError as e:
         return resp.sql_integrity_error(e, sql_query)
     except exc.OperationalError as e:
@@ -144,7 +143,6 @@ def _execute_query_sqlalchemy(
         "query": str(sql_query),
     }
     if res.returns_rows:
-        row: RowProxy
         data["rows"] = [
             (
                 {key: check_type(value) for key, value in row.items()}
