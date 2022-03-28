@@ -139,6 +139,8 @@ class Maubot(Program):
         try:
             await self.db.start()
             await self.state_store.upgrade_table.upgrade(self.db)
+            if self.plugin_postgres_db and self.plugin_postgres_db is not self.db:
+                await self.plugin_postgres_db.start()
             if self.crypto_db and self.crypto_db is not self.db:
                 await self.crypto_db.start()
             else:
