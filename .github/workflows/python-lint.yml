@@ -16,7 +16,6 @@ jobs:
     - uses: psf/black@stable
       with:
         src: "./maubot"
-        version: "22.1.0"
     - name: pre-commit
       run: |
         pip install pre-commit
