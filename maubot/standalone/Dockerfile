@@ -13,7 +13,11 @@ RUN apk add --no-cache \
       py3-ruamel.yaml \
       py3-jinja2 \
       py3-packaging \
-      py3-markdown
+      py3-markdown \
+      py3-cffi \
+      py3-olm \
+      py3-pycryptodome \
+      py3-unpaddedbase64
 
 COPY requirements.txt /opt/maubot/requirements.txt
 RUN cd /opt/maubot \
@@ -21,7 +25,7 @@ RUN cd /opt/maubot \
       python3-dev \
       libffi-dev \
       build-base \
-  && pip3 install -r requirements.txt \
+  && pip3 install -r requirements.txt -r optional-requirements.txt \
   && apk del .build-deps
 
 COPY . /opt/maubot
