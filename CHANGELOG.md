@@ -1,3 +1,10 @@
+# v0.3.1 (2022-03-29)
+
+* Added encryption dependencies to standalone dockerfile.
+* Fixed running without encryption dependencies installed.
+* Removed unnecessary imports that broke on SQLAlchemy 1.4+.
+* Removed unused alembic dependency.
+
 # v0.3.0 (2022-03-28)
 
 * Dropped Python 3.7 support.
