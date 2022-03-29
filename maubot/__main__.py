@@ -91,6 +91,8 @@ class Maubot(Program):
                     upgrade_table=PgCryptoStore.upgrade_table,
                     ignore_foreign_tables=self.args.ignore_foreign_tables,
                 )
+        else:
+            self.crypto_db = None
 
         if self.config["plugin_databases.postgres"] == "default":
             if self.db.scheme != Scheme.POSTGRES:
