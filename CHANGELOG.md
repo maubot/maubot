@@ -1,5 +1,6 @@
 # v0.3.0 (2022-03-28)
 
+* Dropped Python 3.7 support.
 * Switched main maubot database to asyncpg/aiosqlite.
   * Using the same SQLite database for crypto is now safe again.
 * Added support for asyncpg/aiosqlite for plugin databases.
