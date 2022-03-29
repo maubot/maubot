@@ -82,14 +82,15 @@ class Maubot(Program):
         )
         init_db(self.db)
 
-        if self.config["crypto_database"] == "default":
-            self.crypto_db = self.db
-        else:
-            self.crypto_db = Database.create(
-                self.config["crypto_database"],
-                upgrade_table=PgCryptoStore.upgrade_table,
-                ignore_foreign_tables=self.args.ignore_foreign_tables,
-            )
+        if PgCryptoStore:
+            if self.config["crypto_database"] == "default":
+                self.crypto_db = self.db
+            else:
+                self.crypto_db = Database.create(
+                    self.config["crypto_database"],
+                    upgrade_table=PgCryptoStore.upgrade_table,
+                    ignore_foreign_tables=self.args.ignore_foreign_tables,
+                )
 
         if self.config["plugin_databases.postgres"] == "default":
             if self.db.scheme != Scheme.POSTGRES:
@@ -135,16 +136,17 @@ class Maubot(Program):
         ignore_unsupported = self.args.ignore_unsupported_database
         self.db.upgrade_table.allow_unsupported = ignore_unsupported
         self.state_store.upgrade_table.allow_unsupported = ignore_unsupported
-        PgCryptoStore.upgrade_table.allow_unsupported = ignore_unsupported
         try:
             await self.db.start()
             await self.state_store.upgrade_table.upgrade(self.db)
             if self.plugin_postgres_db and self.plugin_postgres_db is not self.db:
                 await self.plugin_postgres_db.start()
-            if self.crypto_db and self.crypto_db is not self.db:
-                await self.crypto_db.start()
-            else:
-                await PgCryptoStore.upgrade_table.upgrade(self.db)
+            if self.crypto_db:
+                PgCryptoStore.upgrade_table.allow_unsupported = ignore_unsupported
+                if self.crypto_db is not self.db:
+                    await self.crypto_db.start()
+                else:
+                    await PgCryptoStore.upgrade_table.upgrade(self.db)
         except DatabaseException as e:
             self.log.critical("Failed to initialize database", exc_info=e)
             if e.explanation:
