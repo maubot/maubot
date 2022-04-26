@@ -38,7 +38,7 @@ def logs(server: str, tail: int) -> None:
     global history_count
     history_count = tail
     loop = asyncio.get_event_loop()
-    future = asyncio.create_task(view_logs(server, token), loop=loop)
+    future = loop.create_task(view_logs(server, token))
     try:
         loop.run_until_complete(future)
     except KeyboardInterrupt:
