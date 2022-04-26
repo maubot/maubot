@@ -38,13 +38,7 @@ def logs(server: str, tail: int) -> None:
     global history_count
     history_count = tail
     loop = asyncio.get_event_loop()
-    future = asyncio.create_task(view_logs(server, token))
-    try:
-        loop.run_until_complete(future)
-    except KeyboardInterrupt:
-        future.cancel()
-        loop.run_until_complete(future)
-        loop.close()
+    loop.run_until_complete(view_logs(server, token))
 
 
 def parsedate(entry: Obj) -> None:
