@@ -17,4 +17,4 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-        files: ^maubot/.*\.pyi$
+        files: ^maubot/.*\.pyi?$
