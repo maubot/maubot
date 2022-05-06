@@ -34,7 +34,7 @@ from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.util.logging import TraceLogger
 
 from .client import Client
-from .db import Instance as DBInstance
+from .db import DatabaseEngine, Instance as DBInstance
 from .lib.plugin_db import ProxyPostgresDatabase
 from .loader import DatabaseType, PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
@@ -71,10 +71,21 @@ class PluginInstance(DBInstance):
     started: bool
 
     def __init__(
-        self, id: str, type: str, enabled: bool, primary_user: UserID, config: str = ""
+        self,
+        id: str,
+        type: str,
+        enabled: bool,
+        primary_user: UserID,
+        config: str = "",
+        database_engine: DatabaseEngine | None = None,
     ) -> None:
         super().__init__(
-            id=id, type=type, enabled=bool(enabled), primary_user=primary_user, config_str=config
+            id=id,
+            type=type,
+            enabled=bool(enabled),
+            primary_user=primary_user,
+            config_str=config,
+            database_engine=database_engine,
         )
 
     def __hash__(self) -> int:
@@ -111,6 +122,8 @@ class PluginInstance(DBInstance):
             "database": (
                 self.inst_db is not None and self.maubot.config["api_features.instance_database"]
             ),
+            "database_interface": self.loader.meta.database_type_str if self.loader else "unknown",
+            "database_engine": self.database_engine_str,
         }
 
     def _introspect_sqlalchemy(self) -> dict:
@@ -269,12 +282,27 @@ class PluginInstance(DBInstance):
         self, upgrade_table: UpgradeTable | None = None, actually_start: bool = True
     ) -> None:
         if self.loader.meta.database_type == DatabaseType.SQLALCHEMY:
+            if self.database_engine is None:
+                await self.update_db_engine(DatabaseEngine.SQLITE)
+            elif self.database_engine == DatabaseEngine.POSTGRES:
+                raise RuntimeError(
+                    "Instance database engine is marked as Postgres, but plugin uses legacy "
+                    "database interface, which doesn't support postgres."
+                )
             self.inst_db = sql.create_engine(f"sqlite:///{self._sqlite_db_path}")
         elif self.loader.meta.database_type == DatabaseType.ASYNCPG:
+            if self.database_engine is None:
+                if os.path.exists(self._sqlite_db_path) or not self.maubot.plugin_postgres_db:
+                    await self.update_db_engine(DatabaseEngine.SQLITE)
+                else:
+                    await self.update_db_engine(DatabaseEngine.POSTGRES)
             instance_db_log = db_log.getChild(self.id)
-            # TODO should there be a way to choose between SQLite and Postgres
-            #      for individual instances? Maybe checking the existence of the SQLite file.
-            if self.maubot.plugin_postgres_db:
+            if self.database_engine == DatabaseEngine.POSTGRES:
+                if not self.maubot.plugin_postgres_db:
+                    raise RuntimeError(
+                        "Instance database engine is marked as Postgres, but this maubot isn't "
+                        "configured to support Postgres for plugin databases"
+                    )
                 self.inst_db = ProxyPostgresDatabase(
                     pool=self.maubot.plugin_postgres_db,
                     instance_id=self.id,
@@ -334,7 +362,12 @@ class PluginInstance(DBInstance):
             self.log.debug("Disabling webapp after plugin meta reload")
             self.disable_webapp()
         if self.loader.meta.database:
-            await self.start_database(cls.get_db_upgrade_table())
+            try:
+                await self.start_database(cls.get_db_upgrade_table())
+            except Exception:
+                self.log.exception("Failed to start instance database")
+                await self.update_enabled(False)
+                return
         config_class = cls.get_config_class()
         if config_class:
             try:
@@ -453,6 +486,11 @@ class PluginInstance(DBInstance):
     async def update_enabled(self, enabled: bool) -> None:
         if enabled is not None and enabled != self.enabled:
             self.enabled = enabled
+            await self.update()
+
+    async def update_db_engine(self, db_engine: DatabaseEngine | None) -> None:
+        if db_engine is not None and db_engine != self.database_engine:
+            self.database_engine = db_engine
             await self.update()
 
     @classmethod

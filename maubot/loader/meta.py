@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import List
+from typing import List, Optional
 
 from attr import dataclass
 from packaging.version import InvalidVersion, Version
@@ -63,3 +63,7 @@ class PluginMeta(SerializableAttrs):
     extra_files: List[str] = []
     dependencies: List[str] = []
     soft_dependencies: List[str] = []
+
+    @property
+    def database_type_str(self) -> Optional[str]:
+        return self.database_type.value if self.database else None

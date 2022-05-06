@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
+from enum import Enum
 
 from asyncpg import Record
 from attr import dataclass
@@ -24,6 +25,11 @@ from mautrix.types import UserID
 from mautrix.util.async_db import Database
 
 fake_db = Database.create("") if TYPE_CHECKING else None
+
+
+class DatabaseEngine(Enum):
+    SQLITE = "sqlite"
+    POSTGRES = "postgres"
 
 
 @dataclass
@@ -35,21 +41,31 @@ class Instance:
     enabled: bool
     primary_user: UserID
     config_str: str
+    database_engine: DatabaseEngine | None
+
+    @property
+    def database_engine_str(self) -> str | None:
+        return self.database_engine.value if self.database_engine else None
 
     @classmethod
     def _from_row(cls, row: Record | None) -> Instance | None:
         if row is None:
             return None
-        return cls(**row)
+        data = {**row}
+        db_engine = data.pop("database_engine", None)
+        return cls(**data, database_engine=DatabaseEngine(db_engine) if db_engine else None)
+
+    _columns = "id, type, enabled, primary_user, config, database_engine"
 
     @classmethod
     async def all(cls) -> list[Instance]:
-        rows = await cls.db.fetch("SELECT id, type, enabled, primary_user, config FROM instance")
+        q = f"SELECT {cls._columns} FROM instance"
+        rows = await cls.db.fetch(q)
         return [cls._from_row(row) for row in rows]
 
     @classmethod
     async def get(cls, id: str) -> Instance | None:
-        q = "SELECT id, type, enabled, primary_user, config FROM instance WHERE id=$1"
+        q = f"SELECT {cls._columns} FROM instance WHERE id=$1"
         return cls._from_row(await cls.db.fetchrow(q, id))
 
     async def update_id(self, new_id: str) -> None:
@@ -58,17 +74,27 @@ class Instance:
 
     @property
     def _values(self):
-        return self.id, self.type, self.enabled, self.primary_user, self.config_str
+        return (
+            self.id,
+            self.type,
+            self.enabled,
+            self.primary_user,
+            self.config_str,
+            self.database_engine_str,
+        )
 
     async def insert(self) -> None:
         q = (
-            "INSERT INTO instance (id, type, enabled, primary_user, config) "
-            "VALUES ($1, $2, $3, $4, $5)"
+            "INSERT INTO instance (id, type, enabled, primary_user, config, database_engine) "
+            "VALUES ($1, $2, $3, $4, $5, $6)"
         )
         await self.db.execute(q, *self._values)
 
     async def update(self) -> None:
-        q = "UPDATE instance SET type=$2, enabled=$3, primary_user=$4, config=$5 WHERE id=$1"
+        q = """
+        UPDATE instance SET type=$2, enabled=$3, primary_user=$4, config=$5, database_engine=$6
+        WHERE id=$1
+        """
         await self.db.execute(q, *self._values)
 
     async def delete(self) -> None:

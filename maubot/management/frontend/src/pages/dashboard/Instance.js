@@ -43,7 +43,7 @@ class Instance extends BaseMainView {
     }
 
     get entryKeys() {
-        return ["id", "primary_user", "enabled", "started", "type", "config"]
+        return ["id", "primary_user", "enabled", "started", "type", "config", "database_engine"]
     }
 
     get initialState() {
@@ -54,6 +54,7 @@ class Instance extends BaseMainView {
             started: true,
             type: "",
             config: "",
+            database_engine: "",
 
             saving: false,
             deleting: false,
