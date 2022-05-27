@@ -36,6 +36,7 @@ def get_default_server() -> tuple[str | None, str | None]:
         server = None
     if server is None:
         print(f"{Fore.RED}Default server not configured.{Fore.RESET}")
+        print(f"Perhaps you forgot to {Fore.CYAN}mbc login{Fore.RESET}?")
         return None, None
     return server, _get_token(server)
 
