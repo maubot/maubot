@@ -1,0 +1,29 @@
+image: dock.mau.dev/maubot/maubot
+
+stages:
+- build
+
+variables:
+  PYTHONPATH: /opt/maubot
+
+build:
+  stage: build
+  except:
+  - tags
+  script:
+  - python3 -m maubot.cli build -o xyz.maubot.$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA.mbp
+  artifacts:
+    paths:
+    - "*.mbp"
+    expire_in: 365 days
+
+build tags:
+  stage: build
+  only:
+  - tags
+  script:
+  - python3 -m maubot.cli build -o xyz.maubot.$CI_PROJECT_NAME-$CI_COMMIT_TAG.mbp
+  artifacts:
+    paths:
+    - "*.mbp"
+    expire_in: never
