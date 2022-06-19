@@ -1,3 +1,3 @@
 #!/bin/sh
-cd /opt/maubot
+export PYTHONPATH=/opt/maubot
 python3 -m maubot.cli "$@"
