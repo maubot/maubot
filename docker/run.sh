@@ -30,7 +30,6 @@ mkdir -p /var/log/maubot /data/plugins /data/trash /data/dbs
 
 if [ ! -f /data/config.yaml ]; then
 	cp example-config.yaml /data/config.yaml
-	# Apply some docker-specific adjustments to the config
 	echo "Config file not found. Example config copied to /data/config.yaml"
 	echo "Please modify the config file to your liking and restart the container."
 	fixperms
@@ -38,7 +37,6 @@ if [ ! -f /data/config.yaml ]; then
 	exit
 fi
 
-alembic -x config=/data/config.yaml upgrade head
 fixperms
 fixconfig
 if ls /data/plugins/*.db > /dev/null 2>&1; then
