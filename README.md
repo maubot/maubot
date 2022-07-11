@@ -68,6 +68,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [alternatingcaps](https://github.com/rom4nik/maubot-alternatingcaps) - A bot repeating last message using aLtErNaTiNg cApS.
 * [metric](https://github.com/edwardsdean/maubot_metric_bot) - A bot that will reply to a message that contains imperial units and replace them with metric units.
 * [urlpreview](https://github.com/coffeebank/coffee-maubot/tree/master/urlpreview) - A bot that responds to links with a link preview embed, using Matrix API to fetch meta tags
+* [alertbot](https://github.com/moan0s/alertbot) - A bot that recives monitoring alerts via alertmanager and forwards them to a matrix room
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
