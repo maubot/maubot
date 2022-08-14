@@ -188,7 +188,7 @@ async def _do_sso(req: AuthRequestInfo) -> web.Response:
         / "client/auth_external_sso/complete"
         / waiter_id
     )
-    sso_url = req.client.api.base_url.with_path(str(Path.login.sso.redirect)).with_query(
+    sso_url = req.client.api.base_url.with_path(str(Path.v3.login.sso.redirect)).with_query(
         {"redirectUrl": str(public_url)}
     )
     sso_waiters[waiter_id] = req, asyncio.get_running_loop().create_future()
