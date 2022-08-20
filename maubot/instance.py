@@ -276,7 +276,11 @@ class PluginInstance(DBInstance):
     def save_config(self, data: RecursiveDict[CommentedMap]) -> None:
         buf = io.StringIO()
         yaml.dump(data, buf)
-        self.config_str = buf.getvalue()
+        val = buf.getvalue()
+        if val != self.config_str:
+            self.config_str = val
+            self.log.debug("Creating background task to save updated config")
+            asyncio.create_task(self.update())
 
     async def start_database(
         self, upgrade_table: UpgradeTable | None = None, actually_start: bool = True
