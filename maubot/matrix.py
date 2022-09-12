@@ -123,6 +123,9 @@ class MaubotMessageEvent(MessageEvent):
     def react(self, key: str) -> Awaitable[EventID]:
         return self.client.react(self.room_id, self.event_id, key)
 
+    def redact(self, reason: str | None = None) -> Awaitable[EventID]:
+        return self.client.redact(self.room_id, self.event_id, reason=reason)
+
     def edit(
         self,
         content: str | MessageEventContent,
