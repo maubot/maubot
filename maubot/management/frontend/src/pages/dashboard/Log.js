@@ -41,7 +41,7 @@ class LogEntry extends PureComponent {
             const req = this.props.line.matrix_http_request
 
             return <>
-                {req.method} {req.path}
+                {req.method} {req.url || req.path}
                 <div className="content">
                     {Object.entries(req.content || {}).length > 0
                     && <JSONTree data={{ content: req.content }} hideRoot={true}/>}
