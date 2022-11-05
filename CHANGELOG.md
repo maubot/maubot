@@ -1,3 +1,12 @@
+# v0.3.2 (unreleased)
+
+* Added `evt.redact()` as a shortcut for `self.client.redact(evt.room_id, evt.event_id)`.
+* Fixed `mbc logs` command not working on Python 3.8+.
+* Fixed saving plugin configs (broke in v0.3.0).
+* Fixed SSO login using the wrong API path (probably broke in v0.3.0).
+* Stopped using `cd` in the docker image's `mbc` wrapper to enable using
+  path-dependent commands like `mbc build` by mounting a directory.
+
 # v0.3.1 (2022-03-29)
 
 * Added encryption dependencies to standalone dockerfile.
