@@ -73,6 +73,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [hasswebhookbot](https://github.com/v411e/hasswebhookbot) - A bot receiving webhooks from [Home Assistant](https://github.com/home-assistant).
 * [ovgumensabot](https://github.com/v411e/ovgumensabot) - A bot that automatically sends meals from OvGU canteen every day.
 * [token](https://github.com/yoxcu/maubot-token) - A maubot to create and manage your synapse user registration tokens.
+* [redactbot](https://gitlab.com/sspaeth/redactbot) - A bot that immediately redacts any posted file (except for whitelisted types).
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
