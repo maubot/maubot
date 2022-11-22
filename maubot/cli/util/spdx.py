@@ -36,10 +36,10 @@ def load() -> None:
 def get(id: str) -> dict[str, str]:
     if not spdx_list:
         load()
-    return spdx_list[id.lower()]
+    return spdx_list[id]
 
 
 def valid(id: str) -> bool:
     if not spdx_list:
         load()
-    return id.lower() in spdx_list
+    return id in spdx_list
