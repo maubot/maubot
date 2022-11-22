@@ -92,6 +92,7 @@ class CommandHandler:
                 "get_name",
                 "is_command_match",
                 "require_subcommand",
+                "must_consume_args",
                 "arg_fallthrough",
                 "event_handler",
                 "event_type",
