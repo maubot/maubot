@@ -70,6 +70,8 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [urlpreview](https://github.com/coffeebank/coffee-maubot/tree/master/urlpreview) - A bot that responds to links with a link preview embed, using Matrix API to fetch meta tags.
 * [autoreply](https://github.com/babolivier/maubot-autoreply) - A bot that sends automated replies when you're away, and shows you a summary of missed messages when you come back.
 * [alertbot](https://github.com/moan0s/alertbot) - A bot that recives monitoring alerts via alertmanager and forwards them to a matrix room.
+* [hasswebhookbot](https://github.com/v411e/hasswebhookbot) - A bot receiving webhooks from [Home Assistant](https://github.com/home-assistant).
+* [ovgumensabot](https://github.com/v411e/ovgumensabot) - A bot that automatically sends meals from OvGU canteen every day.
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
