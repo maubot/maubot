@@ -74,6 +74,14 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [ovgumensabot](https://github.com/v411e/ovgumensabot) - A bot that automatically sends meals from OvGU canteen every day.
 * [token](https://github.com/yoxcu/maubot-token) - A maubot to create and manage your synapse user registration tokens.
 * [redactbot](https://gitlab.com/sspaeth/redactbot) - A bot that immediately redacts any posted file (except for whitelisted types).
+* [join](https://github.com/williamkray/maubot-join) - A plugin that restricts who can convince your bot to join new rooms to certain users.
+* [create-room](https://github.com/williamkray/maubot-createroom) - A plugin that creates new rooms and automatically
+  sets them to be part of a private Matrix Space.
+* [welcome](https://github.com/williamkray/maubot-welcome) - A plugin that greets new people with a configurable message when they join a room.
+* [activity tracker](https://github.com/williamkray/maubot-kickbot) - A plugin that minimally tracks user activity
+  within a space. Useful for kicking inactive users from a private community.
+* [random subreddit post](https://github.com/williamkray/maubot-reddit) - A plugin that returns a random post from a
+  given subreddit.
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
