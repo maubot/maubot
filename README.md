@@ -72,7 +72,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * [alertbot](https://github.com/moan0s/alertbot) - A bot that recives monitoring alerts via alertmanager and forwards them to a matrix room.
 * [hasswebhookbot](https://github.com/v411e/hasswebhookbot) - A bot receiving webhooks from [Home Assistant](https://github.com/home-assistant).
 * [ovgumensabot](https://github.com/v411e/ovgumensabot) - A bot that automatically sends meals from OvGU canteen every day.
-* [token](https://github.com/yoxcu/maubot-token) - A maubot to create and manage your synapse user registration tokens.
+* †[token](https://github.com/yoxcu/maubot-token) - A maubot to create and manage your synapse user registration tokens.
 * [redactbot](https://gitlab.com/sspaeth/redactbot) - A bot that immediately redacts any posted file (except for whitelisted types).
 * [join](https://github.com/williamkray/maubot-join) - A plugin that restricts who can convince your bot to join new rooms to certain users.
 * [create-room](https://github.com/williamkray/maubot-createroom) - A plugin that creates new rooms and automatically
