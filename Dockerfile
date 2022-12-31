@@ -1,9 +1,9 @@
-FROM node:16 AS frontend-builder
+FROM node:18 AS frontend-builder
 
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
 
-FROM alpine:3.15
+FROM alpine:3.17
 
 RUN apk add --no-cache \
         python3 py3-pip py3-setuptools py3-wheel \
@@ -21,11 +21,10 @@ RUN apk add --no-cache \
         py3-packaging \
         py3-markdown \
         py3-alembic \
-#        py3-cssselect \
+        py3-cssselect \
         py3-commonmark \
         py3-pygments \
         py3-tz \
-#        py3-tzlocal \
         py3-regex \
         py3-wcwidth \
         # encryption
@@ -39,9 +38,8 @@ RUN apk add --no-cache \
         py3-magic \
         py3-feedparser \
         py3-dateutil \
-        py3-lxml
-#        py3-gitlab
-#        py3-semver@edge
+        py3-lxml \
+        py3-semver
 # TODO remove pillow, magic, feedparser, lxml, gitlab and semver when maubot supports installing dependencies
 
 COPY requirements.txt /opt/maubot/requirements.txt
@@ -49,7 +47,7 @@ COPY optional-requirements.txt /opt/maubot/optional-requirements.txt
 WORKDIR /opt/maubot
 RUN apk add --virtual .build-deps python3-dev build-base git \
     && pip3 install -r requirements.txt -r optional-requirements.txt \
-        dateparser langdetect python-gitlab pyquery cchardet semver tzlocal cssselect \
+        dateparser langdetect python-gitlab pyquery tzlocal \
     && apk del .build-deps
 # TODO also remove dateparser, langdetect and pyquery when maubot supports installing dependencies
 

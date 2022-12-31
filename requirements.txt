@@ -2,12 +2,12 @@ mautrix>=0.15.5,<0.19
 aiohttp>=3,<4
 yarl>=1,<2
 SQLAlchemy>=1,<1.4
-asyncpg>=0.20,<0.27
-aiosqlite>=0.16,<0.18
+asyncpg>=0.20,<0.28
+aiosqlite>=0.16,<0.19
 commonmark>=0.9,<1
 ruamel.yaml>=0.15.35,<0.18
 attrs>=18.1.0
-bcrypt>=3,<4
+bcrypt>=3,<5
 packaging>=10
 
 click>=7,<9
