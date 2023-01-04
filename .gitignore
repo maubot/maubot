@@ -7,7 +7,8 @@ pip-selfcheck.json
 *.pyc
 __pycache__
 
-*.db
+*.db*
+*.log
 /*.yaml
 !example-config.yaml
 !.pre-commit-config.yaml
