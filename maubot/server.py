@@ -52,7 +52,7 @@ class MaubotServer:
         self.config = config
 
         self.setup_appservice()
-        self.app.add_subapp(config["server.base_path"], management_api)
+        self.app.add_subapp("/_matrix/maubot/v1", management_api)
         self.setup_instance_subapps()
         self.setup_management_ui()
 
@@ -93,7 +93,7 @@ class MaubotServer:
         self.app.router.register_resource(resource)
 
     def setup_appservice(self) -> None:
-        as_path = PathBuilder(self.config["server.appservice_base_path"])
+        as_path = PathBuilder("/_matrix/appservice/v1")
         self.add_route(Method.PUT, as_path.transactions, self.handle_transaction)
 
     def setup_management_ui(self) -> None:
@@ -140,16 +140,12 @@ class MaubotServer:
                 f"{ui_base}/{file}", lambda _: web.Response(body=data, content_type=mime)
             )
 
-        # also set up a resource path for the public url path prefix config
-        # cut the prefix path from public_url
         public_url = self.config["server.public_url"]
-        base_path = self.config["server.base_path"]
         public_url_path = ""
         if public_url:
             public_url_path = URL(public_url).path.rstrip("/")
 
-        # assemble with base_path
-        api_path = f"{public_url_path}{base_path}"
+        api_path = f"{public_url_path}/_matrix/maubot/v1"
 
         path_prefix_response_body = json.dumps({"api_path": api_path.rstrip("/")})
         self.app.router.add_get(

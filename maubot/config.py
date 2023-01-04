@@ -52,11 +52,9 @@ class Config(BaseFileConfig):
         copy("server.port")
         copy("server.public_url")
         copy("server.listen")
-        copy("server.base_path")
         copy("server.ui_base_path")
         copy("server.plugin_base_path")
         copy("server.override_resource_path")
-        copy("server.appservice_base_path")
         shared_secret = self["server.unshared_secret"]
         if shared_secret is None or shared_secret == "generate":
             base["server.unshared_secret"] = self._new_token()

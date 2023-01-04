@@ -45,9 +45,8 @@ class Main extends Component {
             const resp = await fetch(process.env.PUBLIC_URL + "/paths.json", {
                 headers: { "Content-Type": "application/json" },
             })
-            const apiPathJson = await resp.json()
-            const apiPath = apiPathJson.api_path
-            api.setBasePath(`${apiPath}`)
+            const apiPaths = await resp.json()
+            api.setBasePath(apiPaths.api_path)
         } catch (err) {
             console.error("Failed to get API path:", err)
         }

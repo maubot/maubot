@@ -184,8 +184,7 @@ async def _do_sso(req: AuthRequestInfo) -> web.Response:
     cfg = get_config()
     public_url = (
         URL(cfg["server.public_url"])
-        / cfg["server.base_path"].lstrip("/")
-        / "client/auth_external_sso/complete"
+        / "_matrix/maubot/v1/client/auth_external_sso/complete"
         / waiter_id
     )
     sso_url = req.client.api.base_url.with_path(str(Path.v3.login.sso.redirect)).with_query(
