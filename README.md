@@ -82,6 +82,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
   within a space. Useful for kicking inactive users from a private community.
 * [random subreddit post](https://github.com/williamkray/maubot-reddit) - A plugin that returns a random post from a
   given subreddit.
+* [ntfy](https://gitlab.com/999eagle/maubot-ntfy) - A bot for subscribing to [ntfy](https://ntfy.sh) topics and posting messages to Matrix.
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
