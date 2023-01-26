@@ -82,6 +82,8 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
   within a space. Useful for kicking inactive users from a private community.
 * [random subreddit post](https://github.com/williamkray/maubot-reddit) - A plugin that returns a random post from a
   given subreddit.
+* [random quote](https://github.com/itrich/QuoteMaubot) - A plugin to answer with a random quote from a configurable list.
+* [holopin](https://github.com/itrich/HolopinMaubot) - A plugin to issue [Holopin](https://holopin.io) badges to users.
 
 † Uses a synchronous library which can block the whole maubot process (e.g. requests instead of aiohttp)
 
