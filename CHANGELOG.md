@@ -1,4 +1,4 @@
-# v0.4.0 (unreleased)
+# v0.4.0 (2023-01-29)
 
 * Dropped support for using a custom maubot API base path.
   * The public URL can still have a path prefix, e.g. when using a reverse
