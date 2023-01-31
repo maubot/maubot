@@ -82,6 +82,7 @@ class MaubotMessageEvent(MessageEvent):
         markdown: bool = True,
         allow_html: bool = False,
         reply: bool | str = False,
+        reply_in_thread: bool = False,
         edits: EventID | MessageEvent | None = None,
     ) -> EventID:
         if isinstance(content, str):
@@ -102,6 +103,8 @@ class MaubotMessageEvent(MessageEvent):
                     f"{self.sender}"
                     f"</a>: {fmt_body}"
                 )
+            elif reply_in_thread:
+                content.set_thread_parent(self)
             else:
                 content.set_reply(self)
         return await self.client.send_message_event(self.room_id, event_type, content)
@@ -112,9 +115,15 @@ class MaubotMessageEvent(MessageEvent):
         event_type: EventType = EventType.ROOM_MESSAGE,
         markdown: bool = True,
         allow_html: bool = False,
+        thread: bool = False,
     ) -> Awaitable[EventID]:
         return self.respond(
-            content, event_type, markdown=markdown, reply=True, allow_html=allow_html
+            content,
+            event_type,
+            markdown=markdown,
+            reply=True,
+            reply_in_thread=thread,
+            allow_html=allow_html,
         )
 
     def mark_read(self) -> Awaitable[None]:
