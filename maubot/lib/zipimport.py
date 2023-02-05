@@ -323,6 +323,7 @@ _zip_searchorder = (
     (".py", False, False),
 )
 
+
 # Given a module name, return the potential file path in the
 # archive (without extension).
 def _get_module_path(self, fullname):
@@ -350,6 +351,7 @@ def _get_module_info(self, fullname):
 
 
 # implementation
+
 
 # _read_directory(archive) -> files dict (new reference)
 #
@@ -523,6 +525,7 @@ cp437_table = (
 )
 
 _importing_zlib = False
+
 
 # Return the zlib.decompress function object, or NULL if zlib couldn't
 # be imported. The function is cached when found, so subsequent calls
