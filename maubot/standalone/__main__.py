@@ -115,7 +115,7 @@ else:
     main_class = meta.main_class
 bot_module = importlib.import_module(module)
 plugin: type[Plugin] = getattr(bot_module, main_class)
-loader = FileSystemLoader(os.path.dirname(args.meta))
+loader = FileSystemLoader(os.path.dirname(args.meta), meta)
 
 log.info(f"Initializing standalone {meta.id} v{meta.version} on maubot {__version__}")
 

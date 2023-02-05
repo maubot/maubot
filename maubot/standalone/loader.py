@@ -18,12 +18,13 @@ from __future__ import annotations
 import os
 import os.path
 
-from ..loader import BasePluginLoader
+from ..loader import BasePluginLoader, PluginMeta
 
 
 class FileSystemLoader(BasePluginLoader):
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, meta: PluginMeta) -> None:
         self.path = path
+        self.meta = meta
 
     @property
     def source(self) -> str:
