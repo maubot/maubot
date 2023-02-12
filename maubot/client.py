@@ -41,9 +41,9 @@ from mautrix.types import (
     SyncToken,
     UserID,
 )
+from mautrix.util import background_task
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.logging import TraceLogger
-from mautrix.util import background_task
 
 from .db import Client as DBClient
 from .matrix import MaubotMatrixClient

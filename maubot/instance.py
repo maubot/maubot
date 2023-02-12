@@ -28,11 +28,11 @@ from ruamel.yaml.comments import CommentedMap
 import sqlalchemy as sql
 
 from mautrix.types import UserID
+from mautrix.util import background_task
 from mautrix.util.async_db import Database, Scheme, UpgradeTable
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.util.logging import TraceLogger
-from mautrix.util import background_task
 
 from .client import Client
 from .db import DatabaseEngine, Instance as DBInstance
