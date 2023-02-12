@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterable, Awaitable, Callable, cast
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Awaitable, Callable, cast
 from collections import defaultdict
 import asyncio
 import logging
@@ -43,6 +43,7 @@ from mautrix.types import (
 )
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.logging import TraceLogger
+from mautrix.util import background_task
 
 from .db import Client as DBClient
 from .matrix import MaubotMatrixClient
@@ -254,7 +255,7 @@ class Client(DBClient):
                 self.log.warning(
                     f"Failed to get /account/whoami, retrying in {(try_n + 1) * 10}s: {e}"
                 )
-                _ = asyncio.create_task(self.start(try_n + 1))
+                background_task.create(self.start(try_n + 1))
             return
         if whoami.user_id != self.id:
             self.log.error(f"User ID mismatch: expected {self.id}, but got {whoami.user_id}")

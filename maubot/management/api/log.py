@@ -22,6 +22,8 @@ import logging
 
 from aiohttp import web, web_ws
 
+from mautrix.util import background_task
+
 from .auth import is_valid_token
 from .base import routes
 
@@ -142,7 +144,7 @@ async def log_websocket(request: web.Request) -> web.WebSocketResponse:
             await ws.close(code=4000)
             log.debug(f"Connection from {request.remote} terminated due to no authentication")
 
-    asyncio.create_task(close_if_not_authenticated())
+    background_task.create(close_if_not_authenticated())
 
     try:
         msg: web_ws.WSMessage

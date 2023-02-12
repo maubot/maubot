@@ -32,6 +32,7 @@ from mautrix.util.async_db import Database, Scheme, UpgradeTable
 from mautrix.util.async_getter_lock import async_getter_lock
 from mautrix.util.config import BaseProxyConfig, RecursiveDict
 from mautrix.util.logging import TraceLogger
+from mautrix.util import background_task
 
 from .client import Client
 from .db import DatabaseEngine, Instance as DBInstance
@@ -280,7 +281,7 @@ class PluginInstance(DBInstance):
         if val != self.config_str:
             self.config_str = val
             self.log.debug("Creating background task to save updated config")
-            asyncio.create_task(self.update())
+            background_task.create(self.update())
 
     async def start_database(
         self, upgrade_table: UpgradeTable | None = None, actually_start: bool = True
