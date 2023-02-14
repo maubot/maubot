@@ -86,6 +86,28 @@ class MaubotMessageEvent(MessageEvent):
         in_thread: bool | None = None,
         edits: EventID | MessageEvent | None = None,
     ) -> EventID:
+        """
+        Respond to the message.
+
+        Args:
+            content: The content to respond with. If this is a string, it will be passed to
+                :func:`parse_formatted` with the markdown and allow_html flags.
+                Otherwise, the content is used as-is
+            event_type: The type of event to send.
+            markdown: When content is a string, should it be parsed as markdown?
+            allow_html: When content is a string, should it allow raw HTML?
+            reply: Should the response be sent as a reply to this event?
+            in_thread: Should the response be sent in a thread with this event?
+                By default (``None``), the response will be in a thread if this event is in a
+                thread. If set to ``False``, the response will never be in a thread. If set to
+                ``True``, the response will always be in a thread, creating one with this event as
+                the root if necessary.
+            edits: An event ID or MessageEvent to edit. If set, the reply and in_thread parameters
+                are ignored, as edits can't change the reply or thread status.
+
+        Returns:
+            The ID of the response event.
+        """
         if isinstance(content, str):
             content = TextMessageEventContent(msgtype=MessageType.NOTICE, body=content)
             if allow_html or markdown:
@@ -128,6 +150,26 @@ class MaubotMessageEvent(MessageEvent):
         allow_html: bool = False,
         in_thread: bool | None = None,
     ) -> Awaitable[EventID]:
+        """
+        Reply to the message. The parameters are the same as :meth:`respond`,
+        but ``reply`` is always ``True`` and ``edits`` is not supported.
+
+        Args:
+            content: The content to respond with. If this is a string, it will be passed to
+                :func:`parse_formatted` with the markdown and allow_html flags.
+                Otherwise, the content is used as-is
+            event_type: The type of event to send.
+            markdown: When content is a string, should it be parsed as markdown?
+            allow_html: When content is a string, should it allow raw HTML?
+            in_thread: Should the response be sent in a thread with this event?
+                By default (``None``), the response will be in a thread if this event is in a
+                thread. If set to ``False``, the response will never be in a thread. If set to
+                ``True``, the response will always be in a thread, creating one with this event as
+                the root if necessary.
+
+        Returns:
+            The ID of the response event.
+        """
         return self.respond(
             content,
             event_type,
@@ -138,12 +180,37 @@ class MaubotMessageEvent(MessageEvent):
         )
 
     def mark_read(self) -> Awaitable[None]:
+        """
+        Mark this event as read.
+        """
         return self.client.send_receipt(self.room_id, self.event_id, "m.read")
 
     def react(self, key: str) -> Awaitable[EventID]:
+        """
+        React to this event with the given key.
+
+        Args:
+            key: The key to react with. Often an unicode emoji.
+
+        Returns:
+            The ID of the reaction event.
+
+        Examples:
+            >>> evt: MaubotMessageEvent
+            >>> evt.react("🐈️")
+        """
         return self.client.react(self.room_id, self.event_id, key)
 
     def redact(self, reason: str | None = None) -> Awaitable[EventID]:
+        """
+        Redact this event.
+
+        Args:
+            reason: Optionally, the reason for redacting the event.
+
+        Returns:
+            The ID of the redaction event.
+        """
         return self.client.redact(self.room_id, self.event_id, reason=reason)
 
     def edit(
@@ -153,6 +220,21 @@ class MaubotMessageEvent(MessageEvent):
         markdown: bool = True,
         allow_html: bool = False,
     ) -> Awaitable[EventID]:
+        """
+        Edit this event. Note that other clients will only render the edit if it was sent by the
+        same user who's doing the editing.
+
+        Args:
+            content: The new content for the event. If this is a string, it will be passed to
+                :func:`parse_formatted` with the markdown and allow_html flags.
+                Otherwise, the content is used as-is.
+            event_type: The type of event to edit into.
+            markdown: When content is a string, should it be parsed as markdown?
+            allow_html: When content is a string, should it allow raw HTML?
+
+        Returns:
+            The ID of the edit event.
+        """
         return self.respond(
             content, event_type, markdown=markdown, edits=self, allow_html=allow_html
         )
