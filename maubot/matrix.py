@@ -24,6 +24,7 @@ import attr
 from mautrix.client import Client as MatrixClient, SyncStream
 from mautrix.errors import DecryptionError
 from mautrix.types import (
+    BaseMessageEventContentFuncs,
     EncryptedEvent,
     Event,
     EventID,
@@ -82,7 +83,7 @@ class MaubotMessageEvent(MessageEvent):
         markdown: bool = True,
         allow_html: bool = False,
         reply: bool | str = False,
-        reply_in_thread: bool = False,
+        in_thread: bool | None = None,
         edits: EventID | MessageEvent | None = None,
     ) -> EventID:
         if isinstance(content, str):
@@ -94,7 +95,19 @@ class MaubotMessageEvent(MessageEvent):
                 )
         if edits:
             content.set_edit(edits)
-        elif reply:
+        if (
+            not edits
+            and in_thread is not False
+            and (
+                in_thread
+                or (
+                    isinstance(self.content, BaseMessageEventContentFuncs)
+                    and self.content.get_thread_parent()
+                )
+            )
+        ):
+            content.set_thread_parent(self)
+        if reply and not edits:
             if reply != "force" and self.disable_reply:
                 content.body = f"{self.sender}: {content.body}"
                 fmt_body = content.formatted_body or escape(content.body).replace("\n", "<br>")
@@ -103,8 +116,6 @@ class MaubotMessageEvent(MessageEvent):
                     f"{self.sender}"
                     f"</a>: {fmt_body}"
                 )
-            elif reply_in_thread:
-                content.set_thread_parent(self)
             else:
                 content.set_reply(self)
         return await self.client.send_message_event(self.room_id, event_type, content)
@@ -115,14 +126,14 @@ class MaubotMessageEvent(MessageEvent):
         event_type: EventType = EventType.ROOM_MESSAGE,
         markdown: bool = True,
         allow_html: bool = False,
-        thread: bool = False,
+        in_thread: bool | None = None,
     ) -> Awaitable[EventID]:
         return self.respond(
             content,
             event_type,
             markdown=markdown,
             reply=True,
-            reply_in_thread=thread,
+            in_thread=in_thread,
             allow_html=allow_html,
         )
 
