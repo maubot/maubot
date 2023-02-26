@@ -1,3 +1,11 @@
+# unreleased
+
+* Added `in_thread` parameter to `evt.reply()` and `evt.respond()`.
+  * By default, responses will go to the thread if the command is in a thread.
+  * By setting the flag to `True` or `False`, the plugin can force the response
+    to either be or not be in a thread.
+* Fixed `self.loader.meta` not being available to plugins in standalone mode.
+
 # v0.4.0 (2023-01-29)
 
 * Dropped support for using a custom maubot API base path.
