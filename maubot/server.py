@@ -127,6 +127,13 @@ class MaubotServer:
         )
         self.app.router.add_get(ui_base, ui_base_redirect)
 
+    @staticmethod
+    def _static_data(data: bytes, mime: str) -> Callable[[web.Request], web.Response]:
+        def fn(_: web.Request) -> web.Response:
+            return web.Response(body=data, content_type=mime)
+
+        return fn
+
     def setup_static_root_files(self, directory: str, ui_base: str) -> None:
         files = {
             "asset-manifest.json": "application/json",
@@ -136,9 +143,7 @@ class MaubotServer:
         for file, mime in files.items():
             with open(f"{directory}/{file}", "rb") as stream:
                 data = stream.read()
-            self.app.router.add_get(
-                f"{ui_base}/{file}", lambda _: web.Response(body=data, content_type=mime)
-            )
+            self.app.router.add_get(f"{ui_base}/{file}", self._static_data(data, mime))
 
         public_url = self.config["server.public_url"]
         public_url_path = ""
