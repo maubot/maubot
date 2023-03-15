@@ -1,10 +1,12 @@
-# unreleased
+# v0.4.1 (2023-03-15)
 
 * Added `in_thread` parameter to `evt.reply()` and `evt.respond()`.
   * By default, responses will go to the thread if the command is in a thread.
   * By setting the flag to `True` or `False`, the plugin can force the response
     to either be or not be in a thread.
+* Fixed static files like the frontend app manifest not being served correctly.
 * Fixed `self.loader.meta` not being available to plugins in standalone mode.
+* Updated to mautrix-python v0.19.6.
 
 # v0.4.0 (2023-01-29)
 
