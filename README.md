@@ -62,8 +62,7 @@ The plugin wishlist lives at <https://github.com/maubot/plugin-wishlist/issues>.
 * †[pingcheck](https://edugit.org/nik/maubot-pingcheck) - A bot to ping the echo bot and send rtt to Icinga passive check
 * [ticker](https://github.com/williamkray/maubot-ticker) - A bot to return financial data about a stock or cryptocurrency.
 * [weather](https://github.com/kellya/maubot-weather) - A bot to get the weather from wttr.in and return a single line of text for the location specified
-* †[youtube previewer](https://github.com/ggogel/YoutubePreviewMaubot) - A bot that responds to a YouTube link with the video title and thumbnail.
-* †[reddit previewer](https://github.com/ggogel/RedditPreviewMaubot) - A bot that responds to a link of a reddit post with the sub name and title. If available, uploads the image or video.
+* [social media download](https://github.com/ggogel/SocialMediaDownloadMaubot) - A bot that that downloads content from various social media websites given a link.
 * [pocket](https://github.com/jaywink/maubot-pocket) - A bot integrating with Pocket to fetch articles and archive them.
 * [alternatingcaps](https://github.com/rom4nik/maubot-alternatingcaps) - A bot repeating last message using aLtErNaTiNg cApS.
 * [metric](https://github.com/edwardsdean/maubot_metric_bot) - A bot that will reply to a message that contains imperial units and replace them with metric units.
