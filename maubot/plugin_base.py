@@ -76,8 +76,9 @@ class Plugin(ABC):
             val = getattr(obj, key)
             try:
                 if val.__mb_event_handler__:
-                    self._handlers_at_startup.append((val, val.__mb_event_type__))
-                    self.client.add_event_handler(val.__mb_event_type__, val)
+                    for event_type in val.__mb_event_types__:
+                        self._handlers_at_startup.append((val, event_type))
+                        self.client.add_event_handler(event_type, val)
             except AttributeError:
                 pass
             try:

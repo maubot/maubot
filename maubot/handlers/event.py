@@ -27,9 +27,12 @@ def on(var: EventType | InternalEventType | EventHandler) -> EventHandlerDecorat
     def decorator(func: EventHandler) -> EventHandler:
         func.__mb_event_handler__ = True
         if isinstance(var, (EventType, InternalEventType)):
-            func.__mb_event_type__ = var
+            if hasattr(func, "__mb_event_types__"):
+                func.__mb_event_types__.add(var)
+            else:
+                func.__mb_event_types__ = {var}
         else:
-            func.__mb_event_type__ = EventType.ALL
+            func.__mb_event_types__ = {EventType.ALL}
 
         return func
 

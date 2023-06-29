@@ -72,7 +72,7 @@ class CommandHandler:
         self.__mb_must_consume_args__: bool = True
         self.__mb_arg_fallthrough__: bool = True
         self.__mb_event_handler__: bool = True
-        self.__mb_event_type__: EventType = EventType.ROOM_MESSAGE
+        self.__mb_event_types__: set[EventType] = {EventType.ROOM_MESSAGE}
         self.__mb_msgtypes__: Iterable[MessageType] = (MessageType.TEXT,)
         self.__bound_copies__: Dict[Any, CommandHandler] = {}
         self.__bound_instance__: Any = None
@@ -95,7 +95,7 @@ class CommandHandler:
                 "must_consume_args",
                 "arg_fallthrough",
                 "event_handler",
-                "event_type",
+                "event_types",
                 "msgtypes",
             ]
             for key in keys:
@@ -315,7 +315,7 @@ def new(
         func.__mb_require_subcommand__ = require_subcommand
         func.__mb_arg_fallthrough__ = arg_fallthrough
         func.__mb_must_consume_args__ = must_consume_args
-        func.__mb_event_type__ = event_type
+        func.__mb_event_types__ = {event_type}
         if msgtypes:
             func.__mb_msgtypes__ = msgtypes
         return func
