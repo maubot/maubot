@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from json import JSONDecodeError
+import logging
 
 from aiohttp import web
 
@@ -26,6 +27,8 @@ from mautrix.types import FilterID, SyncToken, UserID
 from ...client import Client
 from .base import routes
 from .responses import resp
+
+log = logging.getLogger("maubot.server.client")
 
 
 @routes.get("/clients")
@@ -54,11 +57,13 @@ async def _create_client(user_id: UserID | None, data: dict) -> web.Response:
     )
     try:
         whoami = await new_client.whoami()
-    except MatrixInvalidToken:
+    except MatrixInvalidToken as e:
         return resp.bad_client_access_token
     except MatrixRequestError:
+        log.warning(f"Failed to get whoami from {homeserver} for new client", exc_info=True)
         return resp.bad_client_access_details
     except MatrixConnectionError:
+        log.warning(f"Failed to connect to {homeserver} for new client", exc_info=True)
         return resp.bad_client_connection_details
     if user_id is None:
         existing_client = await Client.get(whoami.user_id)
@@ -90,8 +95,12 @@ async def _update_client(client: Client, data: dict, is_login: bool = False) -> 
     except MatrixInvalidToken:
         return resp.bad_client_access_token
     except MatrixRequestError:
+        log.warning(
+            f"Failed to get whoami from homeserver to update client details", exc_info=True
+        )
         return resp.bad_client_access_details
     except MatrixConnectionError:
+        log.warning(f"Failed to connect to homeserver to update client details", exc_info=True)
         return resp.bad_client_connection_details
     except ValueError as e:
         str_err = str(e)
