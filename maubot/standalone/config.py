@@ -33,9 +33,13 @@ class Config(BaseFileConfig):
         copy("user.credentials.access_token")
         copy("user.credentials.device_id")
         copy("user.sync")
+        copy("user.appservice")
+        copy("user.hs_token")
         copy("user.autojoin")
         copy("user.displayname")
         copy("user.avatar_url")
+        copy("user.ignore_initial_sync")
+        copy("user.ignore_first_sync")
         if "server" in base:
             copy("server.hostname")
             copy("server.port")

@@ -5,9 +5,15 @@ user:
         homeserver: https://example.com
         access_token: foo
         # If you want to enable encryption, set the device ID corresponding to the access token here.
+        # When using an appservice, you should use appservice login manually to generate a device ID and access token.
         device_id: null
     # Enable /sync? This is not needed for purely unencrypted webhook-based bots, but is necessary in most other cases.
     sync: true
+    # Receive appservice transactions? This will add a /_matrix/app/v1/transactions endpoint on
+    # the HTTP server configured below. The base_path will not be applied for the /transactions path.
+    appservice: false
+    # When appservice mode is enabled, the hs_token for the appservice.
+    hs_token: null
     # Automatically accept invites?
     autojoin: false
     # The displayname and avatar URL to set for the bot on startup.
@@ -21,7 +27,8 @@ user:
     # if you want the bot to handle messages that were sent while the bot was down.
     ignore_first_sync: true
 
-# Web server settings. These will only take effect if the plugin requests it using `webapp: true` in the meta file.
+# Web server settings. These will only take effect if the plugin requests it using `webapp: true` in the meta file,
+# or if user -> appservice is set to true.
 server:
     # The IP and port to listen to.
     hostname: 0.0.0.0

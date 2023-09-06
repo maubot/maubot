@@ -30,7 +30,11 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 from yarl import URL
 
+from mautrix.appservice import AppServiceServerMixin
+from mautrix.client import SyncStream
 from mautrix.types import (
+    BaseMessageEventContentFuncs,
+    Event,
     EventType,
     Filter,
     Membership,
@@ -113,6 +117,9 @@ if "/" in meta.main_class:
 else:
     module = meta.modules[0]
     main_class = meta.main_class
+
+if args.meta != "maubot.yaml" and os.path.dirname(args.meta) != "":
+    sys.path.append(os.path.dirname(args.meta))
 bot_module = importlib.import_module(module)
 plugin: type[Plugin] = getattr(bot_module, main_class)
 loader = FileSystemLoader(os.path.dirname(args.meta), meta)
@@ -131,6 +138,7 @@ user_id = config["user.credentials.id"]
 device_id = config["user.credentials.device_id"]
 homeserver = config["user.credentials.homeserver"]
 access_token = config["user.credentials.access_token"]
+appservice_listener = config["user.appservice"]
 
 crypto_store = state_store = None
 if device_id and not OlmMachine:
@@ -188,6 +196,10 @@ if meta.webapp:
     resource = PrefixResource(web_base_path)
     resource.add_route(hdrs.METH_ANY, _handle_plugin_request)
     web_app.router.register_resource(resource)
+elif appservice_listener:
+    web_app = web.Application()
+    web_runner = web.AppRunner(web_app, access_log_class=AccessLogger)
+    public_url = plugin_webapp = None
 else:
     web_app = web_runner = public_url = plugin_webapp = None
 
@@ -195,6 +207,31 @@ loop = asyncio.get_event_loop()
 
 client: MaubotMatrixClient | None = None
 bot: Plugin | None = None
+appservice: AppServiceServerMixin | None = None
+
+
+if appservice_listener:
+    assert web_app is not None, "web_app is always set when appservice_listener is set"
+    appservice = AppServiceServerMixin(
+        ephemeral_events=True,
+        encryption_events=True,
+        log=logging.getLogger("maubot.appservice"),
+        hs_token=config["user.hs_token"],
+    )
+    appservice.register_routes(web_app)
+
+    @appservice.matrix_event_handler
+    async def handle_appservice_event(evt: Event) -> None:
+        if isinstance(evt.content, BaseMessageEventContentFuncs):
+            evt.content.trim_reply_fallback()
+        fake_sync_stream = SyncStream.JOINED_ROOM
+        if evt.type.is_ephemeral:
+            fake_sync_stream |= SyncStream.EPHEMERAL
+        else:
+            fake_sync_stream |= SyncStream.TIMELINE
+        setattr(evt, "source", fake_sync_stream)
+        tasks = client.dispatch_manual_event(evt.type, evt, include_global_handlers=True)
+        await asyncio.gather(*tasks)
 
 
 async def main():
@@ -217,6 +254,8 @@ async def main():
         state_store=state_store,
         device_id=device_id,
     )
+    if appservice:
+        client.api.as_user_id = user_id
     client.ignore_first_sync = config["user.ignore_first_sync"]
     client.ignore_initial_sync = config["user.ignore_initial_sync"]
     if crypto_store:
@@ -225,6 +264,11 @@ async def main():
         await crypto_store.open()
 
         client.crypto = OlmMachine(client, crypto_store, state_store)
+        if appservice:
+            appservice.otk_handler = client.crypto.handle_as_otk_counts
+            appservice.device_list_handler = client.crypto.handle_as_device_lists
+            appservice.to_device_handler = client.crypto.handle_as_to_device_event
+            client.api.as_device_id = device_id
         crypto_device_id = await crypto_store.get_device_id()
         if crypto_device_id and crypto_device_id != device_id:
             log.fatal(
@@ -272,6 +316,8 @@ async def main():
             )
             await nb.put_filter_id(filter_id)
         _ = client.start(nb.filter_id)
+    elif appservice_listener and crypto_store and not client.crypto.account.shared:
+        await client.crypto.share_keys()
 
     if config["user.autojoin"]:
         log.debug("Autojoin is enabled")
@@ -334,9 +380,14 @@ async def stop(suppress_stop_error: bool = False) -> None:
         except Exception:
             if not suppress_stop_error:
                 log.exception("Error stopping bot")
-    if web_runner:
-        await web_runner.shutdown()
-        await web_runner.cleanup()
+    if web_runner and web_runner.server:
+        try:
+            await web_runner.shutdown()
+            await web_runner.cleanup()
+        except RuntimeError:
+            if not suppress_stop_error:
+                await db.stop()
+                raise
     await db.stop()
 
 
@@ -347,6 +398,10 @@ signal.signal(signal.SIGTERM, signal.default_int_handler)
 try:
     log.info("Starting plugin")
     loop.run_until_complete(main())
+except SystemExit:
+    loop.run_until_complete(stop(suppress_stop_error=True))
+    loop.close()
+    raise
 except (Exception, KeyboardInterrupt) as e:
     if isinstance(e, KeyboardInterrupt):
         log.info("Startup interrupted, stopping")
