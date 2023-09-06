@@ -35,7 +35,7 @@ server:
 
 # The database for the plugin. Used for plugin data, the sync token and e2ee data (if enabled).
 # SQLite and Postgres are supported.
-database: sqlite:///bot.db
+database: sqlite:bot.db
 
 # Additional arguments for asyncpg.create_pool() or sqlite3.connect()
 # https://magicstack.github.io/asyncpg/current/api/index.html#asyncpg.pool.create_pool

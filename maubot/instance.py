@@ -317,7 +317,7 @@ class PluginInstance(DBInstance):
                 )
             else:
                 self.inst_db = Database.create(
-                    f"sqlite:///{self._sqlite_db_path}",
+                    f"sqlite:{self._sqlite_db_path}",
                     upgrade_table=upgrade_table,
                     log=instance_db_log,
                 )

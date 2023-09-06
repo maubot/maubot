@@ -32,7 +32,11 @@ class Config(BaseFileConfig):
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         base = helper.base
         copy = helper.copy
-        copy("database")
+
+        if "database" in self and self["database"].startswith("sqlite:///"):
+            helper.base["database"] = self["database"].replace("sqlite:///", "sqlite:")
+        else:
+            copy("database")
         copy("database_opts")
         if isinstance(self["crypto_database"], dict):
             if self["crypto_database.type"] == "postgres":

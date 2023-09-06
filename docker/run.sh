@@ -13,7 +13,7 @@ function fixdefault {
 
 function fixconfig {
 	# Change relative default paths to absolute paths in /data
-	fixdefault '.database' 'sqlite:///maubot.db' 'sqlite:////data/maubot.db'
+	fixdefault '.database' 'sqlite:maubot.db' 'sqlite:/data/maubot.db'
 	fixdefault '.plugin_directories.upload' './plugins' '/data/plugins'
 	fixdefault '.plugin_directories.load[0]' './plugins' '/data/plugins'
 	fixdefault '.plugin_directories.trash' './trash' '/data/trash'
