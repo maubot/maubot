@@ -34,12 +34,13 @@ RUN apk add --no-cache \
         py3-unpaddedbase64 \
         py3-future \
         # plugin deps
-        py3-pillow \
+        #py3-pillow \
         py3-magic \
         py3-feedparser \
         py3-dateutil \
         py3-lxml \
-        py3-semver
+        py3-semver \
+  && apk add --no-cache py3-pillow --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 # TODO remove pillow, magic, feedparser, lxml, gitlab and semver when maubot supports installing dependencies
 
 COPY requirements.txt /opt/maubot/requirements.txt
