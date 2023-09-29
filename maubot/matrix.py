@@ -36,6 +36,8 @@ from mautrix.types import (
     RelatesTo,
     RoomID,
     TextMessageEventContent,
+    EventContext,
+    RoomEventFilter,
 )
 from mautrix.util import markdown
 from mautrix.util.formatter import EntityType, MarkdownString, MatrixParser
@@ -278,7 +280,19 @@ class MaubotMatrixClient(MatrixClient):
         return super().dispatch_event(event, source)
 
     async def get_event(self, room_id: RoomID, event_id: EventID) -> Event:
-        evt = await super().get_event(room_id, event_id)
+        return await self._decrypt_event(await super().get_event(room_id, event_id))
+
+    async def get_event_context(self, room_id: RoomID,  event_id: EventID, limit: int | None = 10,
+        filter: RoomEventFilter | None = None) -> EventContext:
+        event_context = await super().get_event_context(room_id=room_id,event_id=event_id,
+                                                        limit=limit,filter=filter)
+        event_context.events_after = [await self._decrypt_event(evt)
+                                      for evt in event_context.events_after]
+        event_context.events_before = [await self._decrypt_event(evt)
+                                       for evt in event_context.events_before]
+        return event_context
+
+    async def _decrypt_event(self, evt: Event):
         if isinstance(evt, EncryptedEvent) and self.crypto:
             try:
                 self.crypto_log.trace(f"get_event: Decrypting {evt.event_id} in {evt.room_id}...")
