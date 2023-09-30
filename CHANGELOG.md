@@ -1,3 +1,11 @@
+# v0.4.2 (2023-09-20)
+
+* Updated Pillow to 10.0.1.
+* Updated Docker image to Alpine 3.18.
+* Added logging for errors for /whoami errors when adding new bot accounts.
+* Added support for using appservice tokens (including appservice encryption)
+  in standalone mode.
+
 # v0.4.1 (2023-03-15)
 
 * Added `in_thread` parameter to `evt.reply()` and `evt.respond()`.
