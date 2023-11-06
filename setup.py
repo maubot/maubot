@@ -57,6 +57,8 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         mbc=maubot.cli:app
+        [pytest11]
+        maubot=maubot.testing
     """,
     data_files=[
         (".", ["maubot/example-config.yaml"]),
