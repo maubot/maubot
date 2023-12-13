@@ -35,7 +35,7 @@ from .validators import ClickValidator, Required
 def with_http(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        async with aiohttp.ClientSession() as sess:
+        async with aiohttp.ClientSession(trust_env=True) as sess:
             try:
                 return await func(*args, sess=sess, **kwargs)
             except aiohttp.ClientError as e:
@@ -50,7 +50,7 @@ def with_authenticated_http(func):
         server, token = get_token(server)
         if not token:
             return
-        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {token}"}) as sess:
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {token}"}, trust_env=True) as sess:
             try:
                 return await func(*args, sess=sess, server=server, **kwargs)
             except aiohttp.ClientError as e:
