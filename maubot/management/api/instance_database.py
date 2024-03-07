@@ -56,9 +56,11 @@ async def get_table(request: web.Request) -> web.Response:
     try:
         order = [tuple(order.split(":")) for order in request.query.getall("order")]
         order = [
-            (asc if sort.lower() == "asc" else desc)(table.columns[column])
-            if sort
-            else table.columns[column]
+            (
+                (asc if sort.lower() == "asc" else desc)(table.columns[column])
+                if sort
+                else table.columns[column]
+            )
             for column, sort in order
         ]
     except KeyError:
