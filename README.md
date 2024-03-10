@@ -22,7 +22,7 @@ All setup and usage instructions are located on
 Matrix room: [#maubot:maunium.net](https://matrix.to/#/#maubot:maunium.net)
 
 ## Plugins
-A list of plugins can be found at [plugins.maubot.xyz](https://plugins.maubot.xyz/).
+A list of plugins can be found at [plugins.mau.bot](https://plugins.mau.bot/).
 
 To add your plugin to the list, send a pull request to <https://github.com/maubot/plugins.maubot.xyz>.
 
