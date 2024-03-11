@@ -235,7 +235,7 @@ if appservice_listener:
 
 
 async def main():
-    http_client = ClientSession(loop=loop)
+    http_client = ClientSession(loop=loop, trust_env=True)
 
     global client, bot
 
