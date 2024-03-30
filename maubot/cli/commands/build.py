@@ -93,10 +93,16 @@ def write_plugin(meta: PluginMeta, output: str | IO) -> None:
             if os.path.isfile(f"{module}.py"):
                 zip.write(f"{module}.py")
             elif module is not None and os.path.isdir(module):
-                zipdir(zip, module)
+                if os.path.isfile(f"{module}/__init__.py"):
+                    zipdir(zip, module)
+                else:
+                    print(
+                        Fore.YELLOW
+                        + f"Module {module} is missing __init__.py, skipping"
+                        + Fore.RESET
+                    )
             else:
                 print(Fore.YELLOW + f"Module {module} not found, skipping" + Fore.RESET)
-
         for pattern in meta.extra_files:
             for file in glob.iglob(pattern):
                 zip.write(file)
