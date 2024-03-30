@@ -13,6 +13,7 @@ __pycache__
 !example-config.yaml
 !.pre-commit-config.yaml
 
+/start
 logs/
 plugins/
 trash/
