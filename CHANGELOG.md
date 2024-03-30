@@ -7,6 +7,11 @@
 * Added simple scheduler utility for running background tasks periodically or
   after a certain delay.
 * Added testing framework for plugins (thanks to [@abompard] in [#225]).
+* Changed `mbc build` to ignore directories declared in `modules` that are
+  missing an `__init__.py` file.
+  * Importing the modules at runtime would fail and break the plugin.
+    To include non-code resources outside modules in the mbp archive,
+    use `extra_files` instead.
 
 [#225]: https://github.com/maubot/maubot/issues/225
 [@abompard]: https://github.com/abompard
