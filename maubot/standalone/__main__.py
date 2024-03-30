@@ -115,7 +115,7 @@ with open(args.meta, "r") as meta_file:
 if "/" in meta.main_class:
     module, main_class = meta.main_class.split("/", 1)
 else:
-    module = meta.modules[0]
+    module = meta.modules[-1]
     main_class = meta.main_class
 
 if args.meta != "maubot.yaml" and os.path.dirname(args.meta) != "":

@@ -167,7 +167,7 @@ class ZippedPluginLoader(PluginLoader):
         if "/" in meta.main_class:
             self.main_module, self.main_class = meta.main_class.split("/")[:2]
         else:
-            self.main_module = meta.modules[0]
+            self.main_module = meta.modules[-1]
             self.main_class = meta.main_class
         self._file = file
 
