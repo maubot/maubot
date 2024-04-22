@@ -105,8 +105,8 @@ class Client(DBClient):
             sync=bool(sync),
             autojoin=bool(autojoin),
             online=bool(online),
-            displayname=displayname,
-            avatar_url=avatar_url,
+            displayname=(displayname if displayname != "" else None),
+            avatar_url=(avatar_url if avatar_url != "" else None),
         )
         self._postinited = False
 
@@ -287,9 +287,9 @@ class Client(DBClient):
                 )
             )
             await self.update()
-        if self.displayname != "disable":
+        if self.displayname not in ("disable", None):
             await self.client.set_displayname(self.displayname)
-        if self.avatar_url != "disable":
+        if self.avatar_url not in ("disable", None):
             await self.client.set_avatar_url(self.avatar_url)
         if self.crypto:
             await self._start_crypto()
@@ -376,7 +376,7 @@ class Client(DBClient):
             await self.update()
 
     async def update_displayname(self, displayname: str | None, save: bool = True) -> None:
-        if displayname is None or displayname == self.displayname:
+        if displayname == self.displayname:
             return
         self.displayname = displayname
         if self.displayname != "disable":
@@ -387,7 +387,7 @@ class Client(DBClient):
             await self.update()
 
     async def update_avatar_url(self, avatar_url: ContentURI, save: bool = True) -> None:
-        if avatar_url is None or avatar_url == self.avatar_url:
+        if avatar_url == self.avatar_url:
             return
         self.avatar_url = avatar_url
         if self.avatar_url != "disable":
