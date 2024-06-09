@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import zipfile
 
-import pkg_resources
+import importlib.resources as resources
 
 spdx_list: dict[str, dict[str, str]] | None = None
 
@@ -27,7 +27,7 @@ def load() -> None:
     global spdx_list
     if spdx_list is not None:
         return
-    with pkg_resources.resource_stream("maubot.cli", "res/spdx.json.zip") as disk_file:
+    with resources.open_binary("maubot.cli", "res/spdx.json.zip") as disk_file:
         with zipfile.ZipFile(disk_file) as zip_file:
             with zip_file.open("spdx.json") as file:
                 spdx_list = json.load(file)

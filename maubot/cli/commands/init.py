@@ -17,7 +17,7 @@ import os
 
 from jinja2 import Template
 from packaging.version import Version
-from pkg_resources import resource_string
+import importlib.resources as resources
 
 from .. import cliq
 from ..cliq import SPDXValidator, VersionValidator
@@ -33,9 +33,9 @@ def load_templates():
     global mod_template, meta_template, base_config, loaded
     if loaded:
         return
-    meta_template = Template(resource_string("maubot.cli", "res/maubot.yaml.j2").decode("utf-8"))
-    mod_template = Template(resource_string("maubot.cli", "res/plugin.py.j2").decode("utf-8"))
-    base_config = resource_string("maubot.cli", "res/config.yaml").decode("utf-8")
+    meta_template = Template(resources.read_text("maubot.cli", "res/maubot.yaml.j2"))
+    mod_template = Template(resources.read_text("maubot.cli", "res/plugin.py.j2"))
+    base_config = resources.read_text("maubot.cli", "res/config.yaml")
     loaded = True
 
 
