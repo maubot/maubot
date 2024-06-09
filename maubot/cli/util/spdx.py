@@ -27,7 +27,7 @@ def load() -> None:
     global spdx_list
     if spdx_list is not None:
         return
-    with resources.open_binary("maubot.cli", "res/spdx.json.zip") as disk_file:
+    with resources.files("maubot.cli").joinpath("res/spdx.json.zip").open("rb") as disk_file:
         with zipfile.ZipFile(disk_file) as zip_file:
             with zip_file.open("spdx.json") as file:
                 spdx_list = json.load(file)
