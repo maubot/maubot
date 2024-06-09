@@ -33,9 +33,9 @@ def load_templates():
     global mod_template, meta_template, base_config, loaded
     if loaded:
         return
-    meta_template = Template(resources.read_text("maubot.cli", "res/maubot.yaml.j2"))
-    mod_template = Template(resources.read_text("maubot.cli", "res/plugin.py.j2"))
-    base_config = resources.read_text("maubot.cli", "res/config.yaml")
+    meta_template = Template(resources.files("maubot.cli").joinpath("res/maubot.yaml.j2").read_text(encoding="utf-8"))
+    mod_template = Template(resources.files("maubot.cli").joinpath("res/plugin.py.j2").read_text(encoding="utf-8"))
+    base_config = resources.files("maubot.cli").joinpath("res/config.yaml").read_text(encoding="utf-8")
     loaded = True
 
 
