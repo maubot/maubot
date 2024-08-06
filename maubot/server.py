@@ -64,14 +64,14 @@ class MaubotServer:
             if request.path.startswith(path):
                 request = request.clone(
                     rel_url=request.rel_url.with_path(
-                        request.rel_url.path[len(path) :]
+                        request.rel_url.path[len(path) - 1 :]
                     ).with_query(request.query_string)
                 )
                 return await app.handle(request)
         return web.Response(status=404)
 
     def get_instance_subapp(self, instance_id: str) -> tuple[PluginWebApp, str]:
-        subpath = self.config["server.plugin_base_path"] + instance_id
+        subpath = self.config["server.plugin_base_path"] + instance_id + "/"
         url = self.config["server.public_url"] + subpath
         try:
             return self.plugin_routes[subpath], url
@@ -82,7 +82,7 @@ class MaubotServer:
 
     def remove_instance_webapp(self, instance_id: str) -> None:
         try:
-            subpath = self.config["server.plugin_base_path"] + instance_id
+            subpath = self.config["server.plugin_base_path"] + instance_id + "/"
             self.plugin_routes.pop(subpath).clear()
         except KeyError:
             return
