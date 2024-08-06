@@ -25,7 +25,6 @@ import os.path
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
-import sqlalchemy as sql
 
 from mautrix.types import UserID
 from mautrix.util import background_task
@@ -36,6 +35,7 @@ from mautrix.util.logging import TraceLogger
 
 from .client import Client
 from .db import DatabaseEngine, Instance as DBInstance
+from .lib.optionalalchemy import Engine, MetaData, create_engine
 from .lib.plugin_db import ProxyPostgresDatabase
 from .loader import DatabaseType, PluginLoader, ZippedPluginLoader
 from .plugin_base import Plugin
@@ -128,7 +128,7 @@ class PluginInstance(DBInstance):
         }
 
     def _introspect_sqlalchemy(self) -> dict:
-        metadata = sql.MetaData()
+        metadata = MetaData()
         metadata.reflect(self.inst_db)
         return {
             table.name: {
@@ -214,7 +214,7 @@ class PluginInstance(DBInstance):
 
     async def get_db_tables(self) -> dict:
         if self.inst_db_tables is None:
-            if isinstance(self.inst_db, sql.engine.Engine):
+            if isinstance(self.inst_db, Engine):
                 self.inst_db_tables = self._introspect_sqlalchemy()
             elif self.inst_db.scheme == Scheme.SQLITE:
                 self.inst_db_tables = await self._introspect_sqlite()
@@ -294,7 +294,7 @@ class PluginInstance(DBInstance):
                     "Instance database engine is marked as Postgres, but plugin uses legacy "
                     "database interface, which doesn't support postgres."
                 )
-            self.inst_db = sql.create_engine(f"sqlite:///{self._sqlite_db_path}")
+            self.inst_db = create_engine(f"sqlite:///{self._sqlite_db_path}")
         elif self.loader.meta.database_type == DatabaseType.ASYNCPG:
             if self.database_engine is None:
                 if os.path.exists(self._sqlite_db_path) or not self.maubot.plugin_postgres_db:
@@ -329,7 +329,7 @@ class PluginInstance(DBInstance):
     async def stop_database(self) -> None:
         if isinstance(self.inst_db, Database):
             await self.inst_db.stop()
-        elif isinstance(self.inst_db, sql.engine.Engine):
+        elif isinstance(self.inst_db, Engine):
             self.inst_db.dispose()
         else:
             raise RuntimeError(f"Unknown database type {type(self.inst_db).__name__}")

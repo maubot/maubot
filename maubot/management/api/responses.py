@@ -15,12 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from http import HTTPStatus
 
 from aiohttp import web
 from asyncpg import PostgresError
-from sqlalchemy.exc import IntegrityError, OperationalError
 import aiosqlite
+
+if TYPE_CHECKING:
+    from sqlalchemy.exc import IntegrityError, OperationalError
 
 
 class _Response:
@@ -322,6 +325,16 @@ class _Response:
                 "error": "The database type is not supported by this API",
                 "errcode": "unsupported_plugin_database",
             }
+        )
+
+    @property
+    def sqlalchemy_not_installed(self) -> web.Response:
+        return web.json_response(
+            {
+                "error": "This plugin requires a legacy database, but SQLAlchemy is not installed",
+                "errcode": "unsupported_plugin_database",
+            },
+            status=HTTPStatus.NOT_IMPLEMENTED,
         )
 
     @property

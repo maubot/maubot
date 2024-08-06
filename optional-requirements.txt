@@ -9,3 +9,6 @@ unpaddedbase64>=1,<3
 #/testing
 pytest
 pytest-asyncio
+
+#/legacydb
+SQLAlchemy>1,<1.4

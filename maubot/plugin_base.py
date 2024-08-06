@@ -20,7 +20,6 @@ from abc import ABC
 from asyncio import AbstractEventLoop
 
 from aiohttp import ClientSession
-from sqlalchemy.engine.base import Engine
 from yarl import URL
 
 from mautrix.util.async_db import Database, UpgradeTable
@@ -30,6 +29,8 @@ from mautrix.util.logging import TraceLogger
 from .scheduler import BasicScheduler
 
 if TYPE_CHECKING:
+    from sqlalchemy.engine.base import Engine
+
     from .client import MaubotMatrixClient
     from .loader import BasePluginLoader
     from .plugin_server import PluginWebApp
@@ -56,7 +57,7 @@ class Plugin(ABC):
         instance_id: str,
         log: TraceLogger,
         config: BaseProxyConfig | None,
-        database: Engine | None,
+        database: Engine | Database | None,
         webapp: PluginWebApp | None,
         webapp_url: str | None,
         loader: BasePluginLoader,
