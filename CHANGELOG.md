@@ -1,5 +1,9 @@
-# v0.5.0 (unreleased)
+# v0.5.0 (2024-08-24)
 
+* Dropped Python 3.9 support.
+* Updated Docker image to Alpine 3.20.
+* Updated mautrix-python to 0.20.6 to support authenticated media.
+* Removed hard dependency on SQLAlchemy.
 * Fixed `main_class` to default to being loaded from the last module instead of
   the first if a module name is not explicitly specified.
   * This was already the [documented behavior](https://docs.mau.fi/maubot/dev/reference/plugin-metadata.html),
