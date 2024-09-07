@@ -1,5 +1,4 @@
 # The full URI to the database. SQLite and Postgres are fully supported.
-# Other DBMSes supported by SQLAlchemy may or may not work.
 # Format examples:
 #   SQLite:   sqlite:filename.db
 #   Postgres: postgresql://username:password@hostname/dbname
