@@ -205,7 +205,7 @@ export const getClients = () => defaultGet("/clients")
 export const getClient = id => defaultGet(`/clients/${id}`)
 
 export async function uploadAvatar(id, data, mime) {
-    const resp = await fetch(`${BASE_PATH}/proxy/${id}/_matrix/media/r0/upload`, {
+    const resp = await fetch(`${BASE_PATH}/proxy/${id}/_matrix/media/v3/upload`, {
         headers: getHeaders(mime),
         body: data,
         method: "POST",
@@ -217,8 +217,8 @@ export function getAvatarURL({ id, avatar_url }) {
     if (!avatar_url?.startsWith("mxc://")) {
         return null
     }
-    avatar_url = avatar_url.substr("mxc://".length)
-    return `${BASE_PATH}/proxy/${id}/_matrix/media/r0/download/${avatar_url}?access_token=${
+    avatar_url = avatar_url.substring("mxc://".length)
+    return `${BASE_PATH}/proxy/${id}/_matrix/client/v1/media/download/${avatar_url}?access_token=${
         localStorage.accessToken}`
 }
 
