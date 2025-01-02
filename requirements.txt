@@ -1,7 +1,7 @@
 mautrix>=0.20.6,<0.21
 aiohttp>=3,<4
 yarl>=1,<2
-asyncpg>=0.20,<0.30
+asyncpg>=0.20,<0.31
 aiosqlite>=0.16,<0.21
 commonmark>=0.9,<1
 ruamel.yaml>=0.15.35,<0.19
