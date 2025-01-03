@@ -9,14 +9,14 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - uses: isort/isort-action@master
       with:
         sortPaths: "./maubot"
     - uses: psf/black@stable
       with:
         src: "./maubot"
-        version: "24.2.0"
+        version: "24.10.0"
     - name: pre-commit
       run: |
         pip install pre-commit
