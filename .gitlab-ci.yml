@@ -10,7 +10,7 @@ default:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 build frontend:
-  image: node:20-alpine
+  image: node:22-alpine
   stage: build frontend
   before_script: []
   variables:

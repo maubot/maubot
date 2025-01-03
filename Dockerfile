@@ -1,9 +1,9 @@
-FROM node:20 AS frontend-builder
+FROM node:22 AS frontend-builder
 
 COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && yarn --prod && yarn build
 
-FROM alpine:3.20
+FROM alpine:3.21
 
 RUN apk add --no-cache \
         python3 py3-pip py3-setuptools py3-wheel \
