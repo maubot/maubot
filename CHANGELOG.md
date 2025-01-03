@@ -1,3 +1,19 @@
+# v0.5.1 (2025-01-03)
+
+* Updated Docker image to Alpine 3.21.
+* Updated media upload/download endpoints in management frontend
+  (thanks to [@domrim] in [#253]).
+* Fixed plugin web app base path not including a trailing slash
+  (thanks to [@jkhsjdhjs] in [#240]).
+* Changed markdown parsing to cut off plaintext body if necessary to allow
+  longer formatted messages.
+* Updated dependencies to fix Python 3.13 compatibility.
+
+[@domrim]: https://github.com/domrim
+[@jkhsjdhjs]: https://github.com/jkhsjdhjs
+[#253]: https://github.com/maubot/maubot/pull/253
+[#240]: https://github.com/maubot/maubot/pull/240
+
 # v0.5.0 (2024-08-24)
 
 * Dropped Python 3.9 support.
