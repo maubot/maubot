@@ -1,8 +1,8 @@
-mautrix>=0.20.6,<0.21
+mautrix>=0.20.7,<0.21
 aiohttp>=3,<4
 yarl>=1,<2
-asyncpg>=0.20,<0.31
-aiosqlite>=0.16,<0.21
+asyncpg>=0.20,<1
+aiosqlite>=0.16,<1
 commonmark>=0.9,<1
 ruamel.yaml>=0.15.35,<0.19
 attrs>=18.1.0
