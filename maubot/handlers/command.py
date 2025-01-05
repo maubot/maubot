@@ -392,7 +392,7 @@ class CustomArgument(Argument):
 
     def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         if self.pass_raw:
-            return self.matcher(val)
+            return "", self.matcher(val)
         orig_val = val
         val = re.split(r"\s", val, 1)[0]
         res = self.matcher(val)
