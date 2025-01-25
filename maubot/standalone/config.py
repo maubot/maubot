@@ -47,6 +47,7 @@ class Config(BaseFileConfig):
             copy("server.public_url")
         copy("database")
         copy("database_opts")
+        copy("crypto_db_pickle_key")
         if "plugin_config" in base:
             copy("plugin_config")
         copy("logging")

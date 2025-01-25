@@ -43,6 +43,7 @@ class Maubot(Program):
     server: MaubotServer
     db: Database
     crypto_db: Database | None
+    crypto_db_pickle_key: str = "mau.crypto"
     plugin_postgres_db: PostgresDatabase | None
     state_store: PgStateStore
 
@@ -73,6 +74,7 @@ class Maubot(Program):
         )
 
     def prepare_db(self) -> None:
+        self.crypto_db_pickle_key = self.config["crypto_db_pickle_key"]
         self.db = Database.create(
             self.config["database"],
             upgrade_table=upgrade_table,
