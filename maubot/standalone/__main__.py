@@ -147,7 +147,7 @@ if device_id and not OlmMachine:
         exc_info=crypto_import_error,
     )
 elif device_id:
-    crypto_store = PgCryptoStore(account_id=user_id, pickle_key="mau.crypto", db=db)
+    crypto_store = PgCryptoStore(account_id=user_id, pickle_key=config["crypto_db_pickle_key"], db=db)
     state_store = PgCryptoStateStore(db)
 
 bot_config = None

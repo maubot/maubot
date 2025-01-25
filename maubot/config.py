@@ -43,6 +43,7 @@ class Config(BaseFileConfig):
                 base["crypto_database"] = self["crypto_database.postgres_uri"]
         else:
             copy("crypto_database")
+        copy("crypto_db_pickle_key")
         copy("plugin_directories.upload")
         copy("plugin_directories.load")
         copy("plugin_directories.trash")
