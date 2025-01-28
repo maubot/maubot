@@ -40,6 +40,8 @@ class PluginWebApp(web.UrlDispatcher):
         self._resources = []
         self._named_resources = {}
         self._middleware = []
+        self._resource_index = {}
+        self._matched_sub_app_resources = []
 
     async def handle(self, request: web.Request) -> web.StreamResponse:
         match_info = await self.resolve(request)
