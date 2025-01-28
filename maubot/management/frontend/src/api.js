@@ -218,6 +218,7 @@ export function getAvatarURL({ id, avatar_url }) {
         return null
     }
     avatar_url = avatar_url.substring("mxc://".length)
+    // Note: the maubot backend will replace the query param with an authorization header
     return `${BASE_PATH}/proxy/${id}/_matrix/client/v1/media/download/${avatar_url}?access_token=${
         localStorage.accessToken}`
 }
