@@ -88,7 +88,10 @@ def init(name: str, id: str, version: Version, license: str, config: bool) -> No
         file.write(meta)
     if license:
         with open("LICENSE", "w") as file:
-            file.write(spdx.get(license)["licenseText"])
+            if license.startswith("LicenseRef-"):
+                file.write("** You must include the license text here **")
+            else:
+                file.write(spdx.get(license)["licenseText"])
     if not os.path.isdir(name):
         os.mkdir(name)
     mod = mod_template.render(config=config, name=main_class)
