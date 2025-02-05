@@ -23,7 +23,7 @@ import logging
 from aiohttp import hdrs, web
 from aiohttp.abc import AbstractAccessLogger
 from yarl import URL
-import pkg_resources
+import importlib.resources as resources
 
 from mautrix.api import Method, PathBuilder
 
@@ -103,7 +103,7 @@ class MaubotServer:
             ui_base = ""
         directory = self.config[
             "server.override_resource_path"
-        ] or pkg_resources.resource_filename("maubot", "management/frontend/build")
+        ] or resources.files("maubot").joinpath("management/frontend/build")
         self.app.router.add_static(f"{ui_base}/static", f"{directory}/static")
         self.setup_static_root_files(directory, ui_base)
 
