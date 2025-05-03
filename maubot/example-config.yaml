@@ -78,8 +78,9 @@ homeservers:
         # When this is empty, `mbc auth --register` won't work, but `mbc auth` (login) will.
         secret: null
 
-# List of administrator users. Plaintext passwords will be bcrypted on startup. Set empty password
-# to prevent normal login. Root is a special user that can't have a password and will always exist.
+# List of administrator users. Each key is a username and the value is the password.
+# Plaintext passwords will be bcrypted on startup. Set empty password to prevent normal login.
+# Root is a special user that can't have a password and will always exist.
 admins:
     root: ""
 
