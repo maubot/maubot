@@ -372,7 +372,7 @@ class Client(DBClient):
         power_levels = await self.client.get_state_event(room_id, EventType.ROOM_POWER_LEVELS)
         if power_levels.get_user_level(evt.sender) < power_levels.invite:
             self.log.warning(
-                f"{evt.room_id} was tombstoned into {room_id},"
+                f"{evt.room_id} was tombstoned into {room_id} by {evt.sender},"
                 " but the sender doesn't have invite power levels, leaving..."
             )
             await self.client.leave_room(
