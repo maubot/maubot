@@ -353,8 +353,33 @@ class Client(DBClient):
         if not evt.content.replacement_room:
             self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
             return
+        is_joined = await self.client.state_store.is_joined(
+            evt.content.replacement_room,
+            self.client.mxid,
+        )
+        if is_joined:
+            self.log.debug(
+                f"Ignoring tombstone from {evt.room_id} to {evt.content.replacement_room} "
+                f"sent by {evt.sender}: already joined to replacement room"
+            )
+            return
+        self.log.debug(
+            f"Following tombstone from {evt.room_id} to {evt.content.replacement_room} "
+            f"sent by {evt.sender}"
+        )
         _, server = self.client.parse_user_id(evt.sender)
-        await self.client.join_room(evt.content.replacement_room, servers=[server])
+        room_id = await self.client.join_room(evt.content.replacement_room, servers=[server])
+        power_levels = await self.client.get_state_event(room_id, EventType.ROOM_POWER_LEVELS)
+        if power_levels.get_user_level(evt.sender) < power_levels.invite:
+            self.log.warning(
+                f"{evt.room_id} was tombstoned into {room_id},"
+                " but the sender doesn't have invite power levels, leaving..."
+            )
+            await self.client.leave_room(
+                room_id,
+                f"Followed tombstone from {evt.room_id} by {evt.sender},"
+                " but sender doesn't have sufficient power level for invites",
+            )
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
