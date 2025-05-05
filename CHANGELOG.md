@@ -1,3 +1,14 @@
+# v0.5.2 (2025-05-05)
+
+* Improved tombstone handling to ensure that the tombstone sender has
+  permissions to invite users to the target room.
+* Fixed autojoin and online flags not being applied if set during client
+  creation (thanks to [@bnsh] in [#258]).
+* Fixed plugin web apps not being cleared properly when unloading plugins.
+
+[@bnsh]: https://github.com/bnsh
+[#258]: https://github.com/maubot/maubot/pull/258
+
 # v0.5.1 (2025-01-03)
 
 * Updated Docker image to Alpine 3.21.
