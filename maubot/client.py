@@ -350,6 +350,8 @@ class Client(DBClient):
         }
 
     async def _handle_tombstone(self, evt: StateEvent) -> None:
+        if evt.state_key != "":
+            return
         if not evt.content.replacement_room:
             self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
             return
