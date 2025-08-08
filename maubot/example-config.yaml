@@ -54,7 +54,8 @@ server:
     port: 29316
     # Public base URL where the server is visible.
     public_url: https://example.com
-    # The base path for the UI.
+    # The base path for the UI. Note that this does not change the API path.
+    # Add a path prefix to public_url if you want everything on a subpath.
     ui_base_path: /_matrix/maubot
     # The base path for plugin endpoints. The instance ID will be appended directly.
     plugin_base_path: /_matrix/maubot/plugin/
