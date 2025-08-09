@@ -63,7 +63,7 @@ async def parse_formatted(
     else:
         return message, escape(message)
     text = (await MaubotHTMLParser().parse(html)).text
-    if len(text) + len(html) > 40000:
+    if len(text) > 100 and len(text) + len(html) > 40000:
         text = text[:100] + "[long message cut off]"
     return text, html
 
