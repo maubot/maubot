@@ -372,7 +372,10 @@ class Client(DBClient):
         _, server = self.client.parse_user_id(evt.sender)
         room_id = await self.client.join_room(evt.content.replacement_room, servers=[server])
         power_levels = await self.client.get_state_event(room_id, EventType.ROOM_POWER_LEVELS)
-        if power_levels.get_user_level(evt.sender) < power_levels.invite:
+        create_event = await self.client.get_state_event(
+            room_id, EventType.ROOM_CREATE, format="event"
+        )
+        if power_levels.get_user_level(evt.sender, create_event) < power_levels.invite:
             self.log.warning(
                 f"{evt.room_id} was tombstoned into {room_id} by {evt.sender},"
                 " but the sender doesn't have invite power levels, leaving..."
