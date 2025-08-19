@@ -70,9 +70,9 @@ class Client extends BaseMainView {
     get initialState() {
         return {
             id: "",
-            displayname: "",
+            displayname: "disable",
             homeserver: "",
-            avatar_url: "",
+            avatar_url: "disable",
             access_token: "",
             device_id: "",
             fingerprint: null,
