@@ -504,8 +504,14 @@ class Client(DBClient):
         self.start_sync()
 
     async def _update_remote_profile(self) -> None:
-        profile = await self.client.get_profile(self.id)
-        self.remote_displayname, self.remote_avatar_url = profile.displayname, profile.avatar_url
+        try:
+            profile = await self.client.get_profile(self.id)
+            self.remote_displayname, self.remote_avatar_url = (
+                profile.displayname,
+                profile.avatar_url,
+            )
+        except Exception:
+            self.log.warning("Failed to update own profile from server", exc_info=True)
 
     async def delete(self) -> None:
         try:
