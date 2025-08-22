@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from aiohttp import client as http, web
+from urllib.request import getproxies
 
 from ...client import Client
 from .base import routes
@@ -45,8 +46,10 @@ async def proxy(request: web.Request) -> web.StreamResponse:
             headers["X-Forwarded-For"] = f"{host}:{port}"
 
     data = await request.read()
+    proxies = getproxies()
     async with http.request(
-        request.method, f"{client.homeserver}/{path}", headers=headers, params=query, data=data
+            request.method, f"{client.homeserver}/{path}", headers=headers, params=query, data=data,
+            proxy=proxies["https"] if "https" in proxies else None
     ) as proxy_resp:
         response = web.StreamResponse(status=proxy_resp.status, headers=proxy_resp.headers)
         await response.prepare(request)

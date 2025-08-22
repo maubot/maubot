@@ -139,7 +139,7 @@ class Client(DBClient):
         self._postinited = True
         self.cache[self.id] = self
         self.log = self.log.getChild(self.id)
-        self.http_client = ClientSession(loop=self.maubot.loop)
+        self.http_client = ClientSession(loop=self.maubot.loop, trust_env=True)
         self.references = set()
         self.started = False
         self.sync_ok = True
