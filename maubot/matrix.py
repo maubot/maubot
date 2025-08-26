@@ -264,14 +264,18 @@ class MaubotMatrixClient(MatrixClient):
         markdown: str,
         *,
         allow_html: bool = False,
+        render_markdown: bool = True,
         msgtype: MessageType = MessageType.TEXT,
         edits: EventID | MessageEvent | None = None,
         relates_to: RelatesTo | None = None,
+        extra_content: dict[str, Any] = None,
         **kwargs,
     ) -> EventID:
         content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
         content.body, content.formatted_body = await parse_formatted(
-            markdown, allow_html=allow_html
+            markdown,
+            allow_html=allow_html,
+            render_markdown=render_markdown,
         )
         if relates_to:
             if edits:
@@ -279,6 +283,9 @@ class MaubotMatrixClient(MatrixClient):
             content.relates_to = relates_to
         elif edits:
             content.set_edit(edits)
+        if extra_content:
+            for k, v in extra_content.items():
+                content[k] = v
         return await self.send_message(room_id, content, **kwargs)
 
     def dispatch_event(self, event: Event, source: SyncStream) -> list[asyncio.Task]:
