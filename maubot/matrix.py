@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Awaitable
+from typing import Any, Awaitable
 from html import escape
 import asyncio
 
@@ -88,6 +88,7 @@ class MaubotMessageEvent(MessageEvent):
         reply: bool | str = False,
         in_thread: bool | None = None,
         edits: EventID | MessageEvent | None = None,
+        extra_content: dict[str, Any] | None = None,
     ) -> EventID:
         """
         Respond to the message.
@@ -107,6 +108,7 @@ class MaubotMessageEvent(MessageEvent):
                 the root if necessary.
             edits: An event ID or MessageEvent to edit. If set, the reply and in_thread parameters
                 are ignored, as edits can't change the reply or thread status.
+            extra_content: Extra content to add to the event.
 
         Returns:
             The ID of the response event.
@@ -143,6 +145,9 @@ class MaubotMessageEvent(MessageEvent):
                 )
             else:
                 content.set_reply(self)
+        if extra_content:
+            for k, v in extra_content.items():
+                content[k] = v
         return await self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(
@@ -152,6 +157,7 @@ class MaubotMessageEvent(MessageEvent):
         markdown: bool = True,
         allow_html: bool = False,
         in_thread: bool | None = None,
+        extra_content: dict[str, Any] | None = None,
     ) -> Awaitable[EventID]:
         """
         Reply to the message. The parameters are the same as :meth:`respond`,
@@ -169,6 +175,7 @@ class MaubotMessageEvent(MessageEvent):
                 thread. If set to ``False``, the response will never be in a thread. If set to
                 ``True``, the response will always be in a thread, creating one with this event as
                 the root if necessary.
+            extra_content: Extra content to add to the event.
 
         Returns:
             The ID of the response event.
@@ -180,6 +187,7 @@ class MaubotMessageEvent(MessageEvent):
             reply=True,
             in_thread=in_thread,
             allow_html=allow_html,
+            extra_content=extra_content,
         )
 
     def mark_read(self) -> Awaitable[None]:
