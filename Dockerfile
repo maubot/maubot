@@ -11,6 +11,8 @@ RUN apk add --no-cache \
         su-exec \
         yq \
         py3-aiohttp \
+        py3-aiodns \
+        py3-brotli \
         py3-attrs \
         py3-bcrypt \
         py3-cffi \
