@@ -305,7 +305,8 @@ class Client extends BaseMainView {
                        placeholder="syt_bWF1Ym90_tUleVHiGyLKwXLaAMqlm_0afdcq"
                        onChange={this.inputChange}/>
             <PrefInput rowName="Device ID" type="text" name="device_id"
-                       value={this.state.device_id || ""} origValue={this.props.entry.device_id || ""}
+                       value={this.state.device_id || ""}
+                       origValue={this.props.entry.device_id || ""}
                        placeholder="maubot_F00BAR12" onChange={this.inputChange}/>
             {this.props.entry.fingerprint && <>
                 <PrefInput
