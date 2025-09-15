@@ -1,3 +1,10 @@
+# v0.6.0 (unreleased)
+
+* Added support for room v12 creator power when checking power levels after
+  following a tombstone.
+* Added support for verifying the maubot device using a recovery key.
+* Improved cutting off long plaintext body when parsing markdown.
+
 # v0.5.2 (2025-05-05)
 
 * Improved tombstone handling to ensure that the tombstone sender has
