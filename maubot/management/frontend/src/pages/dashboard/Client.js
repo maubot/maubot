@@ -305,7 +305,7 @@ class Client extends BaseMainView {
                        placeholder="syt_bWF1Ym90_tUleVHiGyLKwXLaAMqlm_0afdcq"
                        onChange={this.inputChange}/>
             <PrefInput rowName="Device ID" type="text" name="device_id"
-                       value={this.state.device_id} origValue={this.props.entry.device_id}
+                       value={this.state.device_id || ""} origValue={this.props.entry.device_id || ""}
                        placeholder="maubot_F00BAR12" onChange={this.inputChange}/>
             {this.props.entry.fingerprint && <>
                 <PrefInput
@@ -314,7 +314,7 @@ class Client extends BaseMainView {
                 />
                 <PrefInput
                     rowName="Trust state" type="text" disabled={true}
-                    value={this.props.entry.trust_state} className="trust-state"
+                    value={this.props.entry.trust_state || ""} className="trust-state"
                 />
             </>}
             <PrefInput rowName="Display name" type="text" name="displayname"
@@ -380,7 +380,7 @@ class Client extends BaseMainView {
                 <div className="info">
                     {this.renderPreferences()}
                     {this.renderPrefButtons()}
-                    {this.renderVerifyButtons()}
+                    {this.props.entry.fingerprint && this.renderVerifyButtons()}
                     {this.renderInstances()}
                 </div>
             </div>
