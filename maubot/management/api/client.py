@@ -188,6 +188,7 @@ async def verify_client(request: web.Request) -> web.Response:
             client.crypto.own_identity,
             allow_fetch=False,
         )
+        log.debug(f"Trust state after verifying {client.id}: {client.trust_state}")
     except Exception as e:
         log.exception("Failed to verify client with recovery key")
         return resp.internal_crypto_error(str(e))
@@ -209,6 +210,7 @@ async def generate_recovery_key(request: web.Request) -> web.Response:
             client.crypto.own_identity,
             allow_fetch=False,
         )
+        log.debug(f"Trust state generating recovery key for {client.id}: {client.trust_state}")
     except Exception as e:
         log.exception("Failed to generate recovery key for client")
         return resp.internal_crypto_error(str(e))
