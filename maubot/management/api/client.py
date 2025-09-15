@@ -170,3 +170,46 @@ async def clear_client_cache(request: web.Request) -> web.Response:
         return resp.client_not_found
     await client.clear_cache()
     return resp.ok
+
+
+@routes.post("/client/{id}/verify")
+async def verify_client(request: web.Request) -> web.Response:
+    user_id = request.match_info["id"]
+    client = await Client.get(user_id)
+    if not client:
+        return resp.client_not_found
+    try:
+        req = await request.json()
+    except Exception:
+        return resp.body_not_json
+    try:
+        await client.crypto.verify_with_recovery_key(req["recovery_key"])
+        client.trust_state = await client.crypto.resolve_trust(
+            client.crypto.own_identity,
+            allow_fetch=False,
+        )
+    except Exception as e:
+        log.exception("Failed to verify client with recovery key")
+        return resp.internal_crypto_error(str(e))
+    return resp.ok
+
+
+@routes.post("/client/{id}/generate_recovery_key")
+async def generate_recovery_key(request: web.Request) -> web.Response:
+    user_id = request.match_info["id"]
+    client = await Client.get(user_id)
+    if not client:
+        return resp.client_not_found
+    try:
+        keys = await client.crypto.get_own_cross_signing_public_keys()
+        if keys:
+            return resp.client_has_keys
+        key = await client.crypto.generate_recovery_key()
+        client.trust_state = await client.crypto.resolve_trust(
+            client.crypto.own_identity,
+            allow_fetch=False,
+        )
+    except Exception as e:
+        log.exception("Failed to generate recovery key for client")
+        return resp.internal_crypto_error(str(e))
+    return resp.created({"success": True, "recovery_key": key})

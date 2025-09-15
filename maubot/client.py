@@ -39,6 +39,7 @@ from mautrix.types import (
     StateFilter,
     StrippedStateEvent,
     SyncToken,
+    TrustState,
     UserID,
 )
 from mautrix.util import background_task
@@ -78,6 +79,7 @@ class Client(DBClient):
 
     remote_displayname: str | None
     remote_avatar_url: ContentURI | None
+    trust_state: TrustState | None
 
     def __init__(
         self,
@@ -143,6 +145,7 @@ class Client(DBClient):
         self.references = set()
         self.started = False
         self.sync_ok = True
+        self.trust_state = None
         self.remote_displayname = None
         self.remote_avatar_url = None
         self.client = self._make_client()
@@ -230,6 +233,10 @@ class Client(DBClient):
         await self.crypto.load()
         if not crypto_device_id:
             await self.crypto_store.put_device_id(self.device_id)
+        self.trust_state = await self.crypto.resolve_trust(
+            self.crypto.own_identity,
+            allow_fetch=False,
+        )
 
     async def _start(self, try_n: int | None = 0) -> None:
         if not self.enabled:
@@ -347,6 +354,7 @@ class Client(DBClient):
             "remote_displayname": self.remote_displayname,
             "remote_avatar_url": self.remote_avatar_url,
             "instances": [instance.to_dict() for instance in self.references],
+            "trust_state": str(self.trust_state) if self.trust_state else None,
         }
 
     async def _handle_tombstone(self, evt: StateEvent) -> None:

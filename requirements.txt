@@ -1,4 +1,4 @@
-mautrix>=0.20.9rc3,<0.21
+mautrix>=0.21.0b2,<0.22
 aiohttp>=3,<4
 yarl>=1,<2
 asyncpg>=0.20,<1

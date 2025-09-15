@@ -59,12 +59,13 @@ class Client extends BaseMainView {
     constructor(props) {
         super(props)
         this.deleteFunc = api.deleteClient
+        this.recovery_key = null
         this.homeserverOptions = []
     }
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "device_id",
-                "sync", "autojoin", "online", "enabled", "started"]
+                "sync", "autojoin", "online", "enabled", "started", "trust_state"]
     }
 
     get initialState() {
@@ -81,12 +82,14 @@ class Client extends BaseMainView {
             enabled: true,
             online: true,
             started: false,
+            trust_state: null,
 
             instances: [],
 
             uploadingAvatar: false,
             saving: false,
             deleting: false,
+            verifying: false,
             startingOrStopping: false,
             clearingCache: false,
             error: "",
@@ -188,9 +191,34 @@ class Client extends BaseMainView {
         }
     }
 
+    verifyRecoveryKey = async () => {
+        const recoveryKey = window.prompt("Enter recovery key")
+        if (!recoveryKey) {
+            return
+        }
+        this.setState({ verifying: true })
+        const resp = await api.verifyClient(this.props.entry.id, recoveryKey)
+        if (resp.success) {
+            this.setState({ verifying: false, error: "" })
+        } else {
+            this.setState({ verifying: false, error: resp.error })
+        }
+    }
+
+    generateRecoveryKey = async () => {
+        this.setState({ verifying: true })
+        const resp = await api.generateRecoveryKey(this.props.entry.id)
+        if (resp.success) {
+            this.recovery_key = resp.recovery_key
+            this.setState({ verifying: false, error: "" })
+        } else {
+            this.setState({ verifying: false, error: resp.error })
+        }
+    }
+
     get loading() {
         return this.state.saving || this.state.startingOrStopping
-            || this.clearingCache || this.state.deleting
+            || this.clearingCache || this.state.deleting || this.state.verifying
     }
 
     renderStartedContainer = () => {
@@ -279,10 +307,16 @@ class Client extends BaseMainView {
             <PrefInput rowName="Device ID" type="text" name="device_id"
                        value={this.state.device_id} origValue={this.props.entry.device_id}
                        placeholder="maubot_F00BAR12" onChange={this.inputChange}/>
-            {this.props.entry.fingerprint && <PrefInput
-                rowName="E2EE device fingerprint" type="text" disabled={true} fullWidth={true}
-                value={this.props.entry.fingerprint} className="fingerprint"
-            />}
+            {this.props.entry.fingerprint && <>
+                <PrefInput
+                    rowName="E2EE device fingerprint" type="text" disabled={true}
+                    value={this.props.entry.fingerprint} className="fingerprint"
+                />
+                <PrefInput
+                    rowName="Trust state" type="text" disabled={true}
+                    value={this.props.entry.trust_state} className="trust-state"
+                />
+            </>}
             <PrefInput rowName="Display name" type="text" name="displayname"
                        value={this.state.displayname} origValue={this.props.entry.displayname}
                        placeholder="My fancy bot" onChange={this.inputChange}/>
@@ -325,6 +359,20 @@ class Client extends BaseMainView {
         <div className="error">{this.state.error}</div>
     </>
 
+    renderVerifyButtons = () => <>
+        <div className="buttons">
+            <button className="verify" onClick={this.verifyRecoveryKey} disabled={this.loading}>
+                {this.state.verifying ? <Spinner/> : "Verify"}
+            </button>
+            <button className="verify" onClick={this.generateRecoveryKey} disabled={this.loading}>
+                {this.state.verifying ? <Spinner/> : "Generate recovery key"}
+            </button>
+        </div>
+        {this.recovery_key && <div className="recovery-key">
+            <strong>Recovery key:</strong> <code>{this.recovery_key}</code>
+        </div>}
+    </>
+
     render() {
         return <>
             <div className="client">
@@ -332,6 +380,7 @@ class Client extends BaseMainView {
                 <div className="info">
                     {this.renderPreferences()}
                     {this.renderPrefButtons()}
+                    {this.renderVerifyButtons()}
                     {this.renderInstances()}
                 </div>
             </div>

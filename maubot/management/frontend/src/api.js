@@ -234,6 +234,23 @@ export async function clearClientCache(id) {
     return await resp.json()
 }
 
+export async function verifyClient(id, recovery_key) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/verify`, {
+        headers: getHeaders(),
+        method: "POST",
+        body: JSON.stringify({ recovery_key }),
+    })
+    return await resp.json()
+}
+
+export async function generateRecoveryKey(id) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/generate_recovery_key`, {
+        headers: getHeaders(),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
 export const getClientAuthServers = () => defaultGet("/client/auth/servers")
 
 export async function doClientAuth(server, type, username, password) {
@@ -254,5 +271,6 @@ export default {
     getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient, clearClientCache,
+    verifyClient, generateRecoveryKey,
     getClientAuthServers, doClientAuth,
 }

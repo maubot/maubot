@@ -449,6 +449,25 @@ class _Response:
         )
 
     @property
+    def client_has_keys(self) -> web.Response:
+        return web.json_response(
+            {
+                "error": "Client already has cross-signing keys",
+                "errcode": "client_has_keys",
+            },
+            status=HTTPStatus.CONFLICT,
+        )
+
+    def internal_crypto_error(self, message: str) -> web.Response:
+        return web.json_response(
+            {
+                "error": f"Internal crypto error: {message}",
+                "errcode": "internal_crypto_error",
+            },
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
+
+    @property
     def not_implemented(self) -> web.Response:
         return web.json_response(
             {
