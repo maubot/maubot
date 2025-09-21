@@ -22,6 +22,7 @@ import logging
 
 from aiohttp import ClientSession
 
+from mautrix.api import HTTPAPI
 from mautrix.client import InternalEventType
 from mautrix.errors import MatrixInvalidToken
 from mautrix.types import (
@@ -141,7 +142,12 @@ class Client(DBClient):
         self._postinited = True
         self.cache[self.id] = self
         self.log = self.log.getChild(self.id)
-        self.http_client = ClientSession(loop=self.maubot.loop)
+        self.http_client = ClientSession(
+            loop=self.maubot.loop,
+            headers={
+                "User-Agent": HTTPAPI.default_ua,
+            },
+        )
         self.references = set()
         self.started = False
         self.sync_ok = True
