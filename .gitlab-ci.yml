@@ -1,4 +1,4 @@
-image: docker:stable
+image: docker:latest
 
 stages:
 - build frontend
