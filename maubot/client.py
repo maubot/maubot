@@ -239,6 +239,8 @@ class Client(DBClient):
         await self.crypto.load()
         if not crypto_device_id:
             await self.crypto_store.put_device_id(self.device_id)
+        if not self.crypto.account.shared:
+            await self.crypto.share_keys()
         self.trust_state = await self.crypto.resolve_trust(
             self.crypto.own_identity,
             allow_fetch=False,
