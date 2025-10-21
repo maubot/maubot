@@ -1,4 +1,4 @@
-image: docker:latest
+image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:latest
 
 stages:
 - build frontend
@@ -7,7 +7,8 @@ stages:
 
 default:
   before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - docker login -u "$CI_DEPENDENCY_PROXY_USER" -p "$CI_DEPENDENCY_PROXY_PASSWORD" "$CI_DEPENDENCY_PROXY_SERVER"
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
 build frontend:
   image: node:24-alpine
@@ -35,7 +36,12 @@ build amd64:
   script:
   - echo maubot/management/frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
-  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 . -f Dockerfile.ci
+  - |
+    docker build \
+      --pull --cache-from $CI_REGISTRY_IMAGE:latest \
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64 \
+      --build-arg DOCKER_HUB=$CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX \
+      . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
   - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
 
@@ -46,7 +52,12 @@ build arm64:
   script:
   - echo maubot/management/frontend >> .dockerignore
   - docker pull $CI_REGISTRY_IMAGE:latest || true
-  - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 . -f Dockerfile.ci
+  - |
+    docker build \
+      --pull --cache-from $CI_REGISTRY_IMAGE:latest \
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64 \
+      --build-arg DOCKER_HUB=$CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX \
+      . -f Dockerfile.ci
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
   - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
 
@@ -54,7 +65,7 @@ manifest:
   stage: manifest
   before_script:
   - "mkdir -p $HOME/.docker && echo '{\"experimental\": \"enabled\"}' > $HOME/.docker/config.json"
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
   - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64
   - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64
