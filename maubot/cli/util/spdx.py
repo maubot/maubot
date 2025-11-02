@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+import re
 import zipfile
 
 import pkg_resources
@@ -42,4 +43,5 @@ def get(id: str) -> dict[str, str]:
 def valid(id: str) -> bool:
     if not spdx_list:
         load()
-    return id in spdx_list
+    custom_license = re.compile('LicenseRef-[a-zA-Z0-9.-]*$')
+    return bool(custom_license.match(id)) or id in spdx_list
