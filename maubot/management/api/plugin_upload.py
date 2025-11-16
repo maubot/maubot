@@ -23,9 +23,16 @@ import traceback
 from aiohttp import web
 from packaging.version import Version
 
-from ...loader import MaubotZipImportError, PluginLoader, ZippedPluginLoader
+from ...loader import DatabaseType, MaubotZipImportError, PluginLoader, ZippedPluginLoader
 from .base import get_config, routes
 from .responses import resp
+
+try:
+    import sqlalchemy
+
+    has_alchemy = True
+except ImportError:
+    has_alchemy = False
 
 log = logging.getLogger("maubot.server.upload")
 
@@ -36,9 +43,11 @@ async def put_plugin(request: web.Request) -> web.Response:
     content = await request.read()
     file = BytesIO(content)
     try:
-        pid, version = ZippedPluginLoader.verify_meta(file)
+        pid, version, db_type = ZippedPluginLoader.verify_meta(file)
     except MaubotZipImportError as e:
         return resp.plugin_import_error(str(e), traceback.format_exc())
+    if db_type == DatabaseType.SQLALCHEMY and not has_alchemy:
+        return resp.sqlalchemy_not_installed
     if pid != plugin_id:
         return resp.pid_mismatch
     plugin = PluginLoader.id_cache.get(plugin_id, None)
@@ -55,9 +64,11 @@ async def upload_plugin(request: web.Request) -> web.Response:
     content = await request.read()
     file = BytesIO(content)
     try:
-        pid, version = ZippedPluginLoader.verify_meta(file)
+        pid, version, db_type = ZippedPluginLoader.verify_meta(file)
     except MaubotZipImportError as e:
         return resp.plugin_import_error(str(e), traceback.format_exc())
+    if db_type == DatabaseType.SQLALCHEMY and not has_alchemy:
+        return resp.sqlalchemy_not_installed
     plugin = PluginLoader.id_cache.get(pid, None)
     if not plugin:
         return await upload_new_plugin(content, pid, version)

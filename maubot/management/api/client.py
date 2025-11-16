@@ -78,8 +78,8 @@ async def _create_client(user_id: UserID | None, data: dict) -> web.Response:
     )
     client.enabled = data.get("enabled", True)
     client.sync = data.get("sync", True)
-    client.autojoin = data.get("autojoin", True)
-    client.online = data.get("online", True)
+    await client.update_autojoin(data.get("autojoin", True), save=False)
+    await client.update_online(data.get("online", True), save=False)
     client.displayname = data.get("displayname", "disable")
     client.avatar_url = data.get("avatar_url", "disable")
     await client.update()
@@ -170,3 +170,48 @@ async def clear_client_cache(request: web.Request) -> web.Response:
         return resp.client_not_found
     await client.clear_cache()
     return resp.ok
+
+
+@routes.post("/client/{id}/verify")
+async def verify_client(request: web.Request) -> web.Response:
+    user_id = request.match_info["id"]
+    client = await Client.get(user_id)
+    if not client:
+        return resp.client_not_found
+    try:
+        req = await request.json()
+    except Exception:
+        return resp.body_not_json
+    try:
+        await client.crypto.verify_with_recovery_key(req["recovery_key"])
+        client.trust_state = await client.crypto.resolve_trust(
+            client.crypto.own_identity,
+            allow_fetch=False,
+        )
+        log.debug(f"Trust state after verifying {client.id}: {client.trust_state}")
+    except Exception as e:
+        log.exception("Failed to verify client with recovery key")
+        return resp.internal_crypto_error(str(e))
+    return resp.ok
+
+
+@routes.post("/client/{id}/generate_recovery_key")
+async def generate_recovery_key(request: web.Request) -> web.Response:
+    user_id = request.match_info["id"]
+    client = await Client.get(user_id)
+    if not client:
+        return resp.client_not_found
+    try:
+        keys = await client.crypto.get_own_cross_signing_public_keys()
+        if keys:
+            return resp.client_has_keys
+        key = await client.crypto.generate_recovery_key()
+        client.trust_state = await client.crypto.resolve_trust(
+            client.crypto.own_identity,
+            allow_fetch=False,
+        )
+        log.debug(f"Trust state generating recovery key for {client.id}: {client.trust_state}")
+    except Exception as e:
+        log.exception("Failed to generate recovery key for client")
+        return resp.internal_crypto_error(str(e))
+    return resp.created({"success": True, "recovery_key": key})

@@ -22,6 +22,7 @@ import logging
 
 from aiohttp import ClientSession
 
+from mautrix.api import HTTPAPI
 from mautrix.client import InternalEventType
 from mautrix.errors import MatrixInvalidToken
 from mautrix.types import (
@@ -39,6 +40,7 @@ from mautrix.types import (
     StateFilter,
     StrippedStateEvent,
     SyncToken,
+    TrustState,
     UserID,
 )
 from mautrix.util import background_task
@@ -78,6 +80,7 @@ class Client(DBClient):
 
     remote_displayname: str | None
     remote_avatar_url: ContentURI | None
+    trust_state: TrustState | None
 
     def __init__(
         self,
@@ -139,10 +142,16 @@ class Client(DBClient):
         self._postinited = True
         self.cache[self.id] = self
         self.log = self.log.getChild(self.id)
-        self.http_client = ClientSession(loop=self.maubot.loop)
+        self.http_client = ClientSession(
+            loop=self.maubot.loop,
+            headers={
+                "User-Agent": HTTPAPI.default_ua,
+            },
+        )
         self.references = set()
         self.started = False
         self.sync_ok = True
+        self.trust_state = None
         self.remote_displayname = None
         self.remote_avatar_url = None
         self.client = self._make_client()
@@ -230,6 +239,12 @@ class Client(DBClient):
         await self.crypto.load()
         if not crypto_device_id:
             await self.crypto_store.put_device_id(self.device_id)
+        if not self.crypto.account.shared:
+            await self.crypto.share_keys()
+        self.trust_state = await self.crypto.resolve_trust(
+            self.crypto.own_identity,
+            allow_fetch=False,
+        )
 
     async def _start(self, try_n: int | None = 0) -> None:
         if not self.enabled:
@@ -347,14 +362,45 @@ class Client(DBClient):
             "remote_displayname": self.remote_displayname,
             "remote_avatar_url": self.remote_avatar_url,
             "instances": [instance.to_dict() for instance in self.references],
+            "trust_state": str(self.trust_state) if self.trust_state else None,
         }
 
     async def _handle_tombstone(self, evt: StateEvent) -> None:
+        if evt.state_key != "":
+            return
         if not evt.content.replacement_room:
             self.log.info(f"{evt.room_id} tombstoned with no replacement, ignoring")
             return
+        is_joined = await self.client.state_store.is_joined(
+            evt.content.replacement_room,
+            self.client.mxid,
+        )
+        if is_joined:
+            self.log.debug(
+                f"Ignoring tombstone from {evt.room_id} to {evt.content.replacement_room} "
+                f"sent by {evt.sender}: already joined to replacement room"
+            )
+            return
+        self.log.debug(
+            f"Following tombstone from {evt.room_id} to {evt.content.replacement_room} "
+            f"sent by {evt.sender}"
+        )
         _, server = self.client.parse_user_id(evt.sender)
-        await self.client.join_room(evt.content.replacement_room, servers=[server])
+        room_id = await self.client.join_room(evt.content.replacement_room, servers=[server])
+        power_levels = await self.client.get_state_event(room_id, EventType.ROOM_POWER_LEVELS)
+        create_event = await self.client.get_state_event(
+            room_id, EventType.ROOM_CREATE, format="event"
+        )
+        if power_levels.get_user_level(evt.sender, create_event) < power_levels.invite:
+            self.log.warning(
+                f"{evt.room_id} was tombstoned into {room_id} by {evt.sender},"
+                " but the sender doesn't have invite power levels, leaving..."
+            )
+            await self.client.leave_room(
+                room_id,
+                f"Followed tombstone from {evt.room_id} by {evt.sender},"
+                " but sender doesn't have sufficient power level for invites",
+            )
 
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
@@ -474,8 +520,14 @@ class Client(DBClient):
         self.start_sync()
 
     async def _update_remote_profile(self) -> None:
-        profile = await self.client.get_profile(self.id)
-        self.remote_displayname, self.remote_avatar_url = profile.displayname, profile.avatar_url
+        try:
+            profile = await self.client.get_profile(self.id)
+            self.remote_displayname, self.remote_avatar_url = (
+                profile.displayname,
+                profile.avatar_url,
+            )
+        except Exception:
+            self.log.warning("Failed to update own profile from server", exc_info=True)
 
     async def delete(self) -> None:
         try:

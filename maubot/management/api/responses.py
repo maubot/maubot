@@ -15,12 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from http import HTTPStatus
 
 from aiohttp import web
 from asyncpg import PostgresError
-from sqlalchemy.exc import IntegrityError, OperationalError
 import aiosqlite
+
+if TYPE_CHECKING:
+    from sqlalchemy.exc import IntegrityError, OperationalError
 
 
 class _Response:
@@ -325,6 +328,16 @@ class _Response:
         )
 
     @property
+    def sqlalchemy_not_installed(self) -> web.Response:
+        return web.json_response(
+            {
+                "error": "This plugin requires a legacy database, but SQLAlchemy is not installed",
+                "errcode": "unsupported_plugin_database",
+            },
+            status=HTTPStatus.NOT_IMPLEMENTED,
+        )
+
+    @property
     def table_not_found(self) -> web.Response:
         return web.json_response(
             {
@@ -433,6 +446,25 @@ class _Response:
                 "errcode": "unsupported_plugin_loader",
             },
             status=HTTPStatus.BAD_REQUEST,
+        )
+
+    @property
+    def client_has_keys(self) -> web.Response:
+        return web.json_response(
+            {
+                "error": "Client already has cross-signing keys",
+                "errcode": "client_has_keys",
+            },
+            status=HTTPStatus.CONFLICT,
+        )
+
+    def internal_crypto_error(self, message: str) -> web.Response:
+        return web.json_response(
+            {
+                "error": f"Internal crypto error: {message}",
+                "errcode": "internal_crypto_error",
+            },
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
     @property

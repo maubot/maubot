@@ -1,16 +1,16 @@
-mautrix>=0.20.2,<0.21
+mautrix>=0.21.0b5,<0.22
 aiohttp>=3,<4
 yarl>=1,<2
-SQLAlchemy>=1,<1.4
-asyncpg>=0.20,<0.29
-aiosqlite>=0.16,<0.19
+asyncpg>=0.20,<1
+aiosqlite>=0.16,<1
 commonmark>=0.9,<1
-ruamel.yaml>=0.15.35,<0.18
+ruamel.yaml>=0.15.35,<0.19
 attrs>=18.1.0
 bcrypt>=3,<5
 packaging>=10
 
 click>=7,<9
 colorama>=0.4,<0.5
-questionary>=1,<2
+questionary>=1,<3
 jinja2>=2,<4
+setuptools

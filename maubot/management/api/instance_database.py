@@ -19,12 +19,12 @@ from datetime import datetime
 
 from aiohttp import web
 from asyncpg import PostgresError
-from sqlalchemy import asc, desc, engine, exc
 import aiosqlite
 
 from mautrix.util.async_db import Database
 
 from ...instance import PluginInstance
+from ...lib.optionalalchemy import Engine, IntegrityError, OperationalError, asc, desc
 from .base import routes
 from .responses import resp
 
@@ -66,7 +66,7 @@ async def get_table(request: web.Request) -> web.Response:
     except KeyError:
         order = []
     limit = int(request.query.get("limit", "100"))
-    if isinstance(instance.inst_db, engine.Engine):
+    if isinstance(instance.inst_db, Engine):
         return _execute_query_sqlalchemy(instance, table.select().order_by(*order).limit(limit))
 
 
@@ -84,7 +84,7 @@ async def query(request: web.Request) -> web.Response:
     except KeyError:
         return resp.query_missing
     rows_as_dict = data.get("rows_as_dict", False)
-    if isinstance(instance.inst_db, engine.Engine):
+    if isinstance(instance.inst_db, Engine):
         return _execute_query_sqlalchemy(instance, sql_query, rows_as_dict)
     elif isinstance(instance.inst_db, Database):
         try:
@@ -133,12 +133,12 @@ async def _execute_query_asyncpg(
 def _execute_query_sqlalchemy(
     instance: PluginInstance, sql_query: str, rows_as_dict: bool = False
 ) -> web.Response:
-    assert isinstance(instance.inst_db, engine.Engine)
+    assert isinstance(instance.inst_db, Engine)
     try:
         res = instance.inst_db.execute(sql_query)
-    except exc.IntegrityError as e:
+    except IntegrityError as e:
         return resp.sql_integrity_error(e, sql_query)
-    except exc.OperationalError as e:
+    except OperationalError as e:
         return resp.sql_operational_error(e, sql_query)
     data = {
         "ok": True,

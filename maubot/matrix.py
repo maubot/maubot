@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Awaitable
+from typing import Any, Awaitable
 from html import escape
 import asyncio
 
@@ -62,7 +62,10 @@ async def parse_formatted(
         html = message
     else:
         return message, escape(message)
-    return (await MaubotHTMLParser().parse(html)).text, html
+    text = (await MaubotHTMLParser().parse(html)).text
+    if len(text) > 100 and len(text) + len(html) > 40000:
+        text = text[:100] + "[long message cut off]"
+    return text, html
 
 
 class MaubotMessageEvent(MessageEvent):
@@ -85,6 +88,7 @@ class MaubotMessageEvent(MessageEvent):
         reply: bool | str = False,
         in_thread: bool | None = None,
         edits: EventID | MessageEvent | None = None,
+        extra_content: dict[str, Any] | None = None,
     ) -> EventID:
         """
         Respond to the message.
@@ -104,6 +108,7 @@ class MaubotMessageEvent(MessageEvent):
                 the root if necessary.
             edits: An event ID or MessageEvent to edit. If set, the reply and in_thread parameters
                 are ignored, as edits can't change the reply or thread status.
+            extra_content: Extra content to add to the event.
 
         Returns:
             The ID of the response event.
@@ -140,6 +145,9 @@ class MaubotMessageEvent(MessageEvent):
                 )
             else:
                 content.set_reply(self)
+        if extra_content:
+            for k, v in extra_content.items():
+                content[k] = v
         return await self.client.send_message_event(self.room_id, event_type, content)
 
     def reply(
@@ -149,6 +157,7 @@ class MaubotMessageEvent(MessageEvent):
         markdown: bool = True,
         allow_html: bool = False,
         in_thread: bool | None = None,
+        extra_content: dict[str, Any] | None = None,
     ) -> Awaitable[EventID]:
         """
         Reply to the message. The parameters are the same as :meth:`respond`,
@@ -166,6 +175,7 @@ class MaubotMessageEvent(MessageEvent):
                 thread. If set to ``False``, the response will never be in a thread. If set to
                 ``True``, the response will always be in a thread, creating one with this event as
                 the root if necessary.
+            extra_content: Extra content to add to the event.
 
         Returns:
             The ID of the response event.
@@ -177,6 +187,7 @@ class MaubotMessageEvent(MessageEvent):
             reply=True,
             in_thread=in_thread,
             allow_html=allow_html,
+            extra_content=extra_content,
         )
 
     def mark_read(self) -> Awaitable[None]:
@@ -253,14 +264,18 @@ class MaubotMatrixClient(MatrixClient):
         markdown: str,
         *,
         allow_html: bool = False,
+        render_markdown: bool = True,
         msgtype: MessageType = MessageType.TEXT,
         edits: EventID | MessageEvent | None = None,
         relates_to: RelatesTo | None = None,
+        extra_content: dict[str, Any] = None,
         **kwargs,
     ) -> EventID:
         content = TextMessageEventContent(msgtype=msgtype, format=Format.HTML)
         content.body, content.formatted_body = await parse_formatted(
-            markdown, allow_html=allow_html
+            markdown,
+            allow_html=allow_html,
+            render_markdown=render_markdown,
         )
         if relates_to:
             if edits:
@@ -268,6 +283,9 @@ class MaubotMatrixClient(MatrixClient):
             content.relates_to = relates_to
         elif edits:
             content.set_edit(edits)
+        if extra_content:
+            for k, v in extra_content.items():
+                content[k] = v
         return await self.send_message(room_id, content, **kwargs)
 
     def dispatch_event(self, event: Event, source: SyncStream) -> list[asyncio.Task]:

@@ -205,7 +205,7 @@ export const getClients = () => defaultGet("/clients")
 export const getClient = id => defaultGet(`/clients/${id}`)
 
 export async function uploadAvatar(id, data, mime) {
-    const resp = await fetch(`${BASE_PATH}/proxy/${id}/_matrix/media/r0/upload`, {
+    const resp = await fetch(`${BASE_PATH}/proxy/${id}/_matrix/media/v3/upload`, {
         headers: getHeaders(mime),
         body: data,
         method: "POST",
@@ -217,8 +217,9 @@ export function getAvatarURL({ id, avatar_url }) {
     if (!avatar_url?.startsWith("mxc://")) {
         return null
     }
-    avatar_url = avatar_url.substr("mxc://".length)
-    return `${BASE_PATH}/proxy/${id}/_matrix/media/r0/download/${avatar_url}?access_token=${
+    avatar_url = avatar_url.substring("mxc://".length)
+    // Note: the maubot backend will replace the query param with an authorization header
+    return `${BASE_PATH}/proxy/${id}/_matrix/client/v1/media/download/${avatar_url}?access_token=${
         localStorage.accessToken}`
 }
 
@@ -227,6 +228,23 @@ export const deleteClient = id => defaultDelete("client", id)
 
 export async function clearClientCache(id) {
     const resp = await fetch(`${BASE_PATH}/client/${id}/clearcache`, {
+        headers: getHeaders(),
+        method: "POST",
+    })
+    return await resp.json()
+}
+
+export async function verifyClient(id, recovery_key) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/verify`, {
+        headers: getHeaders(),
+        method: "POST",
+        body: JSON.stringify({ recovery_key }),
+    })
+    return await resp.json()
+}
+
+export async function generateRecoveryKey(id) {
+    const resp = await fetch(`${BASE_PATH}/client/${id}/generate_recovery_key`, {
         headers: getHeaders(),
         method: "POST",
     })
@@ -253,5 +271,6 @@ export default {
     getInstanceDatabase, queryInstanceDatabase,
     getPlugins, getPlugin, uploadPlugin, deletePlugin,
     getClients, getClient, uploadAvatar, getAvatarURL, putClient, deleteClient, clearClientCache,
+    verifyClient, generateRecoveryKey,
     getClientAuthServers, doClientAuth,
 }

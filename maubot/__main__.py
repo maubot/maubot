@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import sys
 
+from mautrix.api import HTTPAPI
 from mautrix.util.async_db import Database, DatabaseException, PostgresDatabase, Scheme
 from mautrix.util.program import Program
 
@@ -125,6 +126,7 @@ class Maubot(Program):
         if self.config["api_features.log"]:
             self.prepare_log_websocket()
 
+        HTTPAPI.default_ua = f"maubot/{self.version} {HTTPAPI.default_ua}"
         init_zip_loader(self.config)
         self.prepare_db()
         Client.init_cls(self)

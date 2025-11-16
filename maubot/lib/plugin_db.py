@@ -53,7 +53,7 @@ class ProxyPostgresDatabase(Database):
         self._max_conns = max_conns
 
     async def start(self) -> None:
-        async with self._underlying_pool.acquire() as conn:
+        async with self._underlying_pool.acquire_direct() as conn:
             self._default_search_path = await conn.fetchval("SHOW search_path")
             self.log.trace(f"Found default search path: {self._default_search_path}")
             await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self._quoted_schema}")
@@ -80,9 +80,9 @@ class ProxyPostgresDatabase(Database):
             self.log.warning("Failed to delete schema", exc_info=True)
 
     @asynccontextmanager
-    async def acquire(self) -> LoggingConnection:
+    async def acquire_direct(self) -> LoggingConnection:
         conn: LoggingConnection
-        async with self._conn_sema, self._underlying_pool.acquire() as conn:
+        async with self._conn_sema, self._underlying_pool.acquire_direct() as conn:
             await conn.execute(f"SET search_path = {self._quoted_schema}")
             try:
                 yield conn

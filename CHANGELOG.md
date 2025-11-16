@@ -1,5 +1,43 @@
-# v0.5.0 (unreleased)
+# v0.6.0 (unreleased)
 
+* Added support for room v12 creator power when checking power levels after
+  following a tombstone.
+* Added support for verifying the maubot device using a recovery key.
+* Improved cutting off long plaintext body when parsing markdown.
+
+# v0.5.2 (2025-05-05)
+
+* Improved tombstone handling to ensure that the tombstone sender has
+  permissions to invite users to the target room.
+* Fixed autojoin and online flags not being applied if set during client
+  creation (thanks to [@bnsh] in [#258]).
+* Fixed plugin web apps not being cleared properly when unloading plugins.
+
+[@bnsh]: https://github.com/bnsh
+[#258]: https://github.com/maubot/maubot/pull/258
+
+# v0.5.1 (2025-01-03)
+
+* Updated Docker image to Alpine 3.21.
+* Updated media upload/download endpoints in management frontend
+  (thanks to [@domrim] in [#253]).
+* Fixed plugin web app base path not including a trailing slash
+  (thanks to [@jkhsjdhjs] in [#240]).
+* Changed markdown parsing to cut off plaintext body if necessary to allow
+  longer formatted messages.
+* Updated dependencies to fix Python 3.13 compatibility.
+
+[@domrim]: https://github.com/domrim
+[@jkhsjdhjs]: https://github.com/jkhsjdhjs
+[#253]: https://github.com/maubot/maubot/pull/253
+[#240]: https://github.com/maubot/maubot/pull/240
+
+# v0.5.0 (2024-08-24)
+
+* Dropped Python 3.9 support.
+* Updated Docker image to Alpine 3.20.
+* Updated mautrix-python to 0.20.6 to support authenticated media.
+* Removed hard dependency on SQLAlchemy.
 * Fixed `main_class` to default to being loaded from the last module instead of
   the first if a module name is not explicitly specified.
   * This was already the [documented behavior](https://docs.mau.fi/maubot/dev/reference/plugin-metadata.html),
