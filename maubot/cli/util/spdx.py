@@ -15,10 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import importlib.resources as resources
 import json
 import zipfile
-
-import pkg_resources
 
 spdx_list: dict[str, dict[str, str]] | None = None
 
@@ -27,7 +26,7 @@ def load() -> None:
     global spdx_list
     if spdx_list is not None:
         return
-    with pkg_resources.resource_stream("maubot.cli", "res/spdx.json.zip") as disk_file:
+    with resources.files("maubot.cli").joinpath("res/spdx.json.zip").open("rb") as disk_file:
         with zipfile.ZipFile(disk_file) as zip_file:
             with zip_file.open("spdx.json") as file:
                 spdx_list = json.load(file)

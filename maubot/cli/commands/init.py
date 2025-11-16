@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import importlib.resources as resources
 import os
 
 from jinja2 import Template
 from packaging.version import Version
-from pkg_resources import resource_string
 
 from .. import cliq
 from ..cliq import SPDXValidator, VersionValidator
@@ -33,9 +33,15 @@ def load_templates():
     global mod_template, meta_template, base_config, loaded
     if loaded:
         return
-    meta_template = Template(resource_string("maubot.cli", "res/maubot.yaml.j2").decode("utf-8"))
-    mod_template = Template(resource_string("maubot.cli", "res/plugin.py.j2").decode("utf-8"))
-    base_config = resource_string("maubot.cli", "res/config.yaml").decode("utf-8")
+    meta_template = Template(
+        resources.files("maubot.cli").joinpath("res/maubot.yaml.j2").read_text(encoding="utf-8")
+    )
+    mod_template = Template(
+        resources.files("maubot.cli").joinpath("res/plugin.py.j2").read_text(encoding="utf-8")
+    )
+    base_config = (
+        resources.files("maubot.cli").joinpath("res/config.yaml").read_text(encoding="utf-8")
+    )
     loaded = True
 
 

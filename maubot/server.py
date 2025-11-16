@@ -17,13 +17,14 @@ from __future__ import annotations
 
 from typing import Callable
 import asyncio
+import importlib.resources as resources
 import json
 import logging
+import pathlib
 
 from aiohttp import hdrs, web
 from aiohttp.abc import AbstractAccessLogger
 from yarl import URL
-import pkg_resources
 
 from mautrix.api import Method, PathBuilder
 
@@ -101,9 +102,13 @@ class MaubotServer:
         ui_base = self.config["server.ui_base_path"]
         if ui_base == "/":
             ui_base = ""
-        directory = self.config[
-            "server.override_resource_path"
-        ] or pkg_resources.resource_filename("maubot", "management/frontend/build")
+        directory = self.config["server.override_resource_path"]
+        if not directory:
+            resource_dir = resources.files("maubot").joinpath("management/frontend/build")
+            assert isinstance(
+                resource_dir, pathlib.Path
+            ), "Resources must be available on disk (use override_resource_path to specify custom path)"
+            directory = str(resource_dir)
         self.app.router.add_static(f"{ui_base}/static", f"{directory}/static")
         self.setup_static_root_files(directory, ui_base)
 
