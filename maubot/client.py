@@ -195,7 +195,9 @@ class Client(DBClient):
 
     def _prepare_crypto(self) -> None:
         self.crypto_store = PgCryptoStore(
-            account_id=self.id, pickle_key="mau.crypto", db=self.maubot.crypto_db
+            account_id=self.id,
+            pickle_key=self.maubot.crypto_db_pickle_key,
+            db=self.maubot.crypto_db,
         )
         self.crypto = OlmMachine(
             self.client,
