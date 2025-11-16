@@ -15,10 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import importlib.resources as resources
 import json
 import zipfile
-
-import importlib.resources as resources
 
 spdx_list: dict[str, dict[str, str]] | None = None
 

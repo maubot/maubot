@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from typing import Callable
 import asyncio
+import importlib.resources as resources
 import json
 import logging
 
 from aiohttp import hdrs, web
 from aiohttp.abc import AbstractAccessLogger
 from yarl import URL
-import importlib.resources as resources
 
 from mautrix.api import Method, PathBuilder
 
