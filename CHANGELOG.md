@@ -1,4 +1,4 @@
-# v0.6.0 (unreleased)
+# v0.6.0 (2025-11-17)
 
 * Added support for room v12 creator power when checking power levels after
   following a tombstone.
