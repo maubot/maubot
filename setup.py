@@ -59,6 +59,7 @@ setuptools.setup(
     entry_points="""
         [console_scripts]
         mbc=maubot.cli:app
+        maubot=maubot.__main__:main
         [pytest11]
         maubot=maubot.testing
     """,
