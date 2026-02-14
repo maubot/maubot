@@ -54,6 +54,7 @@ server:
     hostname: 0.0.0.0
     port: 29316
     # Public base URL where the server is visible.
+    # When using a subpath here, your reverse proxy must strip out the prefix.
     public_url: https://example.com
     # The base path for the UI. Note that this does not change the API path.
     # Add a path prefix to public_url if you want everything on a subpath.
