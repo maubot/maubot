@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import importlib.resources as resources
 import json
+import re
 import zipfile
 
 spdx_list: dict[str, dict[str, str]] | None = None
@@ -41,4 +42,5 @@ def get(id: str) -> dict[str, str]:
 def valid(id: str) -> bool:
     if not spdx_list:
         load()
-    return id in spdx_list
+    custom_license = re.compile('LicenseRef-[a-zA-Z0-9.-]*$')
+    return bool(custom_license.match(id)) or id in spdx_list
