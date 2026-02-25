@@ -702,6 +702,10 @@ components:
           type: boolean
           example: true
           description: Whether or not this client should automatically join rooms when invited.
+        autojoin_allowlist:
+          type: string
+          example: '@.*:example\.com'
+          description: Autojoin only if regex matches inviter MXID. Empty means allow all.
         displayname:
           type: string
           example: J. E. Saarinen
