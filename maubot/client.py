@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator, Awaitable, Callable, cast
 from collections import defaultdict
 import asyncio
 import logging
+import re
 
 from aiohttp import ClientSession
 
@@ -93,6 +94,7 @@ class Client(DBClient):
         filter_id: FilterID = "",
         sync: bool = True,
         autojoin: bool = True,
+        autojoin_allowlist: str = "",
         online: bool = True,
         displayname: str = "disable",
         avatar_url: str = "disable",
@@ -107,11 +109,14 @@ class Client(DBClient):
             filter_id=filter_id,
             sync=bool(sync),
             autojoin=bool(autojoin),
+            autojoin_allowlist=autojoin_allowlist,
             online=bool(online),
             displayname=displayname,
             avatar_url=avatar_url,
         )
         self._postinited = False
+        self._autojoin_allowlist_pattern = None
+        self._compile_autojoin_allowlist(autojoin_allowlist)
 
     def __hash__(self) -> int:
         return hash(self.id)
@@ -358,6 +363,7 @@ class Client(DBClient):
             "sync": self.sync,
             "sync_ok": self.sync_ok,
             "autojoin": self.autojoin,
+            "autojoin_allowlist": self.autojoin_allowlist,
             "online": self.online,
             "displayname": self.displayname,
             "avatar_url": self.avatar_url,
@@ -404,9 +410,26 @@ class Client(DBClient):
                 " but sender doesn't have sufficient power level for invites",
             )
 
+    def _compile_autojoin_allowlist(self, autojoin_allowlist: str) -> bool:
+        if not autojoin_allowlist:
+            self._autojoin_allowlist_pattern = None
+            return True
+        try:
+            self._autojoin_allowlist_pattern = re.compile(autojoin_allowlist)
+            return True
+        except re.error:
+            self.log.exception("Invalid regular expression for autojoin_allowlist")
+            return False
+
+    def _is_autojoin_allowlisted(self, inviter: UserID) -> bool:
+        if not self._autojoin_allowlist_pattern:
+            return True
+        return self._autojoin_allowlist_pattern.fullmatch(str(inviter)) is not None
+
     async def _handle_invite(self, evt: StrippedStateEvent) -> None:
         if evt.state_key == self.id and evt.content.membership == Membership.INVITE:
-            await self.client.join_room(evt.room_id)
+            if self._is_autojoin_allowlisted(evt.sender):
+                await self.client.join_room(evt.room_id)
 
     async def update_started(self, started: bool | None) -> None:
         if started is None or started == self.started:
@@ -467,6 +490,15 @@ class Client(DBClient):
         self.autojoin = autojoin
         if save:
             await self.update()
+
+    async def update_autojoin_allowlist(self, autojoin_allowlist: str | None,
+                                        save: bool = True) -> None:
+        if autojoin_allowlist is None or autojoin_allowlist == self.autojoin_allowlist:
+            return
+        if self._compile_autojoin_allowlist(autojoin_allowlist):
+            self.autojoin_allowlist = autojoin_allowlist
+            if save:
+                await self.update()
 
     async def update_online(self, online: bool | None, save: bool = True) -> None:
         if online is None or online == self.online:
