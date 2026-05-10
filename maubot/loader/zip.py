@@ -185,15 +185,18 @@ class ZippedPluginLoader(PluginLoader):
         try:
             code = importer.get_code(self.main_module.replace(".", "/"))
             if self.main_class not in code.co_names:
+                importer.remove_cache()
                 raise MaubotZipPreLoadError(
                     f"Main class {self.main_class} not in {self.main_module}"
                 )
         except ZipImportError as e:
+            importer.remove_cache()
             raise MaubotZipPreLoadError(f"Main module {self.main_module} not found in file") from e
         for module in self.meta.modules:
             try:
                 importer.find_module(module)
             except ZipImportError as e:
+                importer.remove_cache()
                 raise MaubotZipPreLoadError(f"Module {module} not found in file") from e
 
     async def load(self, reset_cache: bool = False) -> type[PluginClass]:
@@ -215,18 +218,23 @@ class ZippedPluginLoader(PluginLoader):
             try:
                 importer.load_module(module)
             except ZipImportError:
+                importer.remove_cache()
                 raise MaubotZipLoadError(f"Module {module} not found in file")
             except Exception:
+                importer.remove_cache()
                 raise MaubotZipLoadError(f"Failed to load module {module}")
         try:
             main_mod = sys.modules[self.main_module]
         except KeyError as e:
+            importer.remove_cache()
             raise MaubotZipLoadError(f"Main module {self.main_module} of plugin not found") from e
         try:
             plugin = getattr(main_mod, self.main_class)
         except AttributeError as e:
+            importer.remove_cache()
             raise MaubotZipLoadError(f"Main class {self.main_class} of plugin not found") from e
         if not issubclass(plugin, Plugin):
+            importer.remove_cache()
             raise MaubotZipLoadError("Main class of plugin does not extend maubot.Plugin")
         self._loaded = plugin
         self.log.debug(f"Loaded and imported plugin {self.meta.id} from {self.path}")
