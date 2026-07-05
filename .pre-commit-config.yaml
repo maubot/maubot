@@ -14,7 +14,7 @@ repos:
         language_version: python3
         files: ^maubot/.*\.pyi?$
   - repo: https://github.com/PyCQA/isort
-    rev: 9.0.0a3
+    rev: 8.0.1
     hooks:
       - id: isort
         files: ^maubot/.*\.pyi?$
