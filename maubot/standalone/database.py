@@ -30,13 +30,13 @@ upgrade_table = UpgradeTable(
 
 @upgrade_table.register(description="Initial revision")
 async def upgrade_v1(conn: Connection) -> None:
-    await conn.execute(
-        """CREATE TABLE IF NOT EXISTS standalone_next_batch (
+    await conn.execute("""
+        CREATE TABLE IF NOT EXISTS standalone_next_batch (
             user_id    TEXT PRIMARY KEY,
             next_batch TEXT,
             filter_id  TEXT
-        )"""
-    )
+        )
+    """)
 
 
 find_q = "SELECT next_batch, filter_id FROM standalone_next_batch WHERE user_id=$1"

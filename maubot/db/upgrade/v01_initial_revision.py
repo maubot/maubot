@@ -32,8 +32,8 @@ async def upgrade_v1(conn: Connection, scheme: Scheme) -> None:
 
 
 async def create_v1_tables(conn: Connection) -> None:
-    await conn.execute(
-        """CREATE TABLE client (
+    await conn.execute("""
+        CREATE TABLE client (
             id           TEXT    PRIMARY KEY,
             homeserver   TEXT    NOT NULL,
             access_token TEXT    NOT NULL,
@@ -49,18 +49,18 @@ async def create_v1_tables(conn: Connection) -> None:
 
             displayname TEXT NOT NULL,
             avatar_url  TEXT NOT NULL
-        )"""
-    )
-    await conn.execute(
-        """CREATE TABLE instance (
+        )
+    """)
+    await conn.execute("""
+        CREATE TABLE instance (
             id           TEXT    PRIMARY KEY,
             type         TEXT    NOT NULL,
             enabled      BOOLEAN NOT NULL,
             primary_user TEXT    NOT NULL,
             config       TEXT    NOT NULL,
             FOREIGN KEY (primary_user) REFERENCES client(id) ON DELETE RESTRICT ON UPDATE CASCADE
-        )"""
-    )
+        )
+    """)
 
 
 async def migrate_legacy_to_v1(conn: Connection, scheme: Scheme) -> None:
@@ -94,8 +94,8 @@ async def update_state_store(conn: Connection, scheme: Scheme) -> None:
         )
     else:
         # Recreate table to remove CHECK constraint and lowercase everything
-        await conn.execute(
-            """CREATE TABLE new_mx_user_profile (
+        await conn.execute("""
+            CREATE TABLE new_mx_user_profile (
                 room_id     TEXT,
                 user_id     TEXT,
                 membership  TEXT NOT NULL
@@ -103,15 +103,13 @@ async def update_state_store(conn: Connection, scheme: Scheme) -> None:
                 displayname TEXT,
                 avatar_url  TEXT,
                 PRIMARY KEY (room_id, user_id)
-            )"""
-        )
-        await conn.execute(
-            """
+            )
+        """)
+        await conn.execute("""
             INSERT INTO new_mx_user_profile (room_id, user_id, membership, displayname, avatar_url)
             SELECT room_id, user_id, LOWER(membership), displayname, avatar_url
             FROM mx_user_profile
-            """
-        )
+        """)
         await conn.execute("DROP TABLE mx_user_profile")
         await conn.execute("ALTER TABLE new_mx_user_profile RENAME TO mx_user_profile")
 

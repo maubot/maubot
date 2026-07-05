@@ -20,12 +20,11 @@ to Zip archives.
 
 from importlib import _bootstrap  # for _verbose_message
 from importlib import _bootstrap_external
+import _imp  # for check_hash_based_pycs
+import _io  # for open
 import marshal  # for loads
 import sys  # for modules
 import time  # for mktime
-
-import _imp  # for check_hash_based_pycs
-import _io  # for open
 
 __all__ = ["ZipImportError", "zipimporter"]
 

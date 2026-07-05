@@ -8,13 +8,13 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
   - repo: https://github.com/psf/black
-    rev: 25.11.0
+    rev: 26.5.1
     hooks:
       - id: black
         language_version: python3
         files: ^maubot/.*\.pyi?$
   - repo: https://github.com/PyCQA/isort
-    rev: 7.0.0
+    rev: 9.0.0a3
     hooks:
       - id: isort
         files: ^maubot/.*\.pyi?$

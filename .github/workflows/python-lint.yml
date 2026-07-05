@@ -6,7 +6,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
       with:
         python-version: "3.14"
@@ -16,7 +16,7 @@ jobs:
     - uses: psf/black@stable
       with:
         src: "./maubot"
-        version: "25.11.0"
+        version: "26.5.1"
     - name: pre-commit
       run: |
         pip install pre-commit
