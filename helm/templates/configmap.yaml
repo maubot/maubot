@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: maubot-config
+  labels:
+{{ include "maubot.labels" . | indent 4 }}
+data: 
+  config.yaml: | {{ tpl (.Files.Get "configs/config.yaml") . | nindent 4 }}
