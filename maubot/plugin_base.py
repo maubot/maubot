@@ -78,7 +78,14 @@ class Plugin(ABC):
     def register_handler_class(self, obj) -> None:
         warned_webapp = False
         for key in dir(obj):
-            val = getattr(obj, key)
+            try:
+                val = getattr(obj, key)
+            # It's possible for dir() to include descriptors or other
+            # attributes that can't actually be gotten (e.g., __provides__
+            # descriptors created by zope.interface), so in that case,
+            # catch the AttributeError and continue.
+            except AttributeError:
+                continue
             try:
                 if val.__mb_event_handler__:
                     for event_type in val.__mb_event_types__:
