@@ -147,6 +147,7 @@ class Client(DBClient):
             headers={
                 "User-Agent": HTTPAPI.default_ua,
             },
+            trust_env=True,
         )
         self.references = set()
         self.started = False
