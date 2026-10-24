@@ -1,0 +1,289 @@
+# Default values for maubot.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: dock.mau.dev/maubot/maubot
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  #fsGroup: 2000
+
+
+securityContext: {}
+  #runAsGroup: 2000
+  #runAsUser: 2000
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+
+# standaloneMode port: 8080
+# normalMode port: 29316
+service:
+  type: ClusterIP
+  port: 29316
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    # standalone mode does not need 'app-root' redirect
+    nginx.ingress.kubernetes.io/app-root: /_matrix/maubot
+    #cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+    #- secretName: maubot-tls
+    #  hosts:
+    #    - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /_matrix/maubot
+    port: http
+readinessProbe:
+  httpGet:
+    path: /_matrix/maubot
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# you want to persist a volume as plugins and their configs are stored there
+# this Chart uses longhorn as default storageClass
+persistence:
+  enabled: enabled
+  accessModes: 
+    - ReadWriteMany
+  size: 10Gi
+  storageClassName:
+
+# Additional volumes on the output Deployment definition.
+volumes:
+  - name: maubot-data
+    persistentVolumeClaim:
+      claimName: maubot-data
+  - name: maubot-config
+    configMap:
+      name: "maubot-config"
+      defaultMode: 0660
+
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  - name: maubot-data
+    mountPath: "/data"
+  - name: maubot-config
+    mountPath: "/config.yaml"
+    subPath: config.yaml
+
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# configure either Standalone or Normal mode values
+
+######## Standalone mode config values ########
+standaloneMode:
+  enabled: false
+configSA:
+  user:
+      # full bot mxid
+    id: "@bot:example.com"
+      # homeserver you're registering this bot at
+      # this is the `server_name` from your homeserver.yaml
+    homeserver: https://example.com
+      # you need to use maubot-cli to get an access token *and* device_id
+      # getting these from element is NOT possible as they will be bootstrapped to a client
+      # which makes it unusable for maubot 
+    access_token:
+    device_id:
+      # needs to be true for almost any use case
+    sync: true
+      # Receive appservice transactions? This will add a /_matrix/app/v1/transactions endpoint on
+      # the HTTP server configured below. The base_path will not be applied for the /transactions path.
+    appservice: false
+      # hs_token is needed when `appservice` is true
+    hs_token:
+    autojoin: true
+    displayname: 'Mau Bot'
+      # needs to be an `mxc://` url to an existing image on a matrix server
+    avatar_url: mxc://maunium.net/AKwRzQkTbggfVZGEqexbYLIO
+    ignore_initial_sync: true
+    ignore_first_sync: false
+  
+  server:
+    hostname: 0.0.0.0
+    port: 8080
+      # The public URL where the resources are available
+    public_url: https://example.com
+      # where the plugin's web resources will be served
+      # Unlike the normal mode,the webserver is dedicated for a single bot in standalone mode, so the default path
+      # is just /. If you want to emulate normal mode, set this to /_matrix/maubot/plugin/something
+    base_path: /
+
+  database:
+      # SQLite: sqlite:filename.db
+      # Postgres: postgresql://username:password@hostname/dbname
+    type: 'sqlite:bot.db'
+      # For sqlite, min_size is used as the connection thread pool size and max_size is ignored.
+    opts: 
+      min: 10
+      max: 20
+
+      # for additional "plugins" aka other bots within the maubot framework
+  plugin_config:
+    has_config: false
+      # Who is allowed to use the bot?
+    whitelist:
+      - "@user:example.com"
+      # The prefix for the main command without the !
+    command_prefix: myBotCommand
+
+      # python logging configuration
+  logging:
+    format: "[%(asctime)s] [%(levelname)s@%(name)s] %(message)s"
+    loggers:
+      # DEBUG | INFO | WARN | ERROR | CRITICAL 
+      maubot: DEBUG
+      mau: DEBUG
+      aiohttp: INFO
+    root:
+      level: DEBUG
+      handlers: console
+
+######## Normal mode config values ########
+
+normalMode:
+  enabled: true
+configN:
+    # SQLite: sqlite:filename.db
+    # Postgres: postgresql://username:password@hostname/dbname
+    #
+    # IF SQLite is used enter plugin_database path for sqlite  
+  database:
+    type: sqlite:/data/maubot.db
+    # For sqlite, min_size is used as the connection thread pool size and max_size is ignored.
+    opts:
+      min: 10
+      max: 20
+    # Separate database URL for the crypto database. "default" means use the same database as above.
+  crypto_database: default
+
+  plugin_directories:
+    upload: /data/plugins
+    load:
+      - /data/plugins
+      # set to "delete" to delete immediately 
+    trash: /data/trash
+  plugin_databases:
+      # possible values: './plugins' OR null (default in template), but must use postgres
+    sqlite: /data/dbs
+      # possible values: 'default' (default in template) OR null
+    postgres:
+    max_conn_per_plugin: 3
+      # Overrides for the default database_opts when using a non-"default" postgres connection string.
+    postgres_opts: {}
+
+  server:
+    hostname: 0.0.0.0
+    port: 29316
+    public_url: https://example.com
+    ui_base_path: /_matrix/maubot
+    plugin_base_path: /_matrix/maubot/plugin/
+    override_resource_path: false
+      # The shared secret to sign API access tokens.
+      # Set to "generate" to generate and save a new token at startup.
+    unshared_secret: generate
+
+  homeservers: 
+    server_name: matrix.org
+      # Client-server API URL
+    url: https://matrix-client.matrix.org
+      # registration_shared_secret from synapse config
+      # You can leave this empty if you don't have access to the homeserver.
+      # When this is empty, `mbc auth --register` won't work, but `mbc auth` (login) will.
+    secret: null
+
+  admins:
+    # leave password empty to prevent normal login
+    # passwords need to be bcrypt'ed https://bcrypt-generator.com
+    #username: "password"
+
+  api_feature:
+    login: true
+    plugin: true
+    plugin_upload: true
+    instance: true
+    instance_database: true
+    client: true
+    client_proxy: true
+    client_auth: true
+    dev_open: false
+    log: true
+
+      # python logging configuration
+  logging:
+    c_format: "[%(asctime)s] [%(levelname)s@%(name)s] %(message)s"
+    n_format: "[%(asctime)s] [%(levelname)s@%(name)s] %(message)s"
+    loggers:
+      # DEBUG | INFO | WARN | ERROR | CRITICAL 
+      maubot: DEBUG
+      mau: DEBUG
+      aiohttp: INFO
+    root:
+      level: DEBUG
+      handlers: file,console
