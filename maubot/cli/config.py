@@ -26,7 +26,13 @@ config: dict[str, Any] = {
     "aliases": {},
     "default_server": None,
 }
-configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.environ.get("HOME"), ".config"))
+home_dir = os.environ.get("HOME") or os.environ.get("USERPROFILE")
+if home_dir is None:
+    raise EnvironmentError(
+        "Neither HOME nor USERPROFILE environment variables are set."
+    )
+
+configdir = os.environ.get("XDG_CONFIG_HOME", os.path.join(home_dir, ".config"))
 
 
 def get_default_server() -> tuple[str | None, str | None]:
