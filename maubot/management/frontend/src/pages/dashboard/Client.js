@@ -65,7 +65,7 @@ class Client extends BaseMainView {
 
     get entryKeys() {
         return ["id", "displayname", "homeserver", "avatar_url", "access_token", "device_id",
-                "sync", "autojoin", "online", "enabled", "started", "trust_state"]
+                "sync", "autojoin", "autojoin_allowlist", "online", "enabled", "started", "trust_state"]
     }
 
     get initialState() {
@@ -79,6 +79,7 @@ class Client extends BaseMainView {
             fingerprint: null,
             sync: true,
             autojoin: true,
+            autojoin_allowlist: "",
             enabled: true,
             online: true,
             started: false,
@@ -340,6 +341,11 @@ class Client extends BaseMainView {
             <PrefSwitch rowName="Online"
                         active={this.state.online} origActive={this.props.entry.online}
                         onToggle={online => this.setState({ online })} />
+            <PrefInput rowName="Autojoin allowlist (MXID regex)" type="text" fullWidth={true}
+                       name="autojoin_allowlist" className="regex"
+                       value={this.state.autojoin_allowlist || ""}
+                       origValue={this.props.entry.autojoin_allowlist || ""}
+                       placeholder="@.*:example\.com" onChange={this.inputChange}/>
         </PrefTable>
     )
 

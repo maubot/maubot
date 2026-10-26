@@ -36,6 +36,7 @@ class Config(BaseFileConfig):
         copy("user.appservice")
         copy("user.hs_token")
         copy("user.autojoin")
+        copy("user.autojoin_allowlist")
         copy("user.displayname")
         copy("user.avatar_url")
         copy("user.ignore_initial_sync")

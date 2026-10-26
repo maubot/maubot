@@ -42,6 +42,7 @@ class Client(SyncStore):
 
     sync: bool
     autojoin: bool
+    autojoin_allowlist: str
     online: bool
 
     displayname: str
@@ -55,7 +56,7 @@ class Client(SyncStore):
 
     _columns = (
         "id, homeserver, access_token, device_id, enabled, next_batch, filter_id, "
-        "sync, autojoin, online, displayname, avatar_url"
+        "sync, autojoin, autojoin_allowlist, online, displayname, avatar_url"
     )
 
     @property
@@ -70,6 +71,7 @@ class Client(SyncStore):
             self.filter_id,
             self.sync,
             self.autojoin,
+            self.autojoin_allowlist,
             self.online,
             self.displayname,
             self.avatar_url,
@@ -89,8 +91,8 @@ class Client(SyncStore):
         q = """
         INSERT INTO client (
             id, homeserver, access_token, device_id, enabled, next_batch, filter_id,
-            sync, autojoin, online, displayname, avatar_url
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            sync, autojoin, autojoin_allowlist, online, displayname, avatar_url
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         """
         await self.db.execute(q, *self._values)
 
@@ -104,8 +106,8 @@ class Client(SyncStore):
     async def update(self) -> None:
         q = """
         UPDATE client SET homeserver=$2, access_token=$3, device_id=$4, enabled=$5,
-                          next_batch=$6, filter_id=$7, sync=$8, autojoin=$9, online=$10,
-                          displayname=$11, avatar_url=$12
+                          next_batch=$6, filter_id=$7, sync=$8, autojoin=$9, autojoin_allowlist=$10,
+                          online=$11, displayname=$12, avatar_url=$13
         WHERE id=$1
         """
         await self.db.execute(q, *self._values)

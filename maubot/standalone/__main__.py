@@ -22,6 +22,7 @@ import copy
 import importlib
 import logging.config
 import os.path
+import re
 import signal
 import sys
 
@@ -139,6 +140,12 @@ device_id = config["user.credentials.device_id"]
 homeserver = config["user.credentials.homeserver"]
 access_token = config["user.credentials.access_token"]
 appservice_listener = config["user.appservice"]
+
+autojoin_allowlist = config["user.autojoin_allowlist"]
+if autojoin_allowlist:
+    autojoin_allowlist_pattern = re.compile(autojoin_allowlist)
+else:
+    autojoin_allowlist_pattern = None
 
 crypto_store = state_store = None
 if device_id and not OlmMachine:
@@ -327,7 +334,10 @@ async def main():
         @client.on(EventType.ROOM_MEMBER)
         async def _handle_invite(evt: StrippedStateEvent) -> None:
             if evt.state_key == client.mxid and evt.content.membership == Membership.INVITE:
-                await client.join_room(evt.room_id)
+                if not autojoin_allowlist_pattern:
+                    await client.join_room(evt.room_id)
+                elif autojoin_allowlist_pattern.fullmatch(str(evt.sender)) is not None:
+                    await client.join_room(evt.room_id)
 
     displayname, avatar_url = config["user.displayname"], config["user.avatar_url"]
     if avatar_url != "disable":
