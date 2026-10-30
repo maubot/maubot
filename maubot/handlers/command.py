@@ -403,6 +403,8 @@ class CustomArgument(Argument):
 
 class SimpleArgument(Argument):
     def match(self, val: str, **kwargs) -> Tuple[str, Any]:
+        if not val:
+            return "", None
         if self.pass_raw:
             return "", val
         res = re.split(r"\s", val, 1)[0]
