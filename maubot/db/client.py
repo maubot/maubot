@@ -44,8 +44,8 @@ class Client(SyncStore):
     autojoin: bool
     online: bool
 
-    displayname: str
-    avatar_url: ContentURI
+    displayname: str | None
+    avatar_url: ContentURI | None
 
     @classmethod
     def _from_row(cls, row: Record | None) -> Client | None:
@@ -71,8 +71,8 @@ class Client(SyncStore):
             self.sync,
             self.autojoin,
             self.online,
-            self.displayname,
-            self.avatar_url,
+            self.displayname or "",
+            self.avatar_url or "",
         )
 
     @classmethod
