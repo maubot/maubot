@@ -1,3 +1,13 @@
+# v0.6.1 (2026-11-20)
+
+* Updated Docker image to Alpine 3.24.
+* Added `base` field to MaubotMessageEvent to expose non-standard top-level
+  fields.
+* Improved tombstone handling.
+* Fixed errors persisting on future uploads until restart if a broken version
+  of a plugin was uploaded once.
+* Fixed updating access tokens of bots with encryption disabled.
+
 # v0.6.0 (2025-11-17)
 
 * Added support for room v12 creator power when checking power levels after
