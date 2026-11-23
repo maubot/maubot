@@ -1,4 +1,5 @@
 FROM docker.io/alpine:3.21
+LABEL org.opencontainers.image.source="https://github.com/maubot/maubot"
 
 RUN apk add --no-cache \
       python3 py3-pip py3-setuptools py3-wheel \

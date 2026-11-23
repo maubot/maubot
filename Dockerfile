@@ -4,6 +4,7 @@ COPY ./maubot/management/frontend /frontend
 RUN cd /frontend && npm i -g yarn && yarn --prod && yarn build
 
 FROM alpine:3.24
+LABEL org.opencontainers.image.source="https://github.com/maubot/maubot"
 
 RUN apk add --no-cache \
         python3 py3-pip py3-setuptools py3-wheel \
