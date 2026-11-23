@@ -173,7 +173,7 @@ class CommandHandler:
                 remaining_val, call_args[arg.name] = arg.match(
                     remaining_val.strip(), evt=evt, instance=self.__bound_instance__
                 )
-                if arg.required and call_args[arg.name] is None:
+                if arg.required and (call_args[arg.name] is None or call_args[arg.name] == ""):
                     raise ValueError("Argument required")
             except ArgumentSyntaxError as e:
                 await evt.reply(e.message + (f"\n{self.__mb_usage__}" if e.show_usage else ""))
@@ -392,7 +392,7 @@ class CustomArgument(Argument):
 
     def match(self, val: str, **kwargs) -> Tuple[str, Any]:
         if self.pass_raw:
-            return self.matcher(val)
+            return "", self.matcher(val)
         orig_val = val
         val = re.split(r"\s", val, 1)[0]
         res = self.matcher(val)
