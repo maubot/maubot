@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import random
 import re
+import secrets
 import string
 
 import bcrypt
@@ -25,10 +26,6 @@ bcrypt_regex = re.compile(r"^\$2[ayb]\$.{56}$")
 
 
 class Config(BaseFileConfig):
-    @staticmethod
-    def _new_token() -> str:
-        return "".join(random.choices(string.ascii_lowercase + string.digits, k=64))
-
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         base = helper.base
         copy = helper.copy
@@ -62,7 +59,7 @@ class Config(BaseFileConfig):
         copy("server.override_resource_path")
         shared_secret = self["server.unshared_secret"]
         if shared_secret is None or shared_secret == "generate":
-            base["server.unshared_secret"] = self._new_token()
+            base["server.unshared_secret"] = secrets.token_hex(64)
         else:
             base["server.unshared_secret"] = shared_secret
         if "registration_secrets" in self:
@@ -73,7 +70,7 @@ class Config(BaseFileConfig):
         for username, password in base["admins"].items():
             if password and not bcrypt_regex.match(password):
                 if password == "password":
-                    password = self._new_token()
+                    password = secrets.token_hex(64)
                 base["admins"][username] = bcrypt.hashpw(
                     password.encode("utf-8"), bcrypt.gensalt()
                 ).decode("utf-8")
