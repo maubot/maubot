@@ -32,4 +32,4 @@ RUN cd /opt/maubot \
   && apk del .build-deps
 
 COPY . /opt/maubot
-RUN cd /opt/maubot && pip3 install --break-system-packages .
+RUN cd /opt/maubot && pip3 install --break-system-packages --no-dependencies .
