@@ -205,7 +205,8 @@ elif appservice_listener:
 else:
     web_app = web_runner = public_url = plugin_webapp = None
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 client: MaubotMatrixClient | None = None
 bot: Plugin | None = None

@@ -1,4 +1,6 @@
-FROM docker.io/alpine:3.21
+ARG DOCKER_HUB="docker.io"
+
+FROM ${DOCKER_HUB}/alpine:3.24
 
 RUN apk add --no-cache \
       python3 py3-pip py3-setuptools py3-wheel \
@@ -25,6 +27,7 @@ RUN cd /opt/maubot \
       python3-dev \
       libffi-dev \
       build-base \
+      git \
   && pip3 install --break-system-packages -r requirements.txt -r optional-requirements.txt \
   && apk del .build-deps
 
