@@ -42,8 +42,11 @@ yaml = YAML()
 
 def zipdir(zip, dir):
     for root, dirs, files in os.walk(dir):
+        if "__pycache__" in dirs:
+            dirs.remove("__pycache__")
         for file in files:
-            zip.write(os.path.join(root, file))
+            if not file.endswith((".pyc", ".pyo")):
+                zip.write(os.path.join(root, file))
 
 
 def read_meta(path: str) -> PluginMeta | None:
