@@ -16,6 +16,8 @@ user:
     hs_token: null
     # Automatically accept invites?
     autojoin: false
+    # Autojoin only if regex matches inviter MXID. Empty means allow all. Example: "@.*:example\.com"
+    autojoin_allowlist: ""
     # The displayname and avatar URL to set for the bot on startup.
     # Set to "disable" to not change the the current displayname/avatar.
     displayname: Standalone Bot
