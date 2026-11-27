@@ -1,0 +1,207 @@
+{{ if .Values.standaloneMode.enabled }}
+# Bot account details
+user:
+    credentials:
+        id: "{{- .Values.configSA.user.id }}"
+        homeserver: {{ .Values.configSA.user.homeserver }}
+        access_token: {{ .Values.configSA.user.access_token }}
+        # If you want to enable encryption, set the device ID corresponding to the access token here.
+        # When using an appservice, you should use appservice login manually to generate a device ID and access token.
+        device_id: {{ default "null" .Values.configSA.user.device_id }}
+    # Enable /sync? This is not needed for purely unencrypted webhook-based bots, but is necessary in most other cases.
+    sync: {{ .Values.configSA.user.sync }}
+    # Receive appservice transactions? This will add a /_matrix/app/v1/transactions endpoint on
+    # the HTTP server configured below. The base_path will not be applied for the /transactions path.
+    appservice: {{ .Values.configSA.user.appservice }}
+    # When appservice mode is enabled, the hs_token for the appservice.
+    hs_token: {{ default "null" .Values.configSA.user.hs_token }}
+    # Automatically accept invites?
+    autojoin: {{ .Values.configSA.user.autojoin }}
+    # The displayname and avatar URL to set for the bot on startup.
+    # Set to "disable" to not change the the current displayname/avatar.
+    displayname: {{ .Values.configSA.user.displayname }}
+    avatar_url: {{ .Values.configSA.user.avatar_url }}
+    # Should events from the initial sync be ignored? This should usually always be true.
+    ignore_initial_sync: {{ .Values.configSA.user.ignore_initial_sync }}
+    # Should events from the first sync after starting be ignored? This can be set to false
+    # if you want the bot to handle messages that were sent while the bot was down.
+    ignore_first_sync: {{ .Values.configSA.user.ignore_first_sync }}
+
+# Web server settings. These will only take effect if the plugin requests it using `webapp: true` in the meta file,
+# or if user -> appservice is set to true.
+server:
+    # The IP and port to listen to.
+    hostname: {{ .Values.configSA.server.hostname }}
+    port: {{ .Values.configSA.server.port }}
+    # The base path where the plugin's web resources will be served. Unlike the normal mode,
+    # the webserver is dedicated for a single bot in standalone mode, so the default path
+    # is just /. If you want to emulate normal mode, set this to /_matrix/maubot/plugin/something
+    base_path: {{ .Values.configSA.server.base_path }}
+    # The public URL where the resources are available. The base path is automatically appended to this.
+    public_url: {{ .Values.configSA.server.public_url }}
+
+# The database for the plugin. Used for plugin data, the sync token and e2ee data (if enabled).
+# SQLite and Postgres are supported.
+database: {{ .Values.configSA.database.type }}
+
+# Additional arguments for asyncpg.create_pool() or sqlite3.connect()
+# https://magicstack.github.io/asyncpg/current/api/index.html#asyncpg.pool.create_pool
+# https://docs.python.org/3/library/sqlite3.html#sqlite3.connect
+# For sqlite, min_size is used as the connection thread pool size and max_size is ignored.
+database_opts:
+    min_size: {{ .Values.configSA.database.opts.min }}
+    max_size: {{ .Values.configSA.database.opts.max }}
+
+{{ if .Values.configSA.plugin_config.has_config }}
+# Config for the plugin. Refer to the plugin's base-config.yaml to find what (if anything) to put here.
+plugin_config:
+  whitelist: {{ range .Values.configSA.plugin_config.whitelist }}
+    - "{{ . }}"
+    {{- end }}
+  command_prefix: {{ .Values.configSA.plugin_config.command_prefix }}
+{{- end }}
+
+# Standard Python logging configuration
+logging:
+    version: 1
+    formatters:
+        colored:
+            (): maubot.lib.color_log.ColorFormatter
+            format: "{{ .Values.configSA.logging.format }}"
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: colored
+    loggers:
+        maubot:
+            level: {{ .Values.configSA.logging.loggers.maubot }}
+        mau:
+            level: {{ .Values.configSA.logging.loggers.mau }}
+        aiohttp:
+            level: {{ .Values.configSA.logging.loggers.aiohttp }}
+    root:
+        level: {{ .Values.configSA.logging.root.level }}
+        handlers: [{{ .Values.configSA.logging.root.handlers }}]
+{{- end }}
+{{- if .Values.normalMode.enabled }}
+
+database: {{ .Values.configN.database.type }}
+
+crypto_database: {{ .Values.configN.crypto_database }}
+
+database_opts:
+    min_size: {{ .Values.configN.database.opts.min }}
+    max_size: {{ .Values.configN.database.opts.max }}
+
+# Configuration for storing plugin .mbp files
+plugin_directories:
+    # The directory where uploaded new plugins should be stored.
+    upload: {{ .Values.configN.plugin_directories.upload }}
+    # The directories from which plugins should be loaded.
+    # Duplicate plugin IDs will be moved to the trash.
+    load: {{ range .Values.configN.plugin_directories.load }}
+    - {{ . }}
+          {{- end }}
+    # The directory where old plugin versions and conflicting plugins should be moved.
+    # Set to "delete" to delete files immediately.
+    trash: {{ .Values.configN.plugin_directories.trash }}
+
+# Configuration for storing plugin databases
+plugin_databases:
+    # The directory where SQLite plugin databases should be stored.
+    sqlite: {{ .Values.configN.plugin_databases.sqlite }}
+    # The connection URL for plugin databases. If null, all plugins will get SQLite databases.
+    # If set, plugins using the new asyncpg interface will get a Postgres connection instead.
+    # Plugins using the legacy SQLAlchemy interface will always get a SQLite connection.
+    #
+    # To use the same connection pool as the default database, set to "default"
+    # (the default database above must be postgres to do this).
+    #
+    # When enabled, maubot will create separate Postgres schemas in the database for each plugin.
+    # To view schemas in psql, use `\dn`. To view enter and interact with a specific schema,
+    # use `SET search_path = name` (where `name` is the name found with `\dn`) and then use normal
+    # SQL queries/psql commands.
+    postgres: {{ default "null" .Values.configN.plugin_databases.postgres }}
+    # Maximum number of connections per plugin instance.
+    postgres_max_conns_per_plugin: {{ .Values.configN.plugin_databases.max_conn_per_plugin }}
+    # Overrides for the default database_opts when using a non-"default" postgres connection string.
+    postgres_opts: {{ .Values.configN.plugin_databases.postgres_opts | toYaml }}
+
+server:
+    # The IP and port to listen to.
+    hostname: {{ .Values.configN.server.hostname }}
+    port: {{ .Values.configN.server.port }}
+    # Public base URL where the server is visible.
+    public_url: {{ .Values.configN.server.public_url }}
+    # The base path for the UI.
+    ui_base_path: {{ .Values.configN.server.ui_base_path }}
+    # The base path for plugin endpoints. The instance ID will be appended directly.
+    plugin_base_path: {{ .Values.configN.server.plugin_base_path }}
+    # Override path from where to load UI resources.
+    # Set to false to using pkg_resources to find the path.
+    override_resource_path: {{ .Values.configN.server.override_resource_path }}
+    # The shared secret to sign API access tokens.
+    # Set to "generate" to generate and save a new token at startup.
+    unshared_secret: {{ .Values.configN.server.unshared_secret }}
+
+# Known homeservers. This is required for the `mbc auth` command and also allows
+# more convenient access from the management UI. This is not required to create
+# clients in the management UI, since you can also just type the homeserver URL
+# into the box there.
+homeservers:
+    {{ .Values.configN.homeservers.server_name }}:
+        url: {{ .Values.configN.homeservers.url}}
+        secret: {{ .Values.configN.homeservers.secret }}
+
+# List of administrator users. Plaintext passwords will be bcrypted on startup. Set empty password
+# to prevent normal login. Root is a special user that can't have a password and will always exist.
+admins: {{ .Values.configN.admins | toYaml | nindent 2 }}
+  root: ""
+
+# API feature switches.
+api_features:
+    login: {{ .Values.configN.api_feature.login }}
+    plugin: {{ .Values.configN.api_feature.plugin }}
+    plugin_upload: {{ .Values.configN.api_feature.plugin_upload }}
+    instance: {{ .Values.configN.api_feature.instance }}
+    instance_database: {{ .Values.configN.api_feature.instance_database }}
+    client: {{ .Values.configN.api_feature.client }}
+    client_proxy: {{ .Values.configN.api_feature.client_proxy }}
+    client_auth: {{ .Values.configN.api_feature.client_auth }}
+    dev_open: {{ .Values.configN.api_feature.dev_open }}
+    log: {{ .Values.configN.api_feature.log }}
+
+# Python logging configuration.
+#
+# See section 16.7.2 of the Python documentation for more info:
+# https://docs.python.org/3.6/library/logging.config.html#configuration-dictionary-schema
+logging:
+    version: 1
+    formatters:
+        colored:
+            (): maubot.lib.color_log.ColorFormatter
+            format: "{{ .Values.configN.logging.c_format }}"
+        normal:
+            format: "{{ .Values.configN.logging.n_format }}"
+    handlers:
+        file:
+            class: logging.handlers.RotatingFileHandler
+            formatter: normal
+            filename: /data/maubot.log
+            maxBytes: 10485760
+            backupCount: 10
+        console:
+            class: logging.StreamHandler
+            formatter: colored
+            stream: ext://sys.stdout
+    loggers:
+        maubot:
+            level: {{ .Values.configN.logging.loggers.maubot }}
+        mau:
+            level: {{ .Values.configN.logging.loggers.mau }}
+        aiohttp:
+            level: {{ .Values.configN.logging.loggers.aiohttp }}
+    root:
+        level: {{ .Values.configN.logging.root.level }}
+        handlers: [{{ .Values.configN.logging.root.handlers }}]
+{{- end -}}
