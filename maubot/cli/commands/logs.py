@@ -37,8 +37,7 @@ def logs(server: str, tail: int) -> None:
         return
     global history_count
     history_count = tail
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(view_logs(server, token))
+    asyncio.run(view_logs(server, token))
 
 
 def parsedate(entry: Obj) -> None:
